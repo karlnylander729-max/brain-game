@@ -10,13 +10,14 @@
 <meta name="theme-color" content="#14161a">
 <title>Brain</title>
 <style>
+:root { --bottom: max(20px, env(safe-area-inset-bottom)); } /* clear of the home bar; iOS reports 0 without viewport-fit=cover */
 html, body { margin: 0; height: 100%; }
 body { font-family: -apple-system, system-ui, sans-serif; -webkit-tap-highlight-color: transparent; touch-action: manipulation; user-select: none; -webkit-user-select: none; background: #14161a; }
 section { display: none; height: 100%; height: 100dvh; }
 section.active { display: flex; flex-direction: column; }
 .half { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; font-weight: 700; font-size: 32px; border: 0; font-family: inherit; }
 #goLight { background: #e8f3ff; color: #1a5fb4; }
-#goDeep { background: #1d2333; color: #e6e9f2; padding-bottom: env(safe-area-inset-bottom); }
+#goDeep { background: #1d2333; color: #e6e9f2; padding-bottom: var(--bottom); }
 .lightRot { background: #f5f9ff; height: 100%; display: flex; flex-direction: column; }
 .deepRot { background: #1d2333; color: #e6e9f2; height: 100%; display: flex; flex-direction: column; }
 .q { text-align: center; padding: 14px 12px 6px; font-size: 18px; }
@@ -34,7 +35,7 @@ section.active { display: flex; flex-direction: column; }
 #deepItem .q.why { font-size: 15px; font-weight: 600; color: #c9d4f0; }
 #deepItem .q + .q.why { padding-top: 0; } /* Deep: the reason takes the question's slot, so the 320x568 fit holds */
 .btns button.right { outline: 4px solid #2ea043; outline-offset: -4px; }
-.trkL, .trkD { height: 100%; box-sizing: border-box; padding-bottom: env(safe-area-inset-bottom); display: flex; flex-direction: column; align-items: center; --lo: #1a5fb4; --st: #fff; --en: #1a5fb4; --ic: #d6e8ff; }
+.trkL, .trkD { height: 100%; box-sizing: border-box; padding-bottom: var(--bottom); display: flex; flex-direction: column; align-items: center; --lo: #1a5fb4; --st: #fff; --en: #1a5fb4; --ic: #d6e8ff; }
 .trkL { background: #f5f9ff; color: #1a3050; }
 .trkD { background: #1d2333; color: #e6e9f2; --st: #e6e9f2; --en: #9fb6ff; --ic: #2a3247; }
 .board { position: relative; display: grid; grid-template-rows: repeat(var(--n), var(--cell)) auto; margin: auto 0 0; }
@@ -49,7 +50,7 @@ section.active { display: flex; flex-direction: column; }
 .icon i { width: 18px; height: 18px; border-radius: 4px; background: rgba(128,128,128,.18); }
 .icon i.s { background: var(--st); border: 1px solid rgba(128,128,128,.4); box-sizing: border-box; }
 .icon i.e { background: var(--en); }
-.btns button { flex: 1; border: 0; padding: 28px 0 calc(28px + env(safe-area-inset-bottom)); font-weight: 700; font-size: 18px; font-family: inherit; }
+.btns button { flex: 1; border: 0; padding: 28px 0 calc(28px + var(--bottom)); font-weight: 700; font-size: 18px; font-family: inherit; }
 .btnSame { background: #d6e8ff; color: #1a5fb4; }
 .btnMirror { background: #ffe1d6; color: #a3401a; }
 .grid4 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 8px 12px; }
@@ -59,12 +60,12 @@ section.active { display: flex; flex-direction: column; }
 #deepPick, #deepSub, #deep { background: #1d2333; color: #e6e9f2; position: relative; }
 .bar { display: flex; justify-content: space-between; align-items: center; height: 44px; padding-top: env(safe-area-inset-top); flex: none; font-size: 14px; padding-right: 14px; }
 .xbtn { border: 0; background: none; color: #9fb6ff; font-size: 20px; width: 48px; height: 44px; font-family: inherit; }
-.menu { flex: 1; display: flex; flex-direction: column; padding-bottom: calc(12px + env(safe-area-inset-bottom)); }
+.menu { flex: 1; display: flex; flex-direction: column; padding-bottom: calc(12px + var(--bottom)); }
 .menu button { flex: 1; min-height: 56px; max-height: 160px; margin: 6px 12px; border: 0; border-radius: 16px; background: #2a3247; color: #e6e9f2; font-family: inherit; font-weight: 700; font-size: 24px; }
 .menu button:disabled { opacity: .3; pointer-events: none; }
 #subTitle { color: #9fb6ff; font-size: 16px; font-weight: 700; }
 #deepItem { flex: 1; min-height: 0; }
-#deepNext, #deepDone { flex: none; width: 100%; margin-top: auto; border: 0; padding: 20px 0 calc(20px + env(safe-area-inset-bottom)); font-weight: 700; font-size: 18px; font-family: inherit; background: #3d5bd9; color: #fff; }
+#deepNext, #deepDone { flex: none; width: 100%; margin-top: auto; border: 0; padding: 20px 0 calc(20px + var(--bottom)); font-weight: 700; font-size: 18px; font-family: inherit; background: #3d5bd9; color: #fff; }
 #deepNext[hidden] { display: none; }
 .summary { padding: 12px 24px; display: flex; flex-direction: column; gap: 14px; font-size: 18px; }
 .summary h2 { margin: 8px 0; font-size: 22px; }
@@ -77,7 +78,7 @@ section.active { display: flex; flex-direction: column; }
 .path polyline { stroke-dasharray: 1; animation: draw 1s linear; } /* draws in 1 s; a Light miss waits up to 3 s for a tap */
 @keyframes draw { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
 .tile span { position: absolute; top: 6px; left: 10px; font-size: 13px; opacity: .6; }
-.matL, .matD, .serL, .serD, .oddL, .oddD, .evL, .evD, .nimL, .nimD, .rchL, .rchD { height: 100%; box-sizing: border-box; display: flex; flex-direction: column; align-items: center; padding-bottom: env(safe-area-inset-bottom); }
+.matL, .matD, .serL, .serD, .oddL, .oddD, .evL, .evD, .nimL, .nimD, .rchL, .rchD { height: 100%; box-sizing: border-box; display: flex; flex-direction: column; align-items: center; padding-bottom: var(--bottom); }
 .matL, .serL, .oddL, .evL, .nimL, .rchL { background: #f5f9ff; color: #1a3050; --tile: #dfe8f7; }
 .matD, .serD, .oddD, .evD, .nimD, .rchD { background: #1d2333; color: #e6e9f2; --tile: #2a3247; }
 .matGrid { display: grid; grid-template-columns: repeat(3, auto); gap: 6px; margin-top: 8px; }
@@ -103,7 +104,7 @@ section.active { display: flex; flex-direction: column; }
 .nimD .nimDots { grid-template-columns: repeat(15, 10px); margin: 6px 0; } /* Deep piles reach 45: three short rows */
 .nimD .nimDots i { width: 10px; height: 10px; }
 .nimD .nimOpt { min-height: 48px; }
-.seqL, .seqD { height: 100%; box-sizing: border-box; display: flex; flex-direction: column; align-items: center; padding-bottom: env(safe-area-inset-bottom); }
+.seqL, .seqD { height: 100%; box-sizing: border-box; display: flex; flex-direction: column; align-items: center; padding-bottom: var(--bottom); }
 .seqL { background: #f5f9ff; color: #1a3050; --tile: #dfe8f7; }
 .seqD { background: #1d2333; color: #e6e9f2; --tile: #2a3247; }
 .seqQ { display: flex; align-items: center; justify-content: center; gap: 8px; }
@@ -115,7 +116,7 @@ section.active { display: flex; flex-direction: column; }
 .seqBtn svg { pointer-events: none; }
 .seqBtn.used { opacity: .25; }
 .seqBtn.right { outline: 4px solid #2ea043; outline-offset: -4px; }
-.crdL, .crdD { height: 100%; box-sizing: border-box; display: flex; flex-direction: column; align-items: center; padding-bottom: env(safe-area-inset-bottom); }
+.crdL, .crdD { height: 100%; box-sizing: border-box; display: flex; flex-direction: column; align-items: center; padding-bottom: var(--bottom); }
 .crdL { background: #f5f9ff; color: #1a3050; --tile: #dfe8f7; }
 .crdD { background: #1d2333; color: #e6e9f2; --tile: #2a3247; }
 .card { position: relative; box-sizing: border-box; width: 64px; height: 88px; border-radius: 8px; background: #fff; border: 1px solid #9aa4b5; font-weight: 700; pointer-events: none; }
@@ -1773,7 +1774,7 @@ function makeCandidateTile(cand, i, size) {
 // Top plus bottom safe-area insets in CSS px (0 outside a standalone notched iPhone).
 function safeInsetsPx() {
   const probe = document.createElement('div');
-  probe.style.cssText = 'position:fixed;padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom)';
+  probe.style.cssText = 'position:fixed;padding-top:env(safe-area-inset-top);padding-bottom:var(--bottom)';
   document.body.appendChild(probe);
   const cs = getComputedStyle(probe), px = parseFloat(cs.paddingTop) + parseFloat(cs.paddingBottom);
   probe.remove();
@@ -2979,6 +2980,11 @@ test('iOS: page is not drawn under the status bar (no inset can be counted twice
   const sb = document.querySelector('meta[name="apple-mobile-web-app-status-bar-style"]').content;
   assert(!vp.includes('viewport-fit=cover'), 'viewport-fit=cover removed');
   assert(sb === 'default', 'status bar style default, got ' + sb);
+});
+test('layout: answer areas keep at least 20 px above the bottom edge', () => {
+  const el = document.createElement('div'); el.className = 'oddL'; document.body.appendChild(el);
+  const pb = parseFloat(getComputedStyle(el).paddingBottom); el.remove();
+  assert(pb >= 20, 'bottom gap ' + pb);
 });
 test('start halves say only LIGHT and DEEP', () => {
   assert(document.getElementById('goLight').textContent.trim() === 'LIGHT', 'light');
