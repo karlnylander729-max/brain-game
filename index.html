@@ -15,12 +15,11 @@ body { font-family: -apple-system, system-ui, sans-serif; -webkit-tap-highlight-
 section { display: none; height: 100%; height: 100dvh; }
 section.active { display: flex; flex-direction: column; }
 .half { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; font-weight: 700; font-size: 32px; border: 0; font-family: inherit; }
-.half small { font-weight: 400; font-size: 14px; opacity: .7; margin-top: 8px; }
 #goLight { background: #e8f3ff; color: #1a5fb4; }
 #goDeep { background: #1d2333; color: #e6e9f2; padding-bottom: env(safe-area-inset-bottom); }
 .lightRot { background: #f5f9ff; height: 100%; display: flex; flex-direction: column; }
 .deepRot { background: #1d2333; color: #e6e9f2; height: 100%; display: flex; flex-direction: column; }
-.q { text-align: center; padding: 14px 12px 6px; font-size: 15px; }
+.q { text-align: center; padding: 14px 12px 6px; font-size: 18px; }
 .fig { display: flex; justify-content: center; gap: 0; padding: 6px; }
 .btns { display: flex; margin-top: auto; }
 .lightRot .fig { flex: 1; align-items: center; }
@@ -35,7 +34,6 @@ section.active { display: flex; flex-direction: column; }
 .trkL, .trkD { height: 100%; box-sizing: border-box; padding-bottom: env(safe-area-inset-bottom); display: flex; flex-direction: column; align-items: center; --lo: #1a5fb4; --st: #fff; --en: #1a5fb4; --ic: #d6e8ff; }
 .trkL { background: #f5f9ff; color: #1a3050; }
 .trkD { background: #1d2333; color: #e6e9f2; --st: #e6e9f2; --en: #9fb6ff; --ic: #2a3247; }
-.trkL .q, .trkD .q { font-size: 20px; }
 .board { position: relative; display: grid; grid-template-rows: repeat(var(--n), var(--cell)) auto; margin: auto 0 0; }
 .sq { width: var(--cell); height: var(--cell); border: 0; padding: 0; display: flex; align-items: center; justify-content: center; font-size: calc(var(--cell) * .5); background: #dfe8f7; color: inherit; font-family: inherit; }
 .sq.dk { background: #c4d3ee; }
@@ -55,11 +53,13 @@ section.active { display: flex; flex-direction: column; }
 .tile { position: relative; background: #2a3247; border: 0; border-radius: 12px; padding: 0; display: flex; justify-content: center; align-items: center; color: #e6e9f2; }
 #start { position: relative; }
 #progress { position: absolute; top: 0; left: 0; right: 0; padding: calc(14px + env(safe-area-inset-top)) 12px 14px; text-align: center; font-size: 14px; color: #1a5fb4; background: rgba(232,243,255,.92); pointer-events: none; z-index: 1; }
-#deepPick, #deep { background: #1d2333; color: #e6e9f2; position: relative; }
+#deepPick, #deepSub, #deep { background: #1d2333; color: #e6e9f2; position: relative; }
 .bar { display: flex; justify-content: space-between; align-items: center; height: 44px; padding-top: env(safe-area-inset-top); flex: none; font-size: 14px; padding-right: 14px; }
 .xbtn { border: 0; background: none; color: #9fb6ff; font-size: 20px; width: 48px; height: 44px; font-family: inherit; }
-#deepPick .half { background: #2a3247; color: #e6e9f2; margin: 8px 12px; border-radius: 16px; }
-#deepPick .half:last-child { margin-bottom: calc(20px + env(safe-area-inset-bottom)); }
+.menu { flex: 1; display: flex; flex-direction: column; padding-bottom: calc(12px + env(safe-area-inset-bottom)); }
+.menu button { flex: 1; min-height: 56px; max-height: 160px; margin: 6px 12px; border: 0; border-radius: 16px; background: #2a3247; color: #e6e9f2; font-family: inherit; font-weight: 700; font-size: 24px; }
+.menu button:disabled { opacity: .3; pointer-events: none; }
+#subTitle { color: #9fb6ff; font-size: 16px; font-weight: 700; }
 #deepItem { flex: 1; min-height: 0; }
 #deepNext, #deepDone { flex: none; width: 100%; margin-top: auto; border: 0; padding: 20px 0 calc(20px + env(safe-area-inset-bottom)); font-weight: 700; font-size: 18px; font-family: inherit; background: #3d5bd9; color: #fff; }
 #deepNext[hidden] { display: none; }
@@ -74,13 +74,62 @@ section.active { display: flex; flex-direction: column; }
 .path polyline { stroke-dasharray: 1; animation: draw 1s linear; } /* Light miss feedback lasts 1200 ms, so the path is fully drawn */
 @keyframes draw { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
 .tile span { position: absolute; top: 6px; left: 10px; font-size: 13px; opacity: .6; }
+.matL, .matD, .serL, .serD, .oddL, .oddD, .evL, .evD, .nimL, .nimD, .rchL, .rchD { height: 100%; box-sizing: border-box; display: flex; flex-direction: column; align-items: center; padding-bottom: env(safe-area-inset-bottom); }
+.matL, .serL, .oddL, .evL, .nimL, .rchL { background: #f5f9ff; color: #1a3050; --tile: #dfe8f7; }
+.matD, .serD, .oddD, .evD, .nimD, .rchD { background: #1d2333; color: #e6e9f2; --tile: #2a3247; }
+.matGrid { display: grid; grid-template-columns: repeat(3, auto); gap: 6px; margin-top: 8px; }
+.matCell { background: var(--tile); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 32px; font-weight: 700; box-sizing: border-box; }
+.matCell.hole { border: 2px dashed currentColor; }
+.matOpts { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; width: 100%; box-sizing: border-box; padding: 8px 12px; margin-top: auto; }
+.matOpt { min-height: 84px; border: 0; border-radius: 12px; background: var(--tile); display: flex; align-items: center; justify-content: center; padding: 0; }
+.serRow { display: flex; gap: 6px; justify-content: center; margin-top: 6px; }
+.serRow .matCell { flex: none; }
+.matOpt.right { outline: 4px solid #2ea043; outline-offset: -4px; }
+.matOpt svg { pointer-events: none; }
+.oddOpts { display: flex; flex-direction: column; gap: 8px; width: 100%; box-sizing: border-box; padding: 8px 12px; margin-top: auto; }
+.evHint { font-size: 13px; opacity: .7; text-align: center; padding: 0 16px; }
+.evBet { font-size: 20px; font-weight: 700; text-align: center; padding: 16px 8px; margin-bottom: auto; }
+.oddOpt { color: inherit; font: inherit; font-size: 20px; font-weight: 700; padding: 8px 14px; text-align: center; }
+.nimOpt { min-height: 56px; }
+.rchPath { font-size: 16px; font-weight: 700; text-align: center; padding: 4px 16px; line-height: 1.4; }
+.nimBig { font-size: 44px; font-weight: 800; line-height: 1.1; margin-top: 4px; }
+.nimDots { display: grid; grid-template-columns: repeat(10, 14px); gap: 4px; margin: 10px 0; }
+.nimDots i { width: 14px; height: 14px; border-radius: 50%; background: currentColor; opacity: .75; }
+.nimD .nimDots { grid-template-columns: repeat(15, 10px); margin: 6px 0; } /* Deep piles reach 45: three short rows */
+.nimD .nimDots i { width: 10px; height: 10px; }
+.nimD .nimOpt { min-height: 48px; }
+.seqL, .seqD { height: 100%; box-sizing: border-box; display: flex; flex-direction: column; align-items: center; padding-bottom: env(safe-area-inset-bottom); }
+.seqL { background: #f5f9ff; color: #1a3050; --tile: #dfe8f7; }
+.seqD { background: #1d2333; color: #e6e9f2; --tile: #2a3247; }
+.seqQ { display: flex; align-items: center; justify-content: center; gap: 8px; }
+.seqStage { margin: auto 0; width: 130px; height: 130px; border-radius: 16px; background: var(--tile); display: flex; align-items: center; justify-content: center; }
+.seqOpts { display: flex; gap: 8px; width: 100%; box-sizing: border-box; padding: 8px 12px; margin-top: auto; }
+.seqOpts .seqBtn { flex: 1; }
+.seqGrid { display: grid; grid-template-columns: repeat(3, 80px); gap: 8px; margin: auto 0; }
+.seqBtn { color: inherit; position: relative; min-height: 80px; border: 0; border-radius: 12px; background: var(--tile); display: flex; align-items: center; justify-content: center; padding: 0; }
+.seqBtn svg { pointer-events: none; }
+.seqBtn.used { opacity: .25; }
+.seqBtn.right { outline: 4px solid #2ea043; outline-offset: -4px; }
+.crdL, .crdD { height: 100%; box-sizing: border-box; display: flex; flex-direction: column; align-items: center; padding-bottom: env(safe-area-inset-bottom); }
+.crdL { background: #f5f9ff; color: #1a3050; --tile: #dfe8f7; }
+.crdD { background: #1d2333; color: #e6e9f2; --tile: #2a3247; }
+.card { position: relative; box-sizing: border-box; width: 64px; height: 88px; border-radius: 8px; background: #fff; border: 1px solid #9aa4b5; font-weight: 700; pointer-events: none; }
+.card.big { width: 110px; height: 150px; margin: auto 0; border-radius: 12px; }
+.card .cr { position: absolute; top: 4px; left: 6px; font-size: 16px; line-height: 1; text-align: center; }
+.card .cm { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 34px; }
+.card.big .cr { font-size: 24px; top: 8px; left: 10px; }
+.card.big .cm { font-size: 64px; }
+.crdSuits .seqBtn { font-size: 54px; min-height: 96px; background: #fff; }
+.crdCards .seqBtn { min-height: 100px; background: transparent; padding: 0; }
+.crdCards .seqBtn.right { outline-offset: 2px; }
+.seqBtn .n { position: absolute; top: 4px; left: 8px; font-size: 14px; font-weight: 700; }
 </style>
 </head>
 <body>
 <section id="start">
   <div id="progress" hidden></div>
-  <button class="half" id="goLight">LIGHT<small>queue · instant</small></button>
-  <button class="half" id="goDeep">DEEP<small>seated · think</small></button>
+  <button class="half" id="goLight">LIGHT</button>
+  <button class="half" id="goDeep">DEEP</button>
 </section>
 <section id="light">
   <div id="lightBar"><button id="lightExit" aria-label="Back">✕</button><span id="lightCorner"></span></div>
@@ -89,8 +138,11 @@ section.active { display: flex; flex-direction: column; }
 </section>
 <section id="deepPick">
   <div class="bar"><button class="xbtn" id="pickExit" aria-label="Back">✕</button></div>
-  <button class="half" data-drill="rot">ROTATION</button>
-  <button class="half" data-drill="trk">TRACKING</button>
+  <div class="menu" id="opMenu"></div>
+</section>
+<section id="deepSub">
+  <div class="bar"><button class="xbtn" id="subExit" aria-label="Back">✕</button><span id="subTitle"></span></div>
+  <div class="menu" id="drillMenu"></div>
 </section>
 <section id="deep">
   <div class="bar"><button class="xbtn" id="deepExit" aria-label="Back">✕</button><span id="deepCount"></span><span id="deepStatus"></span></div>
@@ -114,7 +166,11 @@ const CONFIG = {
     deepMoves: lvl => Math.min(3 + Math.floor(lvl / 3), 8),
     flashMs: lvl => Math.max(350, 900 - 50 * lvl),
     showStartMs: 800
-  }
+  },
+  seq: { lightLen: 4, deepLen: lvl => Math.min(6 + Math.floor(Math.max(0, lvl - 6) / 3), 9), lightFlashMs: lvl => Math.max(400, 800 - 30 * lvl), deepFlashMs: 1000 },
+  crd: { lightCount: 8, deepCount: lvl => Math.min(16 + Math.max(0, lvl - 6), 24), lightFlashMs: lvl => Math.max(350, 700 - 25 * lvl), deepFlashMs: 900 },
+  mat: { deepVarying: lvl => lvl < 11 ? 2 : 3 },
+  ser: { deepVarying: lvl => lvl < 11 ? 2 : 3, deepTerms: 5, lightTerms: 4 }
 };
 
 // ===== RNG =====
@@ -129,6 +185,31 @@ function makeRng(seed) {
   };
 }
 
+// ===== DRILLS =====
+// DRILLS[id] = {
+//   op: 'transform'|'rules'|'odds'|'memory'|'backward',
+//   name: 'Rotation',                       // menu label; progress line uses name.toLowerCase()
+//   light(level, rng) -> item,  deep(level, rng) -> item,
+//   timeline(item, mode, level) -> [{ phase, ms, index }],   // steps shown BEFORE the answer phase; [] if none
+//   render(item, el, phase, index),          // phase is a timeline phase or 'answer'
+//   answer(item) -> string,                  // the correct data-answer value
+//   options(item) -> string[] | null,        // all answer values offered (null = multi-tap answer built by render)
+//   markMiss(el, item)                       // optional: show the right answer after a miss
+// }
+// Item kind is '<id>L' or '<id>D'. Drill sections call registerDrill; they must come after this section.
+const DRILLS = {};
+const OPERATIONS = [
+  { id: 'transform', name: 'Transform', drills: ['rot', 'trk'] },
+  { id: 'rules', name: 'Rules', drills: ['mat', 'ser'] },
+  { id: 'odds', name: 'Odds', drills: ['odd', 'ev'] },
+  { id: 'memory', name: 'Memory', drills: ['seq', 'crd'] },
+  { id: 'backward', name: 'Backward', drills: ['nim', 'rch'] }
+];
+const ALL_DRILL_IDS = OPERATIONS.flatMap(o => o.drills);
+
+function registerDrill(id, def) { DRILLS[id] = def; }
+
+function drillOf(item) { return item.kind.slice(0, -1); }
 
 // ===== GEOMETRY =====
 const FACE_DIRS = [[1,0,0],[-1,0,0],[0,1,0],[0,-1,0],[0,0,1],[0,0,-1]];
@@ -355,6 +436,15 @@ function makeDeepRotation(level, rng) {
   throw new Error('no visible deep rotation item');
 }
 
+registerDrill('rot', {
+  op: 'transform', name: 'Rotation',
+  light: makeLightRotation, deep: makeDeepRotation,
+  timeline: () => [],
+  render: (item, el) => (item.kind === 'rotL' ? renderLightRotation : renderDeepRotation)(item, el),
+  answer: item => String(item.answer),
+  options: item => (item.kind === 'rotL' ? ['same', 'mirror'] : ['0', '1', '2', '3'])
+});
+
 // ===== RENDER =====
 const LIGHT_DIR = (() => { const l = [-0.4, 0.6, 0.7], n = Math.hypot(...l); return l.map(x => x / n); })();
 
@@ -505,9 +595,10 @@ function makeTracking(size, steps, count, rng) {
   return { start, moves, end: cur };
 }
 
+// flashMs travels with the item so renderTracking can hide each flashed icon 80 % into its step.
 function makeLightTracking(level, rng) {
   const steps = level < CONFIG.trk.lightDiagonalFrom ? KING_STEPS.slice(0, 4) : KING_STEPS;
-  return { kind: 'trkL', size: 3, ...makeTracking(3, steps, CONFIG.trk.lightMoves(level), rng) };
+  return { kind: 'trkL', size: 3, flashMs: CONFIG.trk.flashMs(level), ...makeTracking(3, steps, CONFIG.trk.lightMoves(level), rng) };
 }
 
 function makeDeepTracking(level, rng) {
@@ -520,29 +611,910 @@ function iconCells([df, dr]) {
   return { start: [startCol, startRow], end: [startCol + df, startRow - dr] };
 }
 
+// Light flashes each move for item.flashMs (CONFIG.trk.flashMs at the item's level); Deep shows the start only.
+function trackingTimeline(item, mode) {
+  const start = { phase: 'start', ms: CONFIG.trk.showStartMs };
+  if (mode === 'D') return [start];
+  return [start, ...item.moves.map((_, index) => ({ phase: 'moves', ms: item.flashMs, index }))];
+}
+
+function boardSquares(n) {
+  return Array.from({ length: n * n }, (_, i) => squareName([i % n, Math.floor(i / n)]));
+}
+
+registerDrill('trk', {
+  op: 'transform', name: 'Tracking',
+  light: makeLightTracking, deep: makeDeepTracking,
+  timeline: trackingTimeline,
+  render: renderTracking,
+  answer: item => squareName(item.end),
+  options: item => boardSquares(item.size),
+  markMiss: markTrackingMiss
+});
+
+// ===== FIGURES =====
+// A cell is { shape: 0 circle | 1 square | 2 triangle, count: 1..3, fill: 0 outline | 1 hatched | 2 solid }.
+const CELL_SLOTS = [
+  [[50, 50, 30]],
+  [[27, 50, 17], [73, 50, 17]],
+  [[50, 27, 17], [27, 72, 17], [73, 72, 17]]
+];
+
+function cellKey(c) { return c.shape + '' + c.count + c.fill; }
+
+// SVG markup of one shape centred on (x, y) with half-size s.
+function shapeParts(shape, x, y, s) {
+  if (shape === 0) return `<circle cx="${x}" cy="${y}" r="${s}"/>`;
+  if (shape === 1) return `<rect x="${x - s}" y="${y - s}" width="${2 * s}" height="${2 * s}"/>`;
+  return `<polygon points="${x},${y - s} ${x + s},${y + s} ${x - s},${y + s}"/>`;
+}
+
+// 45-degree lines across the shape's box, spaced 0.75 s apart.
+function hatchLines(x, y, s) {
+  const step = s * 0.75, out = [];
+  for (let o = -2 * s + step / 2; o < 2 * s; o += step) {
+    out.push(`<line x1="${x - s + o}" y1="${y + s}" x2="${x + s + o}" y2="${y - s}"/>`);
+  }
+  return out.join('');
+}
+
+let clipCount = 0;
+
+// Fill 1 is the outline plus hatch lines clipped to the shape.
+function shapeMarkup(shape, fill, slot, ink) {
+  const full = shapeParts(shape, ...slot);
+  const line = `fill="none" stroke="${ink}" stroke-width="5" stroke-linejoin="round"`;
+  if (fill === 2) return `<g fill="${ink}" stroke="${ink}" stroke-width="5" stroke-linejoin="round">${full}</g>`;
+  if (fill === 0) return `<g ${line}>${full}</g>`;
+  const id = 'hc' + clipCount++;
+  return `<clipPath id="${id}">${full}</clipPath><g clip-path="url(#${id})" stroke="${ink}" stroke-width="4">${hatchLines(...slot)}</g><g ${line}>${full}</g>`;
+}
+
+function drawCell(cell, size, dark) {
+  const ink = dark ? '#9fb6ff' : '#1a5fb4';
+  const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  svg.setAttribute('viewBox', '0 0 100 100');
+  svg.setAttribute('width', size); svg.setAttribute('height', size);
+  svg.innerHTML = CELL_SLOTS[cell.count - 1].map(slot => shapeMarkup(cell.shape, cell.fill, slot, ink)).join('');
+  return svg;
+}
+
+// ===== MATRICES =====
+const ATTR_VALUE = [c => c.shape, c => c.count - 1, c => c.fill];
+const RULE_KINDS = ['const', 'prog', 'dist'];
+const RULE_CHECKS = {
+  fixed: rows => rows.flat().every(v => v === rows[0][0]),
+  const: rows => rows.every(r => r.every(v => v === r[0])) && new Set(rows.map(r => r[0])).size === 3,
+  prog: rows => {
+    const step = (rows[0][1] - rows[0][0] + 3) % 3;
+    return step !== 0 && new Set(rows.map(r => r[0])).size === 3 && rows.every(r => r[1] === (r[0] + step) % 3 && r[2] === (r[1] + step) % 3);
+  },
+  dist: rows => rows.every(r => new Set(r).size === 3) && new Set(rows.map(r => r.join())).size === 3
+    && rows.every(r => [0, 1, 2].some(k => r.every((v, c) => v === rows[0][(c + k) % 3])))
+};
+
+// Correctness oracle: reads only the rules and the cells, never how the generator built them.
+function satisfiesRules(grid, cell, rules) {
+  const cells = grid.slice(0, 8).concat([cell]);
+  return rules.every((rule, a) => {
+    const vals = cells.map(ATTR_VALUE[a]);
+    return RULE_CHECKS[rule]([vals.slice(0, 3), vals.slice(3, 6), vals.slice(6, 9)]);
+  });
+}
+
+// Value table [row][col] for one attribute under one rule.
+function attrTable(rule, rng) {
+  const perm = shuffle([0, 1, 2], rng), shift = shuffle([0, 1, 2], rng), step = 1 + Math.floor(rng() * 2);
+  const fixed = Math.floor(rng() * 3);
+  const at = { fixed: () => fixed, const: r => perm[r], prog: (r, c) => (perm[r] + step * c) % 3, dist: (r, c) => perm[(c + shift[r]) % 3] };
+  return [0, 1, 2].map(r => [0, 1, 2].map(c => at[rule](r, c)));
+}
+
+function pickRules(varying, rng) {
+  const moving = shuffle([0, 1, 2], rng).slice(0, varying);
+  return [0, 1, 2].map(a => (moving.includes(a) ? pick(RULE_KINDS, rng) : 'fixed'));
+}
+
+function withAttr(cell, a, v) {
+  return { shape: cell.shape, count: cell.count, fill: cell.fill, ...[{ shape: v }, { count: v + 1 }, { fill: v }][a] };
+}
+
+// One-attribute changes of the answer, varying attributes first.
+function makeDecoys(cell, rules, count, rng) {
+  const all = [0, 1, 2].flatMap(a => [0, 1, 2].filter(v => v !== ATTR_VALUE[a](cell)).map(v => ({ a, key: cellKey(withAttr(cell, a, v)) })));
+  const moving = shuffle(all.filter(d => rules[d.a] !== 'fixed'), rng), still = shuffle(all.filter(d => rules[d.a] === 'fixed'), rng);
+  return moving.concat(still).slice(0, count).map(d => d.key);
+}
+
+function makeMatrix(varying, nOptions, rng) {
+  const rules = pickRules(varying, rng), tables = rules.map(r => attrTable(r, rng));
+  const grid = Array.from({ length: 9 }, (_, i) => {
+    const r = Math.floor(i / 3), c = i % 3;
+    return { shape: tables[0][r][c], count: tables[1][r][c] + 1, fill: tables[2][r][c] };
+  });
+  const answer = cellKey(grid[8]);
+  const options = shuffle([answer, ...makeDecoys(grid[8], rules, nOptions - 1, rng)], rng);
+  return { grid, answer, options, rules };
+}
+
+function matrixItem(mode, varying, nOptions, rng) {
+  return { kind: 'mat' + mode, ...makeMatrix(varying, nOptions, rng) };
+}
+
+// Height cap: bar 44, question 41, grid gaps and margin 20, options (Deep 2 rows + Next 62, Light 1 row).
+function matCellSize(deep) {
+  const room = (window.innerHeight || 667) - 44 - 41 - 20 - (deep ? 192 + 62 : 100) - safeInsetsPx();
+  return Math.min(96, Math.floor((screenWidth() - 48) / 3), Math.floor(room / 3));
+}
+
+function makeMatCell(cell, size, dark) {
+  const d = document.createElement('div');
+  d.className = 'matCell'; d.style.width = d.style.height = size + 'px';
+  if (cell) d.appendChild(drawCell(cell, size - 6, dark)); else { d.textContent = '?'; d.classList.add('hole'); }
+  return d;
+}
+
+function makeMatOption(key, size, dark) {
+  const b = makeAnswerButton('', key, 'matOpt');
+  const cell = { shape: +key[0], count: +key[1], fill: +key[2] };
+  b.appendChild(drawCell(cell, size, dark));
+  return b;
+}
+
+function renderMatrix(item, el) {
+  const dark = item.kind === 'matD', deep = item.options.length > 2, size = matCellSize(deep);
+  el.innerHTML = ''; el.className = item.kind;
+  const q = makeDiv('q matQ', 'Which cell completes it?');
+  const grid = document.createElement('div'); grid.className = 'matGrid';
+  item.grid.forEach((c, i) => grid.appendChild(makeMatCell(i < 8 ? c : null, size, dark)));
+  const opts = makeDiv('matOpts', '');
+  item.options.forEach(k => opts.appendChild(makeMatOption(k, deep ? 68 : 72, dark)));
+  el.append(q, grid, opts);
+}
+
+registerDrill('mat', {
+  op: 'rules', name: 'Matrices',
+  light: (level, rng) => matrixItem('L', 1, 2, rng),
+  deep: (level, rng) => matrixItem('D', CONFIG.mat.deepVarying(level), 4, rng),
+  timeline: () => [],
+  render: renderMatrix,
+  answer: item => item.answer,
+  options: item => item.options
+});
+
+// ===== SERIES =====
+// A dial is { arrow: 0..7, dot: 0..7, centre: 0..2 }. Each varying attribute adds a constant step per term.
+const DIAL_STEPS = [1, 2, 3, 5, 6, 7];
+const DIAL_MODS = { arrow: 8, dot: 8, centre: 3 };
+const DIAL_ATTRS = ['arrow', 'dot', 'centre'];
+
+function dialKey(d) { return 'a' + d.arrow + 'd' + d.dot + 'c' + d.centre; }
+function dialFromKey(k) { return { arrow: +k[1], dot: +k[3], centre: +k[5] }; }
+
+function dialAt(base, steps, t) {
+  const v = {};
+  DIAL_ATTRS.forEach(a => { v[a] = (base[a] + steps[a] * t) % DIAL_MODS[a]; });
+  return v;
+}
+
+function pickVarying(varying, rng) {
+  if (varying === 1) return [pick(['arrow', 'dot'], rng)];
+  return DIAL_ATTRS.slice(0, varying);
+}
+
+function dialDecoys(next, moving, count, rng) {
+  const all = moving.flatMap(a => [1, -1].map(d => ({ ...next, [a]: (next[a] + d + DIAL_MODS[a]) % DIAL_MODS[a] })));
+  return shuffle(all, rng).slice(0, count).map(dialKey);
+}
+
+function drawSeries(moving, terms, rng) {
+  const base = {}, steps = {};
+  DIAL_ATTRS.forEach(a => {
+    base[a] = Math.floor(rng() * DIAL_MODS[a]);
+    steps[a] = !moving.includes(a) ? 0 : a === 'centre' ? 1 : pick(DIAL_STEPS, rng);
+  });
+  const shown = Array.from({ length: terms }, (_, t) => dialAt(base, steps, t));
+  return { shown, next: dialAt(base, steps, terms) };
+}
+
+// Redraws until the answer repeats no shown term, so the row cannot be solved by copying.
+function makeSeries(varying, terms, nOptions, rng) {
+  const moving = pickVarying(varying, rng);
+  for (let tries = 0; tries < 100; tries++) {
+    const d = drawSeries(moving, terms, rng);
+    if (!d.shown.some(t => dialKey(t) === dialKey(d.next))) return finishSeries(d, moving, nOptions, rng);
+  }
+  throw new Error('series: no non-repeating draw');
+}
+
+function finishSeries(d, moving, nOptions, rng) {
+  const answer = dialKey(d.next);
+  const options = shuffle([answer, ...dialDecoys(d.next, moving, nOptions - 1, rng)], rng);
+  return { terms: d.shown, answer, options };
+}
+
+// Light: 4 terms, 2 options. Deep: 5 terms, 4 options.
+function seriesItem(mode, varying, rng) {
+  const light = mode === 'L', terms = light ? CONFIG.ser.lightTerms : CONFIG.ser.deepTerms;
+  return { kind: 'ser' + mode, ...makeSeries(varying, terms, light ? 2 : 4, rng) };
+}
+
+function dialPoint(pos, r) {
+  const ang = pos * Math.PI / 4;
+  return [+(50 + r * Math.sin(ang)).toFixed(2), +(50 - r * Math.cos(ang)).toFixed(2)];
+}
+
+// Needle from the centre to r32 with an arrowhead; a tile-coloured halo keeps it visible over the disc.
+function dialNeedle(pos, ink, halo) {
+  const [tx, ty] = dialPoint(pos, 32), [bx, by] = dialPoint(pos, 20), ang = pos * Math.PI / 4;
+  const wx = 8 * Math.cos(ang), wy = 8 * Math.sin(ang);
+  const head = `${tx},${ty} ${bx + wx},${by + wy} ${bx - wx},${by - wy}`;
+  const shaft = (c, w) => `<line x1="50" y1="50" x2="${bx}" y2="${by}" stroke="${c}" stroke-width="${w}"/>`;
+  return `<polygon points="${head}" fill="${halo}" stroke="${halo}" stroke-width="7" stroke-linejoin="round"/>${shaft(halo, 11)}`
+    + `<polygon points="${head}" fill="${ink}"/>${shaft(ink, 5)}`;
+}
+
+function drawDial(d, size, dark) {
+  const ink = dark ? '#9fb6ff' : '#1a5fb4', halo = dark ? '#2a3247' : '#dfe8f7';
+  const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  svg.setAttribute('viewBox', '0 0 100 100');
+  svg.setAttribute('width', size); svg.setAttribute('height', size);
+  const [dx, dy] = dialPoint(d.dot, 45);
+  svg.innerHTML = `<circle cx="50" cy="50" r="38" fill="none" stroke="${ink}" stroke-width="3"/>`
+    + shapeMarkup(0, d.centre, [50, 50, 8], ink) + dialNeedle(d.arrow, ink, halo)
+    + `<circle cx="${dx}" cy="${dy}" r="5" fill="${ink}"/>`;
+  return svg;
+}
+
+function makeSerCell(dial, size, dark) {
+  const c = document.createElement('div');
+  c.className = 'matCell'; c.style.width = c.style.height = size + 'px';
+  if (dial) c.appendChild(drawDial(dial, size - 6, dark)); else { c.textContent = '?'; c.classList.add('hole'); }
+  return c;
+}
+
+function makeSerOption(key, size, dark) {
+  const b = makeAnswerButton('', key, 'matOpt');
+  b.appendChild(drawDial(dialFromKey(key), size, dark));
+  return b;
+}
+
+function serRow(cells, size, dark) {
+  const row = document.createElement('div'); row.className = 'serRow';
+  cells.forEach(d => row.appendChild(makeSerCell(d, size, dark)));
+  return row;
+}
+
+function renderSeries(item, el) {
+  const dark = item.kind === 'serD', size = Math.min(100, Math.floor((screenWidth() - 28) / 3));
+  el.innerHTML = ''; el.className = item.kind;
+  const q = makeDiv('q matQ', 'What comes next?');
+  const cells = [...item.terms, null];
+  const opts = makeDiv('matOpts', '');
+  item.options.forEach(k => opts.appendChild(makeSerOption(k, item.options.length > 2 ? 68 : 72, dark)));
+  el.append(q, serRow(cells.slice(0, 3), size, dark), serRow(cells.slice(3), size, dark), opts);
+}
+
+registerDrill('ser', {
+  op: 'rules', name: 'Series',
+  light: (level, rng) => seriesItem('L', 1, rng),
+  deep: (level, rng) => seriesItem('D', CONFIG.ser.deepVarying(level), rng),
+  timeline: () => [],
+  render: renderSeries,
+  answer: item => item.answer,
+  options: item => item.options
+});
+
+// ===== EVENTS =====
+// An event is { key, text, p }. p is an exact reduced fraction [num, den] found by counting outcomes.
+// Task 5 (Value) reuses this library.
+function gcd(a, b) { return b ? gcd(b, a % b) : a; }
+function frac(n, d) { const g = gcd(n, d); return [n / g, d / g]; }
+function fracCmp(a, b) { return Math.sign(a[0] * b[1] - b[0] * a[1]); }
+function fracRatio(a, b) { return (a[0] * b[1]) / (b[0] * a[1]); }
+function countP(outcomes, test) { return frac(outcomes.filter(test).length, outcomes.length); }
+
+function diceRolls(n) {
+  let rolls = [[]];
+  for (let i = 0; i < n; i++) rolls = rolls.flatMap(r => [1, 2, 3, 4, 5, 6].map(d => [...r, d]));
+  return rolls;
+}
+
+function diceEvents() {
+  const sum = r => r.reduce((a, b) => a + b, 0), out = [];
+  [[2, 'Two'], [3, 'Three']].forEach(([n, word]) => {
+    const rolls = diceRolls(n);
+    for (let k = n + 1; k < 6 * n; k++) out.push({ key: 'sum' + n + '-' + k, text: word + ' dice sum to ' + k + ' or more', p: countP(rolls, r => sum(r) >= k) });
+    out.push({ key: 'six' + n, text: 'At least one six in ' + n + ' dice', p: countP(rolls, r => r.includes(6)) });
+    out.push({ key: 'diff' + n, text: word + ' dice show different numbers', p: countP(rolls, r => new Set(r).size === n) });
+  });
+  out.push({ key: 'double', text: 'Two dice show a double', p: countP(diceRolls(2), r => r[0] === r[1]) });
+  return out;
+}
+
+function coinEvents() {
+  const out = [];
+  for (let n = 3; n <= 6; n++) {
+    const flips = coinFlips(n);
+    for (let k = 1; k <= n; k++) {
+      out.push({ key: 'heads' + n + '-' + k, text: 'At least ' + k + (k === 1 ? ' head' : ' heads') + ' in ' + n + ' flips', p: countP(flips, f => f.filter(Boolean).length >= k) });
+    }
+  }
+  return out;
+}
+
+function coinFlips(n) {
+  let flips = [[]];
+  for (let i = 0; i < n; i++) flips = flips.flatMap(f => [[...f, true], [...f, false]]);
+  return flips;
+}
+
+function choose(n, k) {
+  let c = 1;
+  for (let i = 1; i <= k; i++) c = c * (n - k + i) / i;
+  return Math.round(c);
+}
+
+// Cards 0..51: rank = i % 13 (0 = ace), suit = floor(i / 13) (0 spades, 1 hearts, 2 diamonds, 3 clubs).
+function cardEvents() {
+  const pairs = [];
+  for (let a = 0; a < 52; a++) for (let b = 0; b < 52; b++) if (a !== b) pairs.push([a, b]);
+  const rank = c => c % 13, suit = c => Math.floor(c / 13), red = c => suit(c) === 1 || suit(c) === 2;
+  const out = [
+    { key: 'pair', text: '2 cards are a pair', p: countP(pairs, ([a, b]) => rank(a) === rank(b)) },
+    { key: 'suited', text: '2 cards are the same suit', p: countP(pairs, ([a, b]) => suit(a) === suit(b)) },
+    { key: 'redheart', text: 'First card red, second a heart', p: countP(pairs, ([a, b]) => red(a) && suit(b) === 1) },
+    { key: 'bothred', text: 'Both cards red', p: countP(pairs, ([a, b]) => red(a) && red(b)) },
+    { key: 'bothface', text: '2 cards are both face cards (J, Q, K)', p: countP(pairs, ([a, b]) => rank(a) > 9 && rank(b) > 9) }
+  ];
+  for (let k = 2; k <= 4; k++) {
+    const all = choose(52, k);
+    out.push({ key: 'ace' + k, text: 'At least one ace in ' + k + ' cards', p: frac(all - choose(48, k), all) });
+  }
+  out.push({ key: 'noace3', text: 'No ace in 3 cards', p: frac(choose(48, 3), choose(52, 3)) });
+  return out;
+}
+
+// Events outside CONFIG.odd.band are too close to certain or impossible to be worth comparing.
+function inBand(p) { const v = p[0] / p[1]; return v >= CONFIG.odd.band[0] && v <= CONFIG.odd.band[1]; }
+
+let EVENT_CATALOG = null;
+function eventCatalog() {
+  if (!EVENT_CATALOG) {
+    const keep = list => list.filter(e => inBand(e.p));
+    const light = keep([...diceEvents(), ...coinEvents()]), cards = keep(cardEvents());
+    EVENT_CATALOG = { light, cards, deep: [...light, ...cards] };
+  }
+  return EVENT_CATALOG;
+}
+
+function randomEvent(rng, deep) {
+  const e = pick(deep ? eventCatalog().deep : eventCatalog().light, rng);
+  return { text: e.text, p: e.p };
+}
+
+// ===== ODDS =====
+CONFIG.odd = { lightRatio: 1.5, deepGap: 0.05, deepMaxRatio: 1.6, band: [0.04, 0.95] };
+
+// Draws n events with pairwise distinct p, so no two share a template and parameters.
+// Deep seeds one card event first; callers shuffle so it lands at any index.
+function distinctEvents(n, deep, rng) {
+  const out = deep ? [pick(eventCatalog().cards, rng)] : [];
+  for (let tries = 0; out.length < n && tries < 200; tries++) {
+    const e = randomEvent(rng, deep);
+    if (!out.some(o => fracCmp(o.p, e.p) === 0)) out.push(e);
+  }
+  if (out.length < n) throw new Error('odds: not enough distinct events');
+  return out;
+}
+
+function sortedByP(events) { return [...events].sort((a, b) => fracCmp(b.p, a.p)); }
+
+function oddsGapOk(events, minRatio, maxRatio) {
+  const s = sortedByP(events), r = fracRatio(s[0].p, s[1].p);
+  return r >= minRatio && r <= maxRatio;
+}
+
+function oddsItem(mode, n, [minRatio, maxRatio], rng) {
+  for (let tries = 0; tries < 200; tries++) {
+    const events = shuffle(distinctEvents(n, mode === 'D', rng), rng);
+    if (oddsGapOk(events, minRatio, maxRatio)) {
+      const best = sortedByP(events)[0];
+      return { kind: 'odd' + mode, events, answer: String(events.indexOf(best)), options: events.map((_, i) => String(i)) };
+    }
+  }
+  throw new Error('odds: no draw met the gap');
+}
+
+function makeOddsLight(level, rng) { return oddsItem('L', 2, [CONFIG.odd.lightRatio, Infinity], rng); }
+function makeOddsDeep(level, rng) { return oddsItem('D', 4, [1 + CONFIG.odd.deepGap, CONFIG.odd.deepMaxRatio], rng); }
+
+function renderOdds(item, el) {
+  el.innerHTML = ''; el.className = item.kind;
+  const q = makeDiv('q matQ', item.events.length === 2 ? 'Which is more likely?' : 'Which is most likely?');
+  const opts = makeDiv('oddOpts', '');
+  item.events.forEach((e, i) => opts.appendChild(makeAnswerButton(e.text, String(i), 'matOpt oddOpt')));
+  el.append(q, opts);
+}
+
+registerDrill('odd', {
+  op: 'odds', name: 'Odds',
+  light: makeOddsLight,
+  deep: makeOddsDeep,
+  timeline: () => [],
+  render: renderOdds,
+  answer: item => item.answer,
+  options: item => item.options
+});
+
+// ===== VALUE =====
+// A bet is { cost, win, event }. EV = p * win - cost, kept as an exact fraction [num, den] with den > 0.
+CONFIG.ev = { lightMargin: 0.2, lightMax: 1.0, deepGap: 0.05, deepMaxGap: 0.5 };
+
+function betEv(b) { return [b.event.p[0] * b.win - b.cost * b.event.p[1], b.event.p[1]]; }
+function evValue(b) { const e = betEv(b); return e[0] / e[1]; }
+// win >= cost (and >= 2): a bet that cannot pay back its cost is not worth asking about.
+function randomBet(event, rng) {
+  const cost = 1 + Math.floor(rng() * 5), low = Math.max(2, cost);
+  return { cost, win: low + Math.floor(rng() * (31 - low)), event };
+}
+function betText(b) { return 'Pay ' + b.cost + ', win ' + b.win + ' if ' + b.event.text[0].toLowerCase() + b.event.text.slice(1); }
+
+function makeEvLight(level, rng) {
+  const c = CONFIG.ev, wantYes = rng() < 0.5;
+  for (let tries = 0; tries < 500; tries++) {
+    const b = randomBet(randomEvent(rng, false), rng), v = evValue(b);
+    if (Math.abs(v) >= c.lightMargin * b.cost && Math.abs(v) <= c.lightMax * b.cost && (v > 0) === wantYes) {
+      return { kind: 'evL', bets: [b], answer: wantYes ? 'yes' : 'no', options: ['yes', 'no'] };
+    }
+  }
+  throw new Error('ev: no light bet met the margin');
+}
+
+// Ruling T: the best bet must pay on average, and stand clear of the second best.
+function evGapOk(bets) {
+  const vs = bets.map(evValue).sort((a, b) => b - a), best = bets.find(b => evValue(b) === vs[0]);
+  const gap = vs[0] - vs[1];
+  return vs[0] > 0 && gap >= CONFIG.ev.deepGap * best.cost && gap <= CONFIG.ev.deepMaxGap * best.cost;
+}
+
+function makeEvDeep(level, rng) {
+  for (let tries = 0; tries < 2000; tries++) {
+    const bets = shuffle(distinctEvents(4, true, rng), rng).map(e => randomBet(e, rng));
+    if (evGapOk(bets)) {
+      const vs = bets.map(evValue);
+      return { kind: 'evD', bets, answer: String(vs.indexOf(Math.max(...vs))), options: ['0', '1', '2', '3'] };
+    }
+  }
+  throw new Error('ev: no deep draw met the gap');
+}
+
+function renderValue(item, el) {
+  el.innerHTML = ''; el.className = item.kind;
+  const q = makeDiv('q matQ', item.bets.length === 1 ? 'Take this bet?' : 'Which bet pays best on average?');
+  const hint = document.createElement('div'); hint.className = 'evHint';
+  hint.textContent = 'You pay the cost either way. The win is paid only if it happens.';
+  const opts = makeDiv('oddOpts', '');
+  if (item.bets.length === 1) {
+    const bet = document.createElement('div'); bet.className = 'evBet'; bet.textContent = betText(item.bets[0]);
+    opts.append(bet, makeAnswerButton('Yes', 'yes', 'matOpt oddOpt'), makeAnswerButton('No', 'no', 'matOpt oddOpt'));
+  } else {
+    item.bets.forEach((b, i) => opts.appendChild(makeAnswerButton(betText(b), String(i), 'matOpt oddOpt')));
+  }
+  el.append(q, hint, opts);
+}
+
+registerDrill('ev', {
+  op: 'odds', name: 'Value',
+  light: makeEvLight,
+  deep: makeEvDeep,
+  timeline: () => [],
+  render: renderValue,
+  answer: item => item.answer,
+  options: item => item.options
+});
+
+// ===== SEQUENCE =====
+// Nine symbols, ids '0'..'8': distinct in shape and in colour (Okabe-Ito based, so no red/green-only pairs).
+const SEQ_SYMBOLS = [
+  { name: 'circle', fill: '#E69F00', d: 'M50 12a38 38 0 1 0 .01 0z' },
+  { name: 'square', fill: '#56B4E9', d: 'M14 14H86V86H14z' },
+  { name: 'triangle', fill: '#009E73', d: 'M50 10L92 86H8z' },
+  { name: 'diamond', fill: '#F0E442', d: 'M50 6L94 50L50 94L6 50z' },
+  { name: 'star', fill: '#CC79A7', d: 'M50 6L61 38L94 38L67 58L77 92L50 72L23 92L33 58L6 38L39 38z' },
+  { name: 'cross', fill: '#D55E00', d: 'M36 8H64V36H92V64H64V92H36V64H8V36H36z' },
+  { name: 'ring', fill: '#0072B2', d: 'M50 10a40 40 0 1 0 .01 0zM50 30a20 20 0 1 1 -.01 0z', rule: 'evenodd' },
+  { name: 'half-moon', fill: '#8A94A6', d: 'M28 6A44 44 0 0 1 28 94z' },
+  { name: 'hexagon', fill: '#8B5A2B', d: 'M50 6L88 28V72L50 94L12 72V28z' }
+];
+
+function seqSvg(id, px, dark) {
+  const s = SEQ_SYMBOLS[+id], edge = dark ? '#e6e9f2' : '#1a3050';
+  return '<svg viewBox="0 0 100 100" width="' + px + '" height="' + px + '" role="img" aria-label="' + s.name + '">' +
+    '<path d="' + s.d + '" fill="' + s.fill + '" fill-rule="' + (s.rule || 'nonzero') + '" stroke="' + edge + '" stroke-width="3" stroke-linejoin="round"/></svg>';
+}
+
+function drawSymbols(n, rng) { return shuffle(SEQ_SYMBOLS.map((_, i) => String(i)), rng).slice(0, n); }
+
+function makeSeqLight(level, rng) {
+  const seq = drawSymbols(CONFIG.seq.lightLen, rng), asked = Math.floor(rng() * (seq.length - 1)), answer = seq[asked + 1];
+  const others = shuffle(seq.filter(x => x !== answer), rng).slice(0, 2);
+  return { kind: 'seqL', seq, asked, answer, options: shuffle([answer, ...others], rng), flashMs: CONFIG.seq.lightFlashMs(level) };
+}
+
+function makeSeqDeep(level, rng) {
+  const seq = drawSymbols(CONFIG.seq.deepLen(level), rng);
+  return { kind: 'seqD', seq, answer: seq.join(','), flashMs: CONFIG.seq.deepFlashMs };
+}
+
+function seqTimeline(item) {
+  return item.seq.map((_, index) => ({ phase: 'show', ms: item.flashMs, index }));
+}
+
+// Each symbol hides 80 % into its step, so a repeated look never blends two symbols.
+function seqFlash(item, index) {
+  const stage = makeDiv('seqStage', seqSvg(item.seq[index], 110, item.kind === 'seqD'));
+  setTimer(() => { stage.style.visibility = 'hidden'; }, item.flashMs * .8);
+  return stage;
+}
+
+function seqButton(id, px, dark) {
+  const b = document.createElement('button');
+  b.className = 'seqBtn'; b.innerHTML = seqSvg(id, px, dark); b.setAttribute('aria-label', SEQ_SYMBOLS[+id].name);
+  return b;
+}
+
+function seqLightAnswer(item) {
+  const q = makeDiv('q seqQ', 'What came after ' + seqSvg(item.seq[item.asked], 44, false) + '?');
+  const opts = makeDiv('seqOpts', '');
+  item.options.forEach(id => { const b = seqButton(id, 64, false); b.dataset.answer = id; opts.appendChild(b); });
+  return [q, opts];
+}
+
+// Multi-tap: after seq.length distinct taps the render hands the joined order to answer() exactly once.
+function seqDeepAnswer(item) {
+  const q = makeDiv('q seqQ', 'Tap the order · 0 / ' + item.seq.length), grid = makeDiv('seqGrid', ''), taps = [];
+  SEQ_SYMBOLS.forEach((_, i) => {
+    const id = String(i), b = seqButton(id, 56, true);
+    b.dataset.tap = id;
+    b.addEventListener('click', () => {
+      if (taps.length >= item.seq.length || taps.includes(id)) return;
+      taps.push(id); b.classList.add('used');
+      q.textContent = 'Tap the order · ' + taps.length + ' / ' + item.seq.length;
+      if (taps.length === item.seq.length) answer(taps.join(','));
+    });
+    grid.appendChild(b);
+  });
+  return [q, grid];
+}
+
+function renderSeq(item, el, phase, index) {
+  el.innerHTML = ''; el.className = item.kind;
+  if (phase === 'show') return el.append(makeDiv('q seqQ', 'Watch the order'), seqFlash(item, index));
+  el.append(...(item.kind === 'seqL' ? seqLightAnswer(item) : seqDeepAnswer(item)));
+}
+
+// Light outlines the right option; Deep numbers every symbol by its place in the order.
+function markSeqMiss(el, item) {
+  if (item.kind === 'seqL') return el.querySelector('[data-answer="' + item.answer + '"]')?.classList.add('right');
+  el.querySelectorAll('[data-tap]').forEach(b => b.classList.remove('used'));
+  item.seq.forEach((id, i) => {
+    const b = el.querySelector('[data-tap="' + id + '"]');
+    if (b) b.append(makeDiv('n', String(i + 1)));
+  });
+}
+
+registerDrill('seq', {
+  op: 'memory', name: 'Sequence',
+  light: makeSeqLight, deep: makeSeqDeep,
+  timeline: seqTimeline,
+  render: renderSeq,
+  answer: item => item.answer,
+  options: item => item.kind === 'seqL' ? item.options : null,
+  markMiss: markSeqMiss
+});
+
+// ===== CARDS =====
+const CARD_RANKS = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
+const CARD_SUITS = ['♠', '♥', '♦', '♣'];
+const CARD_DECK = CARD_RANKS.flatMap(r => CARD_SUITS.map(s => r + s));
+const cardSuit = c => c.slice(-1), cardRank = c => c.slice(0, -1);
+const suitColor = s => s === '♥' || s === '♦' ? '#c8102e' : '#1a1a1a';
+
+function suitCounts(cards) {
+  return CARD_SUITS.map(s => cards.filter(c => cardSuit(c) === s).length);
+}
+
+function hasUniqueMax(counts) {
+  const top = Math.max(...counts);
+  return counts.filter(n => n === top).length === 1;
+}
+
+function makeCardsLight(level, rng) {
+  let cards = null;
+  for (let t = 0; t < 200 && !cards; t++) {
+    const draw = shuffle(CARD_DECK, rng).slice(0, CONFIG.crd.lightCount);
+    if (hasUniqueMax(suitCounts(draw))) cards = draw;
+  }
+  if (!cards) throw new Error('crd: no unique max suit');
+  const counts = suitCounts(cards), answer = CARD_SUITS[counts.indexOf(Math.max(...counts))];
+  return { kind: 'crdL', cards, answer, options: CARD_SUITS.slice(), flashMs: CONFIG.crd.lightFlashMs(level) };
+}
+
+function makeCardsDeep(level, rng) {
+  const order = shuffle(CARD_DECK, rng), cards = order.slice(0, CONFIG.crd.deepCount(level));
+  const related = order.slice(cards.length).filter(u => cards.some(c => cardRank(c) === cardRank(u) || cardSuit(c) === cardSuit(u)));
+  if (!related.length) throw new Error('crd: no unplayed card shares rank or suit');
+  const missing = related[0], options = shuffle([missing, ...shuffle(cards, rng).slice(0, 3)], rng);
+  return { kind: 'crdD', cards, options, answer: String(options.indexOf(missing)), flashMs: CONFIG.crd.deepFlashMs };
+}
+
+function cardsTimeline(item) {
+  return item.cards.map((_, index) => ({ phase: 'show', ms: item.flashMs, index }));
+}
+
+function cardFace(id, big) {
+  const c = document.createElement('div'), s = cardSuit(id), r = cardRank(id);
+  c.className = 'card' + (big ? ' big' : ''); c.style.color = suitColor(s);
+  c.innerHTML = '<span class="cr">' + r + '<br>' + s + '</span><span class="cm">' + s + '</span>';
+  c.setAttribute('aria-label', r + ' ' + s);
+  return c;
+}
+
+// Each card hides 80 % into its step, so a repeated suit or rank never blends two cards.
+function cardsFlash(item, index) {
+  const stage = cardFace(item.cards[index], true);
+  setTimer(() => { stage.style.visibility = 'hidden'; }, item.flashMs * .8);
+  return stage;
+}
+
+function cardsLightAnswer(item) {
+  const q = makeDiv('q seqQ', 'Most common suit?'), opts = makeDiv('seqOpts crdSuits', '');
+  item.options.forEach(s => {
+    const b = document.createElement('button');
+    b.className = 'seqBtn'; b.dataset.answer = s; b.textContent = s; b.style.color = suitColor(s);
+    b.setAttribute('aria-label', 'suit ' + s);
+    opts.appendChild(b);
+  });
+  return [q, opts];
+}
+
+function cardsDeepAnswer(item) {
+  const q = makeDiv('q seqQ', 'Which card was NOT played?'), opts = makeDiv('seqOpts crdCards', '');
+  item.options.forEach((id, i) => {
+    const b = document.createElement('button');
+    b.className = 'seqBtn'; b.dataset.answer = String(i); b.append(cardFace(id, false));
+    opts.appendChild(b);
+  });
+  return [q, opts];
+}
+
+function renderCards(item, el, phase, index) {
+  el.innerHTML = ''; el.className = item.kind;
+  if (phase === 'show') return el.append(makeDiv('q seqQ', 'Watch the cards'), cardsFlash(item, index));
+  el.append(...(item.kind === 'crdL' ? cardsLightAnswer(item) : cardsDeepAnswer(item)));
+}
+
+registerDrill('crd', {
+  op: 'memory', name: 'Cards',
+  light: makeCardsLight, deep: makeCardsDeep,
+  timeline: cardsTimeline,
+  render: renderCards,
+  answer: item => item.answer,
+  options: item => item.kind === 'crdL' ? item.options : ['0', '1', '2', '3']
+});
+
+// ===== TAKE-AWAY =====
+// Subtraction game: players alternate taking a number in S from a pile; taking the last counter wins.
+CONFIG.nim = { lightPile: lvl => 5 + Math.min(lvl, 7), deepPile: lvl => 15 + 2 * lvl, lightTakes: 2, deepTakes: 3, noneShare: 0.3 };
+
+// win[i] is true when the player to move wins with i counters left. A player with no legal move loses.
+function winTable(n, takes) {
+  const win = [false];
+  for (let i = 1; i <= n; i++) win.push(takes.some(t => t <= i && !win[i - t]));
+  return win;
+}
+
+function winningTakes(n, takes) {
+  const win = winTable(n, takes);
+  return takes.filter(t => t <= n && !win[n - t]);
+}
+
+function drawTakes(count, rng) {
+  const pool = [1, 2, 3, 4, 5], out = [];
+  while (out.length < count) out.push(pool.splice(Math.floor(rng() * pool.length), 1)[0]);
+  return out.sort((a, b) => a - b);
+}
+
+function pileRange(top) { return Array.from({ length: 4 }, (_, i) => top - 3 + i); }
+
+function makeNimLight(level, rng) {
+  const wantWin = rng() < 0.5;
+  for (let tries = 0; tries < 200; tries++) {
+    const takes = drawTakes(CONFIG.nim.lightTakes, rng);
+    const piles = pileRange(CONFIG.nim.lightPile(level)).filter(n => n >= takes[0] && winTable(n, takes)[n] === wantWin);
+    if (piles.length) return { kind: 'nimL', pile: pick(piles, rng), takes, answer: wantWin ? 'yes' : 'no', options: ['yes', 'no'] };
+  }
+  throw new Error('nim: no light pile had the wanted outcome');
+}
+
+function makeNimDeep(level, rng) {
+  const wantNone = rng() < CONFIG.nim.noneShare;
+  for (let tries = 0; tries < 200; tries++) {
+    const takes = drawTakes(CONFIG.nim.deepTakes, rng), pile = pick(pileRange(CONFIG.nim.deepPile(level)), rng);
+    const wins = winningTakes(pile, takes);
+    if (wins.length === (wantNone ? 0 : 1)) {
+      return { kind: 'nimD', pile, takes, answer: wantNone ? 'none' : String(wins[0]), options: [...takes.map(String), 'none'] };
+    }
+  }
+  throw new Error('nim: no deep pile had the wanted outcome');
+}
+
+function takesText(takes) {
+  return takes.length === 2 ? takes.join(' or ') : takes.slice(0, -1).join(', ') + ' or ' + takes[takes.length - 1];
+}
+
+function nimQuestion(item) {
+  const rule = 'Pile of ' + item.pile + '. Take ' + takesText(item.takes) + ' each turn. Taking the last one wins. If you can\'t move, you lose. ';
+  return rule + (item.kind === 'nimL' ? 'Your move: can you force a win?' : 'Which take wins?');
+}
+
+function nimDots(n) {
+  const dots = document.createElement('div'); dots.className = 'nimDots';
+  for (let i = 0; i < n; i++) dots.appendChild(document.createElement('i'));
+  return dots;
+}
+
+function renderNim(item, el) {
+  el.innerHTML = ''; el.className = item.kind;
+  const q = makeDiv('q matQ', nimQuestion(item));
+  const opts = makeDiv('oddOpts', '');
+  item.options.forEach(o => opts.appendChild(makeAnswerButton(nimLabel(o), o, 'matOpt oddOpt nimOpt')));
+  el.append(q);
+  if (item.kind === 'nimD') { const big = document.createElement('div'); big.className = 'nimBig'; big.textContent = item.pile; el.append(big); }
+  el.append(nimDots(item.pile), opts);
+}
+
+function nimLabel(o) { return o === 'yes' ? 'Yes' : o === 'no' ? 'No' : o === 'none' ? 'None wins' : 'Take ' + o; }
+
+function markNimMiss(el, item) {
+  el.querySelector('[data-answer="' + item.answer + '"]').classList.add('right');
+  if (item.answer !== 'none') return;
+  const note = document.createElement('div'); note.className = 'evHint'; note.textContent = 'Every take loses';
+  el.querySelector('.oddOpts').before(note);
+}
+
+registerDrill('nim', {
+  op: 'backward', name: 'Take-away',
+  light: makeNimLight, deep: makeNimDeep,
+  timeline: () => [],
+  render: renderNim,
+  answer: item => item.answer,
+  options: item => item.options,
+  markMiss: markNimMiss
+});
+
+// ===== REACH =====
+// Fewest moves from a start to a target with two increasing moves. Backward reasoning from the target is the fast route.
+CONFIG.rch = { lightSteps: lvl => lvl < 5 ? [2, 3] : [2, 3, 4], deepSteps: lvl => Math.min(5 + Math.floor(lvl / 3), 9) };
+const RCH_MOVES = [['×2', '+1'], ['×2', '+3'], ['×3', '+1'], ['×3', '+2'], ['×2', '+5']];
+
+function applyMove(v, m) { return m[0] === '×' ? v * +m.slice(1) : v + +m.slice(1); }
+
+// BFS over values <= target (every move increases the value). Returns the shortest path as values, or null.
+function shortestPath(start, target, moves) {
+  const parent = new Map([[start, null]]);
+  for (let frontier = [start]; frontier.length && !parent.has(target);) {
+    const next = [];
+    frontier.forEach(v => moves.forEach(m => {
+      const w = applyMove(v, m);
+      if (w <= target && !parent.has(w)) { parent.set(w, v); next.push(w); }
+    }));
+    frontier = next;
+  }
+  if (!parent.has(target)) return null;
+  const path = [];
+  for (let v = target; v !== null; v = parent.get(v)) path.unshift(v);
+  return path;
+}
+
+function minSteps(start, target, moves) { return shortestPath(start, target, moves).length - 1; }
+
+function walkValue(start, steps, moves, rng) {
+  let v = start;
+  for (let i = 0; i < steps; i++) v = applyMove(v, pick(moves, rng));
+  return v;
+}
+
+// Targets come from random walks; only those whose BFS distance equals the wanted step count are kept.
+function makeReachItem(kind, steps, nOptions, rng) {
+  for (let tries = 0; tries < 300; tries++) {
+    const moves = pick(RCH_MOVES, rng), start = 1 + Math.floor(rng() * 3);
+    const target = walkValue(start, steps, moves, rng), path = shortestPath(start, target, moves);
+    if (path.length - 1 === steps) {
+      return { kind, start, target, moves, path, answer: String(steps), options: reachOptions(steps, nOptions, rng).map(String) };
+    }
+  }
+  throw new Error('reach: no walk had ' + steps + ' shortest moves');
+}
+
+// The answer's position among the options is drawn uniformly (among positions that keep every option positive).
+function reachOptions(answer, n, rng) {
+  const maxBelow = Math.min(n - 1, answer - 1), below = Math.floor(rng() * (maxBelow + 1));
+  const lower = Array.from({ length: Math.min(3, answer - 1) }, (_, i) => answer - 1 - i);
+  const upper = [answer + 1, answer + 2, answer + 3];
+  const lo = shuffle(lower, rng).slice(0, below), hi = shuffle(upper, rng).slice(0, n - 1 - below);
+  return [...lo, answer, ...hi].sort((a, b) => a - b);
+}
+
+function deepStepChoices(level) {
+  const base = CONFIG.rch.deepSteps(level);
+  return [base - 1, base, base + 1].filter(n => n >= 4 && n <= 9);
+}
+
+function makeReachLight(level, rng) { return makeReachItem('rchL', pick(CONFIG.rch.lightSteps(level), rng), 3, rng); }
+function makeReachDeep(level, rng) { return makeReachItem('rchD', pick(deepStepChoices(level), rng), 4, rng); }
+
+function reachQuestion(item) {
+  return 'From ' + item.start + ', reach ' + item.target + ' using ' + item.moves.join(' or ') + '. Fewest moves?';
+}
+
+function renderReach(item, el) {
+  el.innerHTML = ''; el.className = item.kind;
+  const q = makeDiv('q matQ', reachQuestion(item));
+  const big = document.createElement('div'); big.className = 'nimBig'; big.textContent = item.start + ' → ' + item.target;
+  const opts = makeDiv('oddOpts', '');
+  item.options.forEach(o => opts.appendChild(makeAnswerButton(o, o, 'matOpt oddOpt nimOpt')));
+  el.append(q, big, opts);
+}
+
+function markReachMiss(el, item) {
+  el.querySelector('[data-answer="' + item.answer + '"]').classList.add('right');
+  const note = document.createElement('div'); note.className = 'rchPath'; note.textContent = item.path.join(' → ');
+  el.querySelector('.oddOpts').before(note);
+}
+
+registerDrill('rch', {
+  op: 'backward', name: 'Reach',
+  light: makeReachLight, deep: makeReachDeep,
+  timeline: () => [],
+  render: renderReach,
+  answer: item => item.answer,
+  options: item => item.options,
+  markMiss: markReachMiss
+});
+
 // ===== STATE =====
 // Progress and the staircase use Light answers only: Deep runs at skill + 5 and takes ~10x longer.
 const STORAGE_KEY = 'brain-game-v1';
 const HISTORY_CAP = 20000;
 const DAY_MS = 864e5;
-const DRILL_NAMES = { rot: 'rotation', trk: 'tracking' };
 
 function defaultState() {
-  return { v: 1, skill: { rot: 1, trk: 1 }, run: { rot: 0, trk: 0 }, streak: 0, history: [] };
+  const skill = {}, run = {};
+  ALL_DRILL_IDS.forEach(id => { skill[id] = 1; run[id] = 0; });
+  return { v: 1, skill, run, streak: 0, history: [] };
 }
 
-function hasDrillNumbers(o) {
-  return !!o && typeof o.rot === 'number' && typeof o.trk === 'number';
-}
+function isObject(o) { return !!o && typeof o === 'object' && !Array.isArray(o); }
 
 function isValidState(s) {
-  return !!s && s.v === 1 && Array.isArray(s.history) && hasDrillNumbers(s.skill) && hasDrillNumbers(s.run);
+  return isObject(s) && s.v === 1 && Array.isArray(s.history) && isObject(s.skill) && isObject(s.run);
+}
+
+// A saved state from before a drill existed keeps its history and gains that drill at the default.
+function fillDrills(s) {
+  const d = defaultState();
+  for (const k of ['skill', 'run']) {
+    ALL_DRILL_IDS.forEach(id => { if (!Number.isFinite(s[k][id])) s[k][id] = d[k][id]; });
+  }
+  return s;
 }
 
 function loadState(storage = localStorage) {
   try {
     const s = JSON.parse(storage.getItem(STORAGE_KEY));
-    return isValidState(s) ? s : defaultState();
+    return isValidState(s) ? fillDrills(s) : defaultState();
   } catch (e) {
     return defaultState();
   }
@@ -592,7 +1564,7 @@ function correctMs(state, drill, from, to) {
 
 function progressLine(state, now) {
   let best = null;
-  for (const drill of Object.keys(DRILL_NAMES)) {
+  for (const drill of Object.keys(DRILLS)) {
     const cur = correctMs(state, drill, now - 7 * DAY_MS, now);
     const prev = correctMs(state, drill, now - 14 * DAY_MS, now - 7 * DAY_MS);
     if (cur.length < 10 || prev.length < 10) continue;
@@ -601,12 +1573,18 @@ function progressLine(state, now) {
   if (!best) return null;
   const pct = Math.round(100 * Math.abs(best.a - best.b) / best.b);
   if (pct === 0) return null;
-  return DRILL_NAMES[best.drill] + ': ' + pct + '% ' + (best.a < best.b ? 'faster' : 'slower') + ' than last week';
+  return DRILLS[best.drill].name.toLowerCase() + ': ' + pct + '% ' + (best.a < best.b ? 'faster' : 'slower') + ' than last week';
 }
 
 
 // ===== UI =====
 function screenWidth() { return Math.min(window.innerWidth || 390, 480); }
+
+// A div with a class and inner markup (internal strings only: question text, SVG).
+function makeDiv(cls, html) {
+  const d = document.createElement('div'); d.className = cls; d.innerHTML = html;
+  return d;
+}
 
 function makeAnswerButton(label, answer, cls) {
   const b = document.createElement('button');
@@ -705,21 +1683,23 @@ function makeMoveIcon(move) {
   return icon;
 }
 
-function showMoveIcon(el, move) {
-  const row = el.querySelector('.icons');
-  row.innerHTML = '';
-  if (move) row.appendChild(makeMoveIcon(move));
+// Light shows one move per step; the icon hides 80 % into the step so repeated moves read as two flashes.
+function flashedIcon(item, index) {
+  const icon = makeMoveIcon(item.moves[index]);
+  setTimer(() => { icon.style.visibility = 'hidden'; }, item.flashMs * .8);
+  return icon;
 }
 
 const TRACKING_QUESTION = { start: 'Start here', moves: 'Follow the moves', answer: 'Where did it end?' };
 
-function renderTracking(item, el, phase) {
+function renderTracking(item, el, phase, index) {
   el.innerHTML = '';
   el.className = item.kind;
   const q = document.createElement('div'); q.className = 'q'; q.textContent = TRACKING_QUESTION[phase];
   if (phase === 'start' || item.kind === 'trkD') q.textContent += ' · ' + (item.piece || '●') + ' ' + squareName(item.start);
   const icons = document.createElement('div'); icons.className = 'icons';
   if (phase !== 'start' && item.kind === 'trkD') item.moves.forEach(m => icons.appendChild(makeMoveIcon(m)));
+  if (phase === 'moves') icons.appendChild(flashedIcon(item, index));
   if (item.kind === 'trkD') el.append(q, icons, makeBoard(item, phase));
   else el.append(q, makeBoard(item, phase), icons);
 }
@@ -744,7 +1724,7 @@ function setTimer(fn, ms) { app.timers.push(setTimeout(fn, ms)); }
 function clearTimers() { app.timers.forEach(clearTimeout); app.timers = []; }
 
 function correctAnswer(item) {
-  return item.kind.startsWith('trk') ? squareName(item.end) : String(item.answer);
+  return DRILLS[drillOf(item)].answer(item);
 }
 
 function lightCornerText() {
@@ -758,35 +1738,31 @@ function makeItemRng() { return makeRng((Math.random() * 2 ** 32) >>> 0); }
 
 function becomeAnswerable(item, el) {
   app.phase = 'answer'; app.locked = false; app.startedAt = performance.now();
-  renderTracking(item, el, 'answer');
+  DRILLS[drillOf(item)].render(item, el, 'answer');
 }
 
-function playMoves(item, el) {
-  const flash = CONFIG.trk.flashMs(itemLevel(app.state, 'trk', 'L'));
-  app.phase = 'moves';
-  renderTracking(item, el, 'moves');
-  item.moves.forEach((m, i) => {
-    setTimer(() => showMoveIcon(el, m), i * flash);
-    setTimer(() => showMoveIcon(el, null), i * flash + flash * .8);
-  });
-  setTimer(() => becomeAnswerable(item, el), item.moves.length * flash);
+// The first step renders at once, so an empty timeline makes the item answerable immediately.
+function runSteps(item, el, steps) {
+  if (!steps.length) return becomeAnswerable(item, el);
+  const [step, ...rest] = steps;
+  app.phase = step.phase;
+  DRILLS[drillOf(item)].render(item, el, step.phase, step.index);
+  setTimer(() => runSteps(item, el, rest), step.ms);
+}
+
+function playItem(item, el) {
+  const id = drillOf(item);
+  app.locked = true;
+  runSteps(item, el, DRILLS[id].timeline(item, app.mode, itemLevel(app.state, id, app.mode)));
 }
 
 function nextLightItem() {
   clearTimers();
   document.getElementById('lightFlash').className = '';
-  const el = document.getElementById('lightItem'), rng = makeItemRng();
-  app.locked = true; app.phase = 'start';
   updateCorner();
-  if (Math.random() < .5) {
-    app.item = makeLightRotation(itemLevel(app.state, 'rot', 'L'), rng);
-    renderLightRotation(app.item, el);
-    app.phase = 'answer'; app.locked = false; app.startedAt = performance.now();
-    return;
-  }
-  app.item = makeLightTracking(itemLevel(app.state, 'trk', 'L'), rng);
-  renderTracking(app.item, el, 'start');
-  setTimer(() => playMoves(app.item, el), CONFIG.trk.showStartMs);
+  const ids = Object.keys(DRILLS), id = ids[Math.floor(Math.random() * ids.length)];
+  app.item = DRILLS[id].light(itemLevel(app.state, id, 'L'), makeItemRng());
+  playItem(app.item, document.getElementById('lightItem'));
 }
 
 function startLight() {
@@ -801,18 +1777,23 @@ function exitLight() {
   showStart();
 }
 
+// Drills without markMiss get the right answer button outlined, when the answer is one button.
+function markRight(el, item) {
+  const def = DRILLS[drillOf(item)];
+  if (def.markMiss) return def.markMiss(el, item);
+  const btn = el.querySelector('[data-answer="' + def.answer(item) + '"]');
+  if (btn) btn.classList.add('right');
+}
+
 function showFeedback(correct) {
-  const el = document.getElementById('lightItem');
   document.getElementById('lightFlash').className = correct ? 'ok' : 'miss';
-  if (correct) return;
-  if (app.item.kind.startsWith('trk')) markTrackingMiss(el, app.item);
-  else el.querySelector('[data-answer="' + app.item.answer + '"]').classList.add('right');
+  if (!correct) markRight(document.getElementById('lightItem'), app.item);
 }
 
 function answer(choice) {
   if (app.locked || app.phase !== 'answer') return;
   app.locked = true;
-  const correct = choice === correctAnswer(app.item), drill = app.item.kind.startsWith('trk') ? 'trk' : 'rot';
+  const correct = choice === correctAnswer(app.item), drill = drillOf(app.item);
   const ms = Math.round(performance.now() - app.startedAt);
   recordAnswer(app.state, { drill, mode: app.mode, level: itemLevel(app.state, drill, app.mode), correct, ms, t: Date.now() });
   saveState(app.state, app.storage);
@@ -826,11 +1807,9 @@ function answer(choice) {
 function deepEl() { return document.getElementById('deepItem'); }
 
 function showDeepFeedback(correct, ms) {
-  const el = deepEl();
   app.deepSet.results.push({ correct, ms });
   document.getElementById('deepStatus').textContent = (correct ? '✓ ' : '✗ ') + (ms / 1000).toFixed(1) + ' s';
-  if (app.item.kind.startsWith('trk')) markTrackingMiss(el, app.item);
-  else el.querySelector('[data-answer="' + app.item.answer + '"]').classList.add('right');
+  markRight(deepEl(), app.item);
   document.getElementById('deepNext').hidden = false;
 }
 
@@ -856,17 +1835,8 @@ function nextDeepItem() {
   document.getElementById('deepStatus').textContent = '';
   if (set.results.length >= CONFIG.deepSetSize) return showDeepSummary();
   document.getElementById('deepCount').textContent = 'puzzle ' + (set.results.length + 1) + ' / ' + CONFIG.deepSetSize;
-  app.locked = true; app.phase = 'start';
-  const level = itemLevel(app.state, set.drill, 'D'), rng = makeItemRng();
-  if (set.drill === 'rot') {
-    app.item = makeDeepRotation(level, rng);
-    renderDeepRotation(app.item, el);
-    app.phase = 'answer'; app.locked = false; app.startedAt = performance.now();
-    return;
-  }
-  app.item = makeDeepTracking(level, rng);
-  renderTracking(app.item, el, 'start');
-  setTimer(() => becomeAnswerable(app.item, el), CONFIG.trk.showStartMs);
+  app.item = DRILLS[set.drill].deep(itemLevel(app.state, set.drill, 'D'), makeItemRng());
+  playItem(app.item, el);
 }
 
 function startDeep(drill) {
@@ -876,9 +1846,11 @@ function startDeep(drill) {
   guarded(nextDeepItem);
 }
 
+// Ruling W: ✕ and Done go back to the operation's drill menu, one tap from the next set.
 function exitDeep() {
+  const op = DRILLS[app.deepSet.drill].op;
   app.item = null; app.locked = true; app.deepSet = null;
-  showStart();
+  showDeepSub(op);
 }
 
 // Leaving the app drops the item unrecorded, so time away never counts as an answer.
@@ -896,12 +1868,43 @@ function guarded(next) {
   }
 }
 
+function menuButton(label, key, value) {
+  const b = document.createElement('button');
+  b.textContent = label; b.dataset[key] = value;
+  return b;
+}
+
+// An operation opens once at least one of its drills is registered.
+function showDeepPick() {
+  const menu = document.getElementById('opMenu');
+  menu.innerHTML = '';
+  for (const op of OPERATIONS) {
+    const b = menuButton(op.name, 'op', op.id);
+    b.disabled = !op.drills.some(id => DRILLS[id]);
+    menu.appendChild(b);
+  }
+  showScreen('deepPick');
+}
+
+function showDeepSub(opId) {
+  const op = OPERATIONS.find(o => o.id === opId), menu = document.getElementById('drillMenu');
+  document.getElementById('subTitle').textContent = op.name;
+  menu.innerHTML = '';
+  op.drills.filter(id => DRILLS[id]).forEach(id => menu.appendChild(menuButton(DRILLS[id].name, 'drill', id)));
+  showScreen('deepSub');
+}
+
 function wireDeep() {
-  document.getElementById('goDeep').addEventListener('click', () => showScreen('deepPick'));
+  document.getElementById('goDeep').addEventListener('click', showDeepPick);
   document.getElementById('pickExit').addEventListener('click', showStart);
+  document.getElementById('subExit').addEventListener('click', showDeepPick);
   document.getElementById('deepExit').addEventListener('click', exitDeep);
   document.getElementById('deepNext').addEventListener('click', () => guarded(nextDeepItem));
   document.getElementById('deepPick').addEventListener('click', e => {
+    const btn = e.target.closest('[data-op]');
+    if (btn) showDeepSub(btn.dataset.op);
+  });
+  document.getElementById('deepSub').addEventListener('click', e => {
     const btn = e.target.closest('[data-drill]');
     if (btn) startDeep(btn.dataset.drill);
   });
@@ -1217,6 +2220,11 @@ test('deep: a set is 3 puzzles then a summary', () => {
   for (let k = 0; k < 3; k++) { app.phase = 'answer'; app.locked = false; answer(String(app.item.answer)); nextDeepItem(); }
   assert(document.querySelector('#deep .summary'), 'summary shown');
   assert(app.state.history.filter(h => h[2] === 'D').length === 3, '3 records');
+  document.getElementById('deepDone').click();
+  assert(document.getElementById('deepSub').classList.contains('active') && document.getElementById('subTitle').textContent === 'Transform', 'Done opens the drill menu');
+  startDeep('odd');
+  exitDeep(); // what #deepExit runs (listeners are not wired in test mode)
+  assert(document.getElementById('deepSub').classList.contains('active') && document.getElementById('subTitle').textContent === 'Odds' && !app.deepSet, '✕ opens the drill menu');
 });
 test('deep: items use the deep level', () => {
   app.state = defaultState(); startDeep('rot');
@@ -1260,6 +2268,451 @@ test('guarded: one retry after a throw, then the start screen', () => {
   showScreen('light');
   guarded(() => { throw new Error('always'); });
   assert(document.getElementById('start').classList.contains('active'), 'fell back to start');
+});
+
+// Both modes, levels 1-15: options distinct and include the answer; the answer screen has one button per option.
+function checkDrillItem(d, item, tag) {
+  const opts = d.options(item), el = document.createElement('div');
+  d.render(item, el, 'answer');
+  if (opts === null) return assert(el.querySelectorAll('[data-answer]').length === 0, 'multi-tap has no data-answer ' + tag);
+  assert(new Set(opts).size === opts.length, 'distinct options ' + tag);
+  assert(opts.includes(d.answer(item)), 'answer offered ' + tag);
+  const shown = [...el.querySelectorAll('[data-answer]')].map(b => b.dataset.answer);
+  assert(shown.sort().join() === [...opts].sort().join(), 'one button per option ' + tag);
+}
+
+function fuzzDrill(id, draws) {
+  const d = DRILLS[id], rng = makeRng(draws * 31 + id.length);
+  for (let i = 0; i < draws; i++) {
+    const mode = i % 2 ? 'D' : 'L', level = 1 + (Math.floor(i / 2) % 15);
+    const item = d[mode === 'L' ? 'light' : 'deep'](level, rng);
+    assert(item.kind === id + mode, 'kind ' + id + ' ' + i);
+    checkDrillItem(d, item, id + ' ' + mode + level + ' #' + i);
+  }
+}
+
+test('registry: transform drills registered, five operations', () => {
+  assert(OPERATIONS.map(o => o.name).join() === 'Transform,Rules,Odds,Memory,Backward', 'ops');
+  assert(DRILLS.rot && DRILLS.trk && DRILLS.rot.op === 'transform', 'rot/trk');
+  fuzzDrill('rot', 40); fuzzDrill('trk', 200);
+});
+function cellFromKey(k) { return { shape: +k[0], count: +k[1], fill: +k[2] }; }
+function attrsDiffering(a, b) { return ATTR_VALUE.filter(f => f(a) !== f(b)).length; }
+
+test('matrices: exactly one option fits the rules; decoys differ in one attribute', () => {
+  const rng = makeRng(77);
+  for (let i = 0; i < 300; i++) {
+    const varying = 1 + (i % 3), nOptions = i % 2 ? 4 : 2;
+    const m = makeMatrix(varying, nOptions, rng);
+    assert(m.grid.length === 9 && m.options.length === nOptions, 'sizes ' + i);
+    assert(new Set(m.options).size === nOptions && m.options.includes(m.answer), 'options ' + i);
+    assert(m.rules.filter(r => r !== 'fixed').length === varying, 'varying ' + i);
+    const fits = m.options.filter(k => satisfiesRules(m.grid, cellFromKey(k), m.rules));
+    assert(fits.length === 1 && fits[0] === m.answer, 'one fit ' + i);
+    assert(cellKey(m.grid[8]) === m.answer, 'hidden cell is the answer ' + i);
+    for (const k of m.options) {
+      if (k !== m.answer) assert(attrsDiffering(cellFromKey(k), m.grid[8]) === 1, 'decoy ' + i);
+    }
+  }
+});
+test('matrices: oracle rejects a broken row', () => {
+  const rules = ['const', 'fixed', 'fixed'];
+  const grid = [0, 0, 0, 1, 1, 1, 2, 2, 2].map(s => ({ shape: s, count: 1, fill: 0 }));
+  assert(satisfiesRules(grid, { shape: 2, count: 1, fill: 0 }, rules), 'good');
+  assert(!satisfiesRules(grid, { shape: 1, count: 1, fill: 0 }, rules), 'bad shape');
+  assert(!satisfiesRules(grid, { shape: 2, count: 2, fill: 0 }, rules), 'bad count');
+  const cells = shapes => shapes.map(shape => ({ shape, count: 1, fill: 0 }));
+  const pg = cells([0, 1, 2, 1, 2, 0, 2, 0]), dg = cells([0, 1, 2, 2, 0, 1, 1, 2]);
+  const fixed = ['fixed', 'fixed'];
+  assert(satisfiesRules(pg, { shape: 1, count: 1, fill: 0 }, ['prog', ...fixed]), 'prog good');
+  assert(!satisfiesRules(pg, { shape: 2, count: 1, fill: 0 }, ['prog', ...fixed]), 'prog bad');
+  assert(satisfiesRules(dg, { shape: 0, count: 1, fill: 0 }, ['dist', ...fixed]), 'dist good');
+  assert(!satisfiesRules(dg, { shape: 1, count: 1, fill: 0 }, ['dist', ...fixed]), 'dist bad');
+});
+test('matrices: difficulty config and cell drawing', () => {
+  assert(CONFIG.mat.deepVarying(10) === 2 && CONFIG.mat.deepVarying(11) === 3, 'deepVarying');
+  const seen = new Set();
+  for (let s = 0; s < 3; s++) for (let n = 1; n <= 3; n++) for (let f = 0; f < 3; f++) {
+    const svg = drawCell({ shape: s, count: n, fill: f }, 70, false);
+    assert(svg.tagName.toLowerCase() === 'svg' && svg.getAttribute('width') === '70', 'svg');
+    seen.add(svg.innerHTML.replace(/hc\d+/g, 'hc'));
+  }
+  assert(seen.size === 27, 'all 27 cells draw differently');
+  const el = document.createElement('div');
+  DRILLS.mat.render(DRILLS.mat.deep(3, makeRng(5)), el, 'answer');
+  assert(el.querySelectorAll('[data-answer]').length === 4 && el.querySelector('.matQ'), 'deep layout');
+  fuzzDrill('mat', 300);
+});
+// Oracle: reads only the shown terms. Each attribute's step is the common difference of consecutive terms.
+function dialNext(terms) {
+  const next = {};
+  DIAL_ATTRS.forEach(a => {
+    const m = DIAL_MODS[a], v = terms.map(t => t[a]), step = (v[1] - v[0] + m) % m;
+    v.slice(1).forEach((x, i) => assert((x - v[i] + m) % m === step, 'constant step ' + a));
+    next[a] = (v[v.length - 1] + step) % m;
+  });
+  return next;
+}
+
+test('series: the shown terms fix the next dial; decoys are one position off', () => {
+  const rng = makeRng(91);
+  let differs = 0;
+  for (let i = 0; i < 300; i++) {
+    const varying = 1 + (i % 3), terms = 4 + (i % 2), nOptions = varying === 1 ? 2 : 4;
+    const s = makeSeries(varying, terms, nOptions, rng);
+    assert(s.terms.length === terms && s.options.length === nOptions, 'sizes ' + i);
+    assert(new Set(s.options).size === nOptions && s.options.includes(s.answer), 'options ' + i);
+    const next = dialNext(s.terms), nextKey = dialKey(next);
+    const moving = DIAL_ATTRS.filter(a => s.terms[0][a] !== s.terms[1][a]).length;
+    assert(moving === varying, 'varying ' + i);
+    assert(s.options.filter(k => k === nextKey).length === 1 && nextKey === s.answer, 'one fit ' + i);
+    if (s.terms.every(t => dialKey(t) !== s.answer)) differs++;
+    for (const k of s.options) {
+      const off = DIAL_ATTRS.filter(a => dialFromKey(k)[a] !== next[a]);
+      if (k !== s.answer) assert(off.length === 1, 'decoy one attribute ' + i);
+    }
+  }
+  assert(differs >= 240, 'answer differs from every shown term: ' + differs);
+});
+test('series: config, layout, drawing, registration', () => {
+  assert(CONFIG.ser.deepVarying(10) === 2 && CONFIG.ser.deepVarying(11) === 3, 'deepVarying');
+  assert(CONFIG.ser.deepTerms === 5 && CONFIG.ser.lightTerms === 4, 'terms');
+  assert(DRILLS.ser.op === 'rules', 'op');
+  const light = DRILLS.ser.light(1, makeRng(3));
+  assert(light.terms.length === 4 && light.options.length === 2, 'light shape');
+  const el = document.createElement('div');
+  DRILLS.ser.render(DRILLS.ser.deep(6, makeRng(5)), el, 'answer');
+  assert(el.querySelectorAll('.serRow').length === 2 && el.querySelectorAll('.serRow .matCell').length === 6 && el.querySelectorAll('[data-answer]').length === 4, 'deep layout');
+  assert(dialKey({ arrow: 3, dot: 6, centre: 1 }) === 'a3d6c1', 'key format');
+  const looks = new Set([0, 1, 2].map(c => drawDial({ arrow: 2, dot: 5, centre: c }, 60, false).innerHTML.replace(/hc\d+/g, 'hc')));
+  assert(looks.size === 3, 'centre fills draw differently');
+  fuzzDrill('ser', 300);
+});
+function eventByText(text) {
+  const e = eventCatalog().deep.find(x => x.text === text);
+  assert(e, 'no event: ' + text);
+  return e;
+}
+
+test('events: exact probabilities for fixed cases', () => {
+  const same = (text, want) => assert(fracCmp(eventByText(text).p, frac(want[0], want[1])) === 0, text + ' = ' + eventByText(text).p);
+  same('Two dice sum to 9 or more', [10, 36]);
+  same('At least one six in 2 dice', [11, 36]);
+  same('2 cards are the same suit', [12, 51]);
+  same('At least 2 heads in 3 flips', [1, 2]);
+  same('2 cards are a pair', [3, 51]);
+  same('Two dice show a double', [6, 36]);
+  same('Three dice show different numbers', [120, 216]);
+  same('At least one ace in 2 cards', [396, 2652]);
+  same('First card red, second a heart', [325, 2652]);
+  same('Both cards red', [25, 102]);
+  same('No ace in 3 cards', [4324, 5525]);
+  const face = cardEvents().find(e => e.key === 'bothface');
+  assert(fracCmp(face.p, frac(11, 221)) === 0 && inBand(face.p), 'both face = 11/221, inside the 0.04 band');
+  assert(eventByText('2 cards are both face cards (J, Q, K)'), 'both face is drawable');
+  assert(fracCmp(frac(10, 36), [5, 18]) === 0 && fracCmp(frac(1, 3), frac(1, 2)) < 0, 'fraction helpers');
+});
+test('events: catalogue is distinct, proper and light has no cards', () => {
+  const { light, deep } = eventCatalog();
+  assert(new Set(deep.map(e => e.key)).size === deep.length, 'unique keys');
+  assert(new Set(deep.map(e => e.text)).size === deep.length, 'unique texts');
+  deep.forEach(e => assert(e.p[0] > 0 && e.p[0] < e.p[1] && e.text.length <= 40, 'proper ' + e.text));
+  assert(!light.some(e => /card/.test(e.text)), 'no cards in light');
+  const rng = makeRng(8);
+  for (let i = 0; i < 50; i++) assert(!/card/.test(randomEvent(rng, false).text), 'randomEvent light');
+});
+test('odds: light pair ratio, deep four distinct with a clear best', () => {
+  const rng = makeRng(404);
+  for (let i = 0; i < 300; i++) {
+    const l = makeOddsLight(1 + i % 15, rng), d = makeOddsDeep(1 + i % 15, rng);
+    const ls = sortedByP(l.events), ds = sortedByP(d.events);
+    assert(l.events.length === 2 && fracRatio(ls[0].p, ls[1].p) >= CONFIG.odd.lightRatio, 'light ratio ' + i);
+    assert(l.events.every(e => !/card/.test(e.text)), 'light dice and coins ' + i);
+    assert(d.events.length === 4 && new Set(d.events.map(e => e.p.join('/'))).size === 4, 'deep distinct ' + i);
+    assert(new Set(d.events.map(e => e.text)).size === 4, 'deep texts ' + i);
+    const ratio = fracRatio(ds[0].p, ds[1].p);
+    assert(ratio >= 1 + CONFIG.odd.deepGap && ratio <= CONFIG.odd.deepMaxRatio, 'deep ratio ' + i);
+    assert(d.events.some(e => eventCatalog().cards.some(c => c.text === e.text)), 'deep has a card event ' + i);
+    assert([...l.events, ...d.events].every(e => inBand(e.p)), 'band ' + i);
+    assert(d.events[+d.answer] === ds[0] && l.events[+l.answer] === ls[0], 'answer is the most likely ' + i);
+  }
+});
+test('odds: layout and registration', () => {
+  assert(DRILLS.odd.op === 'odds' && CONFIG.odd.lightRatio === 1.5 && CONFIG.odd.deepGap === 0.05, 'config');
+  const el = document.createElement('div');
+  DRILLS.odd.render(DRILLS.odd.deep(1, makeRng(2)), el, 'answer');
+  assert(el.querySelectorAll('[data-answer]').length === 4 && /most likely/.test(el.textContent), 'deep layout');
+  DRILLS.odd.render(DRILLS.odd.light(1, makeRng(2)), el, 'answer');
+  assert(el.querySelectorAll('[data-answer]').length === 2 && /more likely/.test(el.textContent), 'light layout');
+  fuzzDrill('odd', 300);
+});
+test('value: exact EV for fixed cases', () => {
+  const six = eventByText('At least one six in 2 dice');
+  const ev = betEv({ cost: 1, win: 4, event: six });
+  assert(ev[0] * 36 === 8 * ev[1] && ev[1] > 0, 'pay 1 win 4 six = 8/36, got ' + ev);
+  const neg = betEv({ cost: 3, win: 10, event: eventByText('Two dice sum to 9 or more') });
+  assert(neg[0] * 18 === -4 * neg[1], 'pay 3 win 10 sum9 = -4/18: ' + neg);
+});
+test('value: light and deep constraints over 300 draws', () => {
+  const rng = makeRng(505), c = CONFIG.ev;
+  let yes = 0;
+  for (let i = 0; i < 300; i++) {
+    const l = makeEvLight(1, rng), d = makeEvDeep(1, rng);
+    const b = l.bets[0], v = evValue(b);
+    assert(l.bets.length === 1 && Math.abs(v) >= c.lightMargin * b.cost && Math.abs(v) <= c.lightMax * b.cost, 'light margin ' + i);
+    assert(l.answer === (v > 0 ? 'yes' : 'no') && l.options.join() === 'yes,no', 'light answer ' + i);
+    assert(!/card/.test(b.event.text), 'light has no cards ' + i);
+    yes += v > 0;
+    const vs = d.bets.map(evValue), sorted = [...vs].sort((x, y) => y - x), best = d.bets[vs.indexOf(sorted[0])];
+    assert(d.bets.length === 4 && new Set(d.bets.map(x => x.event.text)).size === 4, 'deep four ' + i);
+    assert(sorted[0] - sorted[1] >= c.deepGap * best.cost && sorted[0] - sorted[1] <= c.deepMaxGap * best.cost, 'deep gap ' + i);
+    assert(d.answer === String(vs.indexOf(sorted[0])), 'deep answer ' + i);
+    assert(d.bets.some(x => eventCatalog().cards.some(k => k.text === x.event.text)), 'deep card ' + i);
+    assert(sorted[0] > 0, 'deep best EV is positive ' + i);
+    assert([...l.bets, ...d.bets].every(x => x.cost >= 1 && x.cost <= 5 && x.win >= 2 && x.win <= 30 && x.win >= x.cost && inBand(x.event.p)), 'ranges ' + i);
+  }
+  assert(yes > 90 && yes < 210, 'light yes/no balanced ' + yes);
+});
+test('value: layout and registration', () => {
+  assert(DRILLS.ev.op === 'odds' && CONFIG.ev.lightMargin === 0.2 && CONFIG.ev.deepGap === 0.05, 'config');
+  const el = document.createElement('div');
+  const bet = { cost: 3, win: 10, event: eventByText('Two dice sum to 9 or more') };
+  assert(betText(bet) === 'Pay 3, win 10 if two dice sum to 9 or more', betText(bet));
+  DRILLS.ev.render(DRILLS.ev.deep(1, makeRng(2)), el, 'answer');
+  assert(el.querySelectorAll('[data-answer]').length === 4 && /Which bet pays best on average\?/.test(el.textContent) && /paid only if it happens/.test(el.textContent), 'deep layout');
+  DRILLS.ev.render(DRILLS.ev.light(1, makeRng(2)), el, 'answer');
+  assert(el.querySelectorAll('[data-answer]').length === 2 && /Take this bet\?/.test(el.textContent), 'light layout');
+  fuzzDrill('ev', 300);
+});
+// Index of the first card event among the options, and the answer index, both spread over 0-3.
+function deepPositionCounts(make, eventsOf, n) {
+  const rng = makeRng(2026), card = [0, 0, 0, 0], ans = [0, 0, 0, 0];
+  const isCard = e => eventCatalog().cards.some(c => c.text === e.text);
+  for (let i = 0; i < n; i++) {
+    const it = make(6, rng), evs = eventsOf(it);
+    evs.forEach((e, k) => { if (isCard(e)) card[k]++; });
+    ans[+it.answer]++;
+  }
+  return { card, ans };
+}
+test('odds and value: deep card event and answer land at every index', () => {
+  [[makeOddsDeep, it => it.events], [makeEvDeep, it => it.bets.map(b => b.event)]].forEach(([make, eventsOf], k) => {
+    const { card, ans } = deepPositionCounts(make, eventsOf, 300);
+    assert(card.every(c => c > 0), 'card event at every index ' + k + ': ' + card);
+    assert(ans.every(c => c >= 45), 'answer spread ' + k + ': ' + ans);
+  });
+});
+test('value: bets never offer a win below the cost', () => {
+  const rng = makeRng(77);
+  for (let i = 0; i < 2000; i++) {
+    const b = randomBet(null, rng);
+    assert(b.win >= b.cost && b.win >= 2 && b.win <= 30, 'bet ' + JSON.stringify(b));
+  }
+  const ev = e => ({ text: 'x', p: e });
+  assert(!evGapOk([{ cost: 2, win: 2, event: ev([3, 4]) }, { cost: 2, win: 2, event: ev([1, 2]) }]), 'all-losing set rejected');
+});
+test('sequence: light item rules and flash timeline', () => {
+  const d = DRILLS.seq, rng = makeRng(5);
+  for (let i = 0; i < 200; i++) {
+    const it = d.light(1 + i % 15, rng), opts = d.options(it);
+    assert(it.seq.length === 4 && new Set(it.seq).size === 4, 'four distinct ' + i);
+    assert(opts.length === 3 && new Set(opts).size === 3 && opts.includes(d.answer(it)), 'options ' + i);
+    assert(it.asked < it.seq.length - 1 && d.answer(it) === it.seq[it.asked + 1], 'asked not last ' + i);
+    assert(opts.every(o => it.seq.includes(o)), 'options are shown symbols ' + i);
+  }
+  const it = d.light(3, rng), tl = d.timeline(it, 'L', 3);
+  assert(tl.length === 4 && tl.every((s, k) => s.phase === 'show' && s.index === k && s.ms === 710), 'timeline');
+  assert(d.deep(1, rng).flashMs === 1000 && d.timeline(d.deep(1, rng), 'D', 1).length === 6, 'deep timeline');
+});
+test('sequence: deep length grows and symbols are distinct and large', () => {
+  const d = DRILLS.seq, rng = makeRng(6);
+  assert(d.deep(1, rng).seq.length === 6 && d.deep(9, rng).seq.length === 7 && d.deep(15, rng).seq.length === 9, 'lengths');
+  assert(new Set(SEQ_SYMBOLS.map(s => s.fill)).size === 9 && new Set(SEQ_SYMBOLS.map(s => s.d)).size === 9, 'distinct');
+  const el = document.createElement('div');
+  d.render(d.deep(1, rng), el, 'answer');
+  assert(el.querySelectorAll('[data-tap]').length === 9 && el.querySelector('svg').getAttribute('width') >= 56, 'nine tap buttons');
+  d.render(d.deep(1, rng), el, 'show', 0);
+  assert(el.querySelector('.seqStage svg').getAttribute('width') >= 90 && !el.querySelector('[data-tap]'), 'flash large, no taps');
+});
+test('sequence: deep multi-tap records once, right and wrong', () => {
+  const saved = [app.state, app.item, app.deepSet, app.mode], d = DRILLS.seq, rng = makeRng(8);
+  app.state = defaultState(); app.mode = 'D';
+  function play(order) {
+    const it = d.deep(1, rng), el = document.createElement('div');
+    app.item = it; app.deepSet = { drill: 'seq', results: [] }; app.locked = false; app.phase = 'answer'; app.startedAt = performance.now();
+    d.render(it, el, 'answer');
+    order(it).forEach(id => el.querySelector('[data-tap="' + id + '"]').click());
+    el.querySelectorAll('[data-tap]').forEach(b => b.click());
+    return app.deepSet.results;
+  }
+  const right = play(it => it.seq);
+  assert(right.length === 1 && right[0].correct && app.state.history.length === 1, 'right order records once');
+  const wrong = play(it => [...it.seq].reverse());
+  assert(wrong.length === 1 && !wrong[0].correct && app.state.history.length === 2, 'wrong order records once');
+  [app.state, app.item, app.deepSet, app.mode] = saved; app.locked = true; app.phase = null;
+  fuzzDrill('seq', 300);
+});
+test('cards: light has a unique most common suit; deep has exactly one unplayed option', () => {
+  const d = DRILLS.crd, rng = makeRng(11), suitOf = c => c.slice(-1);
+  for (let i = 0; i < 300; i++) {
+    const L = d.light(1 + i % 15, rng), n = {};
+    L.cards.forEach(c => { n[suitOf(c)] = (n[suitOf(c)] || 0) + 1; });
+    const top = Math.max(...Object.values(n));
+    assert(L.cards.length === 8 && new Set(L.cards).size === 8, 'eight distinct ' + i);
+    assert(Object.values(n).filter(v => v === top).length === 1 && n[d.answer(L)] === top, 'unique max suit ' + i);
+    assert(d.options(L).join() === '♠,♥,♦,♣', 'suit buttons');
+    const D = d.deep(1 + i % 15, rng), o = D.options, ids = d.options(D), played = new Set(D.cards);
+    assert(D.cards.length === Math.min(16 + Math.max(0, i % 15 - 5), 24) && played.size === D.cards.length, 'deep count ' + i);
+    assert(o.length === 4 && new Set(o).size === 4 && ids.join() === '0,1,2,3', 'options distinct ' + i);
+    assert(o.filter(c => !played.has(c)).length === 1 && d.answer(D) === String(o.findIndex(c => !played.has(c))), 'one unplayed ' + i);
+    const u = o[+d.answer(D)];
+    assert(D.cards.some(c => c.slice(0, -1) === u.slice(0, -1) || suitOf(c) === suitOf(u)), 'unplayed card shares rank or suit ' + i);
+  }
+  assert(d.timeline(d.light(3, rng), 'L', 3).length === 8 && d.timeline(d.light(3, rng), 'L', 3)[0].ms === 625, 'light flash');
+  assert(d.timeline(d.deep(1, rng), 'D', 1).every(s => s.ms === 900), 'deep flash');
+  const el = document.createElement('div');
+  d.render(d.deep(1, rng), el, 'answer');
+  assert(el.querySelectorAll('[data-answer] .card').length === 4, 'four card buttons');
+  fuzzDrill('crd', 300);
+});
+test('take-away: winTable known values and brute-force cross-check', () => {
+  const w = winTable(9, [1, 3]);
+  assert(w[0] === false && w[9] === true && w.every((v, n) => v === (n % 2 === 1)), 'odd piles win with {1,3}: ' + w);
+  const brute = (n, S) => S.some(t => t <= n && !brute(n - t, S));
+  [[1, 3], [2, 4], [1, 4, 5], [2, 3, 5], [3, 4, 5], [1, 2, 3]].forEach(S => {
+    const t = winTable(20, S);
+    for (let n = 0; n <= 20; n++) assert(t[n] === brute(n, S), 'winTable ' + S + ' n=' + n);
+  });
+});
+test('take-away: light balance and deep uniqueness over 300 draws', () => {
+  const rng = makeRng(808);
+  let wins = 0, none = 0;
+  for (let i = 0; i < 300; i++) {
+    const l = makeNimLight(1 + i % 15, rng), d = makeNimDeep(1 + i % 15, rng);
+    const top = CONFIG.nim.lightPile(1 + i % 15), dtop = CONFIG.nim.deepPile(1 + i % 15);
+    assert(l.takes.length === 2 && l.pile >= top - 3 && l.pile <= top && l.takes[0] <= l.pile, 'light shape ' + i);
+    assert((l.answer === 'yes') === winTable(l.pile, l.takes)[l.pile], 'light answer ' + i);
+    assert(d.takes.length === 3 && d.pile >= dtop - 3 && d.pile <= dtop, 'deep shape ' + i);
+    const ws = winningTakes(d.pile, d.takes);
+    assert(ws.length <= 1 && d.answer === (ws.length ? String(ws[0]) : 'none'), 'deep unique ' + i);
+    assert(d.options.length === 4 && d.options[3] === 'none', 'deep options ' + i);
+    wins += l.answer === 'yes'; none += d.answer === 'none';
+  }
+  assert(wins > 120 && wins < 180, 'light balanced ' + wins);
+  assert(none >= 75 && none <= 105, 'deep none share ' + none);
+});
+test('take-away: text, layout and registration', () => {
+  const el = document.createElement('div');
+  assert(nimQuestion({ kind: 'nimL', pile: 9, takes: [1, 3] }) === 'Pile of 9. Take 1 or 3 each turn. Taking the last one wins. If you can\'t move, you lose. Your move: can you force a win?', 'light text');
+  assert(nimQuestion({ kind: 'nimD', pile: 23, takes: [1, 3, 4] }) === 'Pile of 23. Take 1, 3 or 4 each turn. Taking the last one wins. If you can\'t move, you lose. Which take wins?', 'deep text');
+  DRILLS.nim.render(DRILLS.nim.deep(15, makeRng(3)), el, 'answer');
+  assert(el.querySelectorAll('[data-answer]').length === 4 && el.querySelectorAll('.nimDots i').length === 45 && el.querySelector('.nimBig'), 'deep layout');
+  DRILLS.nim.render(DRILLS.nim.light(1, makeRng(3)), el, 'answer');
+  assert(el.querySelectorAll('[data-answer]').length === 2 && !el.querySelector('.nimBig'), 'light layout');
+  assert([...el.querySelectorAll('[data-answer]')].map(b => b.dataset.answer + ':' + b.textContent).join() === 'yes:Yes,no:No', 'light buttons Yes/No');
+  assert(DRILLS.nim.op === 'backward' && CONFIG.nim.deepTakes === 3, 'config');
+  fuzzDrill('nim', 300);
+});
+test('reach: minSteps known values and brute-force cross-check', () => {
+  const brute = (start, target, moves) => {
+    for (let depth = 0; depth <= 12; depth++) {
+      const go = (v, d) => v === target ? true : d > 0 && moves.some(m => applyMove(v, m) <= target && go(applyMove(v, m), d - 1));
+      if (go(start, depth)) return depth;
+    }
+    return -1;
+  };
+  assert(minSteps(1, 10, ['×2', '+3']) === 3 && brute(1, 10, ['×2', '+3']) === 3, '1 to 10 in 3 moves');
+  RCH_MOVES.forEach(moves => {
+    for (let start = 1; start <= 3; start++) {
+      for (let target = start; target <= 60; target++) {
+        const path = shortestPath(start, target, moves);
+        if (path) assert(path.length - 1 === brute(start, target, moves), 'minSteps ' + moves + ' ' + start + '->' + target);
+        else assert(brute(start, target, moves) === -1, 'unreachable ' + moves + ' ' + start + '->' + target);
+      }
+    }
+  });
+});
+test('reach: generator answers equal BFS, options distinct, position uniform', () => {
+  const rng = makeRng(909), pos = { L: [0, 0, 0], D: [0, 0, 0, 0] };
+  for (let i = 0; i < 300; i++) {
+    const lvl = 1 + i % 15, l = makeReachLight(lvl, rng), d = makeReachDeep(lvl, rng), l8 = makeReachLight(8, rng);
+    [l, d, l8].forEach(it => {
+      assert(String(minSteps(it.start, it.target, it.moves)) === it.answer, 'bfs ' + i);
+      assert(it.path[0] === it.start && it.path[it.path.length - 1] === it.target && it.path.length - 1 === +it.answer && it.path.every((v, k) => k === 0 || it.moves.some(m => applyMove(it.path[k - 1], m) === v)), 'path ' + i);
+      assert(new Set(it.options).size === it.options.length && it.options.every(o => +o >= 1) && it.options.includes(it.answer), 'options ' + i);
+      assert(it.options.every(o => Math.abs(o - it.answer) <= 3), 'nearby ' + i);
+    });
+    assert(l.options.length === 3 && d.options.length === 4 && CONFIG.rch.lightSteps(lvl).includes(+l.answer) && deepStepChoices(lvl).includes(+d.answer), 'sizes ' + i);
+    pos.L[l8.options.indexOf(l8.answer)]++; pos.D[d.options.indexOf(d.answer)]++;
+  }
+  assert(pos.L.every(c => c >= 50) && pos.D.every(c => c >= 35), 'answer position spread ' + pos.L + ' / ' + pos.D);
+});
+test('reach: step counts vary and answer positions cover every feasible slot', () => {
+  const rng = makeRng(4242), seen = (f, n) => { const c = {}; for (let i = 0; i < n; i++) { const it = f(); c[it.answer] = (c[it.answer] || 0) + 1; } return c; };
+  const l1 = seen(() => makeReachLight(1, rng), 300), l8 = seen(() => makeReachLight(8, rng), 300), d6 = seen(() => makeReachDeep(6, rng), 300);
+  assert(Object.keys(l1).sort().join() === '2,3' && l1[2] >= 90 && l1[3] >= 90, 'light L1 ' + JSON.stringify(l1));
+  assert(Object.keys(l8).sort().join() === '2,3,4', 'light L8 ' + JSON.stringify(l8));
+  assert(Object.keys(d6).length === 3, 'deep L6 ' + JSON.stringify(d6));
+  assert(deepStepChoices(15).join() === '8,9' && deepStepChoices(1).join() === '4,5,6', 'clamp');
+  [1, 8].forEach(lvl => {
+    const pos = {};
+    for (let i = 0; i < 300; i++) { const it = makeReachLight(lvl, rng), k = it.options.indexOf(it.answer) + ':' + it.answer; pos[k] = 1; }
+    const byAnswer = {};
+    Object.keys(pos).forEach(k => { const [p, a] = k.split(':'); (byAnswer[a] = byAnswer[a] || new Set()).add(+p); });
+    Object.entries(byAnswer).forEach(([a, set]) => assert(set.size === Math.min(3, +a), 'positions for answer ' + a + ' at level ' + lvl + ': ' + [...set]));
+  });
+});
+test('reach: text, miss path, layout and registration', () => {
+  const el = document.createElement('div');
+  const item = { kind: 'rchD', start: 2, target: 37, moves: ['×2', '+3'], path: [2, 4, 7, 14, 17, 34, 37], answer: '6', options: ['5', '6', '7', '8'] };
+  assert(reachQuestion(item) === 'From 2, reach 37 using ×2 or +3. Fewest moves?', 'text');
+  DRILLS.rch.render(item, el, 'answer');
+  assert(el.querySelector('.nimBig').textContent === '2 → 37' && el.querySelectorAll('[data-answer]').length === 4, 'layout');
+  DRILLS.rch.markMiss(el, item);
+  assert(el.querySelector('.rchPath').textContent === '2 → 4 → 7 → 14 → 17 → 34 → 37' && el.querySelector('[data-answer="6"]').classList.contains('right'), 'miss');
+  assert(DRILLS.rch.op === 'backward' && CONFIG.rch.deepSteps(15) === 9 && CONFIG.rch.lightSteps(1).length === 2, 'config');
+  fuzzDrill('rch', 300);
+});
+test('deep ramps start at the Deep entry level (skill 1 + 5)', () => {
+  const lvl = id => itemLevel(defaultState(), id, 'D'), rng = makeRng(31);
+  assert(lvl('mat') === 6, 'entry level ' + lvl('mat'));
+  assert(DRILLS.mat.deep(lvl('mat'), rng).rules.filter(r => r !== 'fixed').length === 2, 'matrices 2 varying');
+  const ser = DRILLS.ser.deep(lvl('ser'), rng).terms;
+  assert(DIAL_ATTRS.filter(a => ser[0][a] !== ser[1][a]).length === 2, 'series 2 varying');
+  assert(DRILLS.seq.deep(lvl('seq'), rng).seq.length === 6 && DRILLS.crd.deep(lvl('crd'), rng).cards.length === 16, 'sequence 6, cards 16');
+  assert(CONFIG.seq.deepLen(1) === 6 && CONFIG.seq.deepLen(15) === 9 && CONFIG.crd.deepCount(15) === 24, 'clamps');
+});
+test('every drill question uses one font size; cards miss uses the default outline', () => {
+  const host = document.createElement('div'), rng = makeRng(12);
+  document.body.appendChild(host);
+  ALL_DRILL_IDS.forEach(id => ['light', 'deep'].forEach(m => {
+    DRILLS[id].render(DRILLS[id][m](6, rng), host, 'answer');
+    const q = host.querySelector('.q');
+    assert(q && getComputedStyle(q).fontSize === '18px', id + ' ' + m + ' question ' + (q && getComputedStyle(q).fontSize));
+  }));
+  const item = DRILLS.crd.deep(6, rng);
+  DRILLS.crd.render(item, host, 'answer');
+  markRight(host, item);
+  assert(!DRILLS.crd.markMiss && host.querySelector('[data-answer="' + item.answer + '"]').classList.contains('right'), 'cards outline');
+  host.remove();
+});
+test('state: v1 save keeps history and gains new drills', () => {
+  const old = { v: 1, skill: { rot: 4, trk: 2 }, run: { rot: 1, trk: 0 }, streak: 3, history: [[1, 'rot', 'L', 4, 1, 1500]] };
+  const s = loadState({ getItem: () => JSON.stringify(old), setItem() {} });
+  assert(s.history.length === 1 && s.skill.rot === 4 && s.streak === 3, 'kept');
+  ALL_DRILL_IDS.forEach(id => assert(typeof s.skill[id] === 'number' && typeof s.run[id] === 'number', id));
+  assert(s.skill.nim === 1, 'new default');
+});
+test('start halves say only LIGHT and DEEP', () => {
+  assert(document.getElementById('goLight').textContent.trim() === 'LIGHT', 'light');
+  assert(document.getElementById('goDeep').textContent.trim() === 'DEEP', 'deep');
+});
+test('deep menu: five operations, transform opens rotation and tracking', () => {
+  showDeepPick();
+  assert(document.querySelectorAll('#deepPick [data-op]').length === 5, 'five');
+  showDeepSub('transform');
+  const ids = [...document.querySelectorAll('#deepSub [data-drill]')].map(b => b.dataset.drill).join();
+  assert(ids === 'rot,trk', ids);
 });
 
 // ===== BOOT =====
