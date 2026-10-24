@@ -57,13 +57,12 @@ section.active { display: flex; flex-direction: column; }
 .tile { position: relative; background: #2a3247; border: 0; border-radius: 12px; padding: 0; display: flex; justify-content: center; align-items: center; color: #e6e9f2; }
 #start { position: relative; }
 #progress { position: absolute; top: 0; left: 0; right: 0; padding: calc(14px + env(safe-area-inset-top)) 12px 14px; text-align: center; font-size: 14px; color: #1a5fb4; background: rgba(232,243,255,.92); pointer-events: none; z-index: 1; }
-#deepPick, #deepSub, #deep { background: #1d2333; color: #e6e9f2; position: relative; }
+#deepPick, #deep { background: #1d2333; color: #e6e9f2; position: relative; }
 .bar { display: flex; justify-content: space-between; align-items: center; height: 44px; padding-top: env(safe-area-inset-top); flex: none; font-size: 14px; padding-right: 14px; }
 .xbtn { border: 0; background: none; color: #9fb6ff; font-size: 20px; width: 48px; height: 44px; font-family: inherit; }
 .menu { flex: 1; display: flex; flex-direction: column; padding-bottom: calc(12px + var(--bottom)); }
 .menu button { flex: 1; min-height: 56px; max-height: 160px; margin: 6px 12px; border: 0; border-radius: 16px; background: #2a3247; color: #e6e9f2; font-family: inherit; font-weight: 700; font-size: 24px; }
 .menu button:disabled { opacity: .3; pointer-events: none; }
-#subTitle { color: #9fb6ff; font-size: 16px; font-weight: 700; }
 #deepItem { flex: 1; min-height: 0; }
 #deepNext, #deepDone { flex: none; width: 100%; margin-top: auto; border: 0; padding: 20px 0 calc(20px + var(--bottom)); font-weight: 700; font-size: 18px; font-family: inherit; background: #3d5bd9; color: #fff; }
 #deepNext[hidden] { display: none; }
@@ -72,15 +71,58 @@ section.active { display: flex; flex-direction: column; }
 .summary .row { display: flex; justify-content: space-between; }
 .summary .ok { color: #7ee2a0; } .summary .miss { color: #ff9b9b; }
 .tile.right { outline: 4px solid #2ea043; outline-offset: -4px; }
+.chsL, .chsD { height: 100%; box-sizing: border-box; padding-bottom: var(--bottom); display: flex; flex-direction: column; align-items: center; }
+.chsL { background: #f5f9ff; color: #1a3050; }
+.chsD { background: #1d2333; color: #e6e9f2; }
+.chsL .board, .chsD .board { margin: auto 0; }
+.chsL .sq, .chsD .sq { line-height: 1; font-size: calc(var(--cell) * 1.1); font-family: 'Apple Symbols', 'Segoe UI Symbol', 'DejaVu Sans', 'Noto Sans Symbols 2', sans-serif; }
+.chsD .sq { background: #2a3247; } .chsD .sq.dk { background: #343d57; }
 .trkD .icon { grid-template-columns: repeat(3, 12px); gap: 2px; padding: 5px; border-radius: 8px; }
 .trkD .icon i { width: 12px; height: 12px; border-radius: 3px; }
 .trkD .icons { height: auto; flex-wrap: wrap; justify-content: center; margin: 8px 8px 0; }
 .path polyline { stroke-dasharray: 1; animation: draw 1s linear; } /* draws in 1 s; a Light miss waits up to 3 s for a tap */
 @keyframes draw { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
 .tile span { position: absolute; top: 6px; left: 10px; font-size: 13px; opacity: .6; }
-.matL, .matD, .serL, .serD, .oddL, .oddD, .evL, .evD, .nimL, .nimD, .rchL, .rchD { height: 100%; box-sizing: border-box; display: flex; flex-direction: column; align-items: center; padding-bottom: var(--bottom); }
-.matL, .serL, .oddL, .evL, .nimL, .rchL { background: #f5f9ff; color: #1a3050; --tile: #dfe8f7; }
-.matD, .serD, .oddD, .evD, .nimD, .rchD { background: #1d2333; color: #e6e9f2; --tile: #2a3247; }
+.cubL, .cubD { height: 100%; box-sizing: border-box; padding-bottom: var(--bottom); display: flex; flex-direction: column; align-items: center; }
+.cubL { background: #f5f9ff; color: #1a3050; }
+.cubD { background: #1d2333; color: #e6e9f2; }
+.cubL canvas, .cubD canvas { margin: auto 0 4px; flex: none; }
+.cubLegend { font-size: 13px; opacity: .75; text-align: center; padding: 4px 16px 0; margin-bottom: auto; }
+.cubNet { display: grid; grid-template-columns: repeat(4, auto); gap: 4px; margin: 4px 0 auto; }
+.cubFace { display: grid; grid-template-columns: repeat(3, var(--cell)); grid-auto-rows: var(--cell); gap: 1px; background: #111827; padding: 1px; border-radius: 3px; }
+.cubSq { width: var(--cell); height: var(--cell); border: 0; padding: 0; border-radius: 2px; display: flex; align-items: center; justify-content: center; }
+.cubSq.right { box-shadow: 0 0 0 2px #fff, 0 0 0 5px #2ea043; position: relative; z-index: 1; }
+.cubSq.was { box-shadow: inset 0 0 0 3px #111827; }
+.cubDot { width: 44%; height: 44%; border-radius: 50%; background: #000; border: 3px solid #fff; box-sizing: border-box; }
+.dieL, .dieD, .matL, .matD, .serL, .serD, .oddL, .oddD, .evL, .evD, .nimL, .nimD, .rchL, .rchD, .netL, .netD { height: 100%; box-sizing: border-box; display: flex; flex-direction: column; align-items: center; padding-bottom: var(--bottom); }
+.dieL, .matL, .serL, .oddL, .evL, .nimL, .rchL, .netL { background: #f5f9ff; color: #1a3050; --tile: #dfe8f7; }
+.dieD, .matD, .serD, .oddD, .evD, .nimD, .rchD, .netD { background: #1d2333; color: #e6e9f2; --tile: #2a3247; }
+.dieOpts { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; width: 100%; box-sizing: border-box; padding: 8px 12px; margin-top: auto; }
+.dieOpt { color: inherit; font: inherit; font-size: 32px; font-weight: 800; }
+.dieD .dieOpt { min-height: 56px; }
+.dieMoves { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; padding: 4px 0 0; }
+.dieMove { flex: none; display: flex; flex-direction: column; align-items: center; background: var(--tile); border-radius: 10px; padding: 2px 0 3px; }
+.dieCap { font-size: 10px; line-height: 1.1; opacity: .85; }
+.dieLegend { font-size: 12px; opacity: .7; text-align: center; padding: 2px 16px 0; }
+.rtiL, .rtiD { height: 100%; box-sizing: border-box; display: flex; flex-direction: column; align-items: center; padding-bottom: var(--bottom); }
+.rtiL { background: #f5f9ff; color: #1a3050; --tile: #dfe8f7; }
+.rtiD { background: #1d2333; color: #e6e9f2; --tile: #2a3247; }
+.rtiTop { display: flex; align-items: center; gap: 6px; padding: 0 8px; flex: none; }
+.rtiStart { flex: none; }
+.rtiL .rtiTop { flex-direction: column; gap: 2px; }
+.rtiL .rtiSide { align-items: center; }
+.rtiSide { display: flex; flex-direction: column; gap: 3px; font-size: 16px; min-width: 0; }
+.rtiTurn b { font-size: 19px; }
+.rtiL .ax0 { color: #3b5bdb; } .rtiL .ax1 { color: #b45309; } .rtiL .ax2 { color: #15803d; }
+.rtiD .ax0 { color: #91a7ff; } .rtiD .ax1 { color: #fbbf24; } .rtiD .ax2 { color: #4ade80; }
+.rtiLegend { display: flex; align-items: center; gap: 4px; font-size: 11px; line-height: 1.2; opacity: .8; margin-top: 4px; }
+.rtiLegend svg { flex: none; }
+.rtiOpts { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; width: 100%; box-sizing: border-box; padding: 8px 12px; margin-top: auto; }
+.rtiOpt canvas { pointer-events: none; }
+.netCanvas { margin-top: 8px; flex: none; }
+.netOpts { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; width: 100%; box-sizing: border-box; padding: 8px 12px; margin-top: auto; }
+.netD .netOpts { grid-template-columns: 1fr 1fr; }
+.netOpt canvas { pointer-events: none; }
 .matGrid { display: grid; grid-template-columns: repeat(3, auto); gap: 6px; margin-top: 8px; }
 .matCell { background: var(--tile); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 32px; font-weight: 700; box-sizing: border-box; }
 .matCell.hole { border: 2px dashed currentColor; }
@@ -129,6 +171,35 @@ section.active { display: flex; flex-direction: column; }
 .crdCards .seqBtn { min-height: 100px; background: transparent; padding: 0; }
 .crdCards .seqBtn.right { outline-offset: 2px; }
 .seqBtn .n { position: absolute; top: 4px; left: 8px; font-size: 14px; font-weight: 700; }
+.mfwL, .mfwD, .mbwL, .mbwD, .mptL, .mptD { height: 100%; box-sizing: border-box; display: flex; flex-direction: column; align-items: center; padding-bottom: var(--bottom); }
+.mfwL, .mbwL, .mptL { background: #f5f9ff; color: #1a3050; --tile: #dfe8f7; }
+.mfwD, .mbwD, .mptD { background: #1d2333; color: #e6e9f2; --tile: #2a3247; }
+.mfwTop, .mbwTop, .mptTop { display: flex; align-items: center; justify-content: center; gap: 12px; flex: none; margin: auto 0; }
+.mfwStart { flex: none; display: flex; }
+.mfwOpts, .mbwOpts { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; width: 100%; box-sizing: border-box; padding: 8px 12px; }
+.mfwOpt canvas { pointer-events: none; }
+.mcoL, .mcoD { height: 100%; box-sizing: border-box; display: flex; flex-direction: column; align-items: center; padding-bottom: var(--bottom); }
+.mcoL { background: #f5f9ff; color: #1a3050; --tile: #dfe8f7; }
+.mcoD { background: #1d2333; color: #e6e9f2; --tile: #2a3247; }
+.mco .mfwTop { gap: 8px; }
+.mcoMat { flex: none; display: flex; flex-direction: column; align-items: center; }
+.mcoLab { font-weight: 700; font-size: 14px; }
+.mcoLab { color: #5b6b82; }
+.mcoD .mcoLab { color: #aab3c5; }
+.mco .mtx { grid-template-columns: repeat(var(--n), 24px); gap: 3px 4px; padding: 4px 9px; font-size: 18px; }
+.mbwOpts { flex: none; }
+.mbwOpt { min-height: 88px; }
+.mptTop { flex-direction: column; gap: 10px; }
+.mptBoard { position: relative; flex: none; }
+.mptBoard svg { position: absolute; pointer-events: none; }
+.mptHit { position: absolute; border: 0; padding: 0; background: transparent; -webkit-tap-highlight-color: transparent; }
+.mptHit.right::after { content: ''; position: absolute; inset: 1px; border: 3px solid #2ea043; border-radius: 50%; }
+.mptLab { position: absolute; font: 700 12px ui-monospace, Menlo, monospace; pointer-events: none; white-space: nowrap; }
+.mtx { position: relative; flex: none; display: inline-grid; grid-template-columns: repeat(var(--n), 30px); gap: 4px 6px; padding: 6px 10px; font: 700 21px ui-monospace, Menlo, monospace; text-align: center; }
+.mtx::before, .mtx::after { content: ''; position: absolute; top: 0; bottom: 0; width: 6px; border: 2px solid currentColor; }
+.mtx::before { left: 0; border-right: 0; } .mtx::after { right: 0; border-left: 0; }
+.mtx .c0 { color: #15803d; } .mtx .c1 { color: #a21caf; } .mtx .c2 { color: #0e7490; }
+#deepItem .mtx .c0 { color: #4ade80; } #deepItem .mtx .c1 { color: #e879f9; } #deepItem .mtx .c2 { color: #22d3ee; }
 </style>
 </head>
 <body>
@@ -144,11 +215,7 @@ section.active { display: flex; flex-direction: column; }
 </section>
 <section id="deepPick">
   <div class="bar"><button class="xbtn" id="pickExit" aria-label="Back">✕</button></div>
-  <div class="menu" id="opMenu"></div>
-</section>
-<section id="deepSub">
-  <div class="bar"><button class="xbtn" id="subExit" aria-label="Back">✕</button><span id="subTitle"></span></div>
-  <div class="menu" id="drillMenu"></div>
+  <div class="menu" id="skillMenu"></div>
 </section>
 <section id="deep">
   <div class="bar"><button class="xbtn" id="deepExit" aria-label="Back">✕</button><span id="deepCount"></span><span id="deepStatus"></span></div>
@@ -173,6 +240,16 @@ const CONFIG = {
     flashMs: lvl => Math.max(350, 900 - 50 * lvl),
     showStartMs: 800
   },
+  chs: {
+    lightPieces: lvl => lvl < 4 ? ['rook', 'king'] : lvl < 7 ? ['rook', 'king', 'bishop'] : ['rook', 'king', 'bishop', 'knight'],
+    lightMoves: lvl => Math.min(5, 3 + Math.floor(lvl / 4)),
+    lightStartMs: 900,
+    lightFlashMs: lvl => Math.max(600, 1100 - 50 * lvl),
+    deepPieces: lvl => lvl < 12 ? ['rook', 'king', 'bishop', 'knight'] : ['rook', 'king', 'bishop', 'knight', 'queen'],
+    deepMoves: lvl => Math.min(8, 3 + Math.floor((lvl - 6) * 5 / 9)),
+    bigBoardFrom: 10, twoPiecesFrom: 10,
+    deepStartMs: 1800, deepFlashMs: 1000
+  },
   seq: { lightLen: 4, deepLen: lvl => Math.min(6 + Math.floor(Math.max(0, lvl - 6) / 3), 9), lightFlashMs: lvl => Math.max(400, 800 - 30 * lvl), deepFlashMs: 1000 },
   crd: { lightCount: 8, deepCount: lvl => Math.min(16 + Math.max(0, lvl - 6), 24), lightFlashMs: lvl => Math.max(350, 700 - 25 * lvl), deepFlashMs: 900 },
   mat: { deepVarying: lvl => lvl < 11 ? 3 : 4 },
@@ -194,6 +271,8 @@ function makeRng(seed) {
 // ===== DRILLS =====
 // DRILLS[id] = {
 //   op: 'transform'|'rules'|'odds'|'memory'|'backward',
+//   skill: 'rotation'|'tracking'|'matrices'|'rules'|'odds'|'memory'|'backward',  // Light mix and Deep skill menu group by it
+//   hidden: true,                            // optional: kept in code and state, left out of Light, menus and the progress line
 //   name: 'Rotation',                       // menu label; progress line uses name.toLowerCase()
 //   light(level, rng) -> item,  deep(level, rng) -> item,
 //   timeline(item, mode, level) -> [{ phase, ms, index }],   // steps shown BEFORE the answer phase; [] if none
@@ -206,7 +285,7 @@ function makeRng(seed) {
 // Item kind is '<id>L' or '<id>D'. Drill sections call registerDrill; they must come after this section.
 const DRILLS = {};
 const OPERATIONS = [
-  { id: 'transform', name: 'Transform', drills: ['rot', 'trk'] },
+  { id: 'transform', name: 'Transform', drills: ['rot', 'trk', 'die', 'net', 'rti', 'chs', 'cub', 'mfw', 'mbw', 'mpt', 'mco'] },
   { id: 'rules', name: 'Rules', drills: ['mat', 'ser'] },
   { id: 'odds', name: 'Odds', drills: ['odd', 'ev'] },
   { id: 'memory', name: 'Memory', drills: ['seq', 'crd'] },
@@ -215,6 +294,37 @@ const OPERATIONS = [
 const ALL_DRILL_IDS = OPERATIONS.flatMap(o => o.drills);
 
 function registerDrill(id, def) { DRILLS[id] = def; }
+
+// Ruling CC: hidden drills keep their old operation as skill, so un-hiding is flipping the flag.
+const SKILLS = [{ id: 'rotation', name: 'Rotation' }, { id: 'tracking', name: 'Tracking' }, { id: 'matrices', name: 'Matrices' },
+  { id: 'rules', name: 'Rules' }, { id: 'odds', name: 'Odds' }, { id: 'memory', name: 'Memory' }, { id: 'backward', name: 'Backward' }];
+
+// Registered, not hidden, with a skill; in OPERATIONS order. Ids not registered yet are simply absent.
+function visibleDrills() {
+  return ALL_DRILL_IDS.filter(id => DRILLS[id] && !DRILLS[id].hidden && DRILLS[id].skill);
+}
+
+// A skill whose registered drills are all hidden stays off the menu; one with no drills yet shows disabled.
+function skillHidden(skillId) {
+  const ids = Object.keys(DRILLS).filter(id => DRILLS[id].skill === skillId);
+  return ids.length > 0 && ids.every(id => DRILLS[id].hidden);
+}
+
+function scenesOf(skillId) { return visibleDrills().filter(id => DRILLS[id].skill === skillId); }
+
+function pickFrom(list, rnd) { return list[Math.floor(rnd() * list.length)]; }
+
+// A skill uniformly among skills with a visible scene, then a scene within it, so a skill with many scenes does not crowd out the rest.
+function pickLightDrill(rnd = Math.random) {
+  const skills = SKILLS.filter(k => scenesOf(k.id).length);
+  return pickFrom(scenesOf(pickFrom(skills, rnd).id), rnd);
+}
+
+// Never prev when the skill has two or more scenes; a single scene repeats.
+function pickDeepScene(skillId, prev, rng) {
+  const scenes = scenesOf(skillId), pool = scenes.length > 1 ? scenes.filter(id => id !== prev) : scenes;
+  return pickFrom(pool, rng);
+}
 
 function drillOf(item) { return item.kind.slice(0, -1); }
 
@@ -449,7 +559,7 @@ function explainRotation(item) {
 }
 
 registerDrill('rot', {
-  op: 'transform', name: 'Rotation',
+  op: 'transform', skill: 'rotation', name: 'Blocks',
   light: makeLightRotation, deep: makeDeepRotation,
   timeline: () => [],
   render: (item, el) => (item.kind === 'rotL' ? renderLightRotation : renderDeepRotation)(item, el),
@@ -586,11 +696,85 @@ function makeFigureCanvas(cssW, cssH) {
   return c;
 }
 
+// Faced cube: a unit cube whose six faces carry 2D content (die pips, net symbols, Rubik stickers).
+// Each face: outward normal n and in-face axes u (paint x, rightward) and v (paint up), with u × v = n.
+// paintFace(g, id) draws in the unit square [0,1]², x right and y down as on a canvas: paint (s, t)
+// is the cube point n/2 + (s - 0.5) u + (0.5 - t) v. Under the orthographic view that map is affine.
+const CUBE_FACES = [
+  { id: 'U', n: [0, 1, 0], u: [1, 0, 0], v: [0, 0, -1] },
+  { id: 'D', n: [0, -1, 0], u: [1, 0, 0], v: [0, 0, 1] },
+  { id: 'F', n: [0, 0, 1], u: [1, 0, 0], v: [0, 1, 0] },
+  { id: 'B', n: [0, 0, -1], u: [-1, 0, 0], v: [0, 1, 0] },
+  { id: 'L', n: [-1, 0, 0], u: [0, 0, 1], v: [0, 1, 0] },
+  { id: 'R', n: [1, 0, 0], u: [0, 0, -1], v: [0, 1, 0] }
+];
+// Fixed oblique view (Ruling D holds for it): F, R and U face the viewer when orient is the identity.
+const CUBE_VIEW = { yaw: -40 * DEG, pitch: 30 * DEG, roll: 0 };
+
+// orient (a 3×3 rotation) turns the cube first; the fixed view pose then shows it.
+function cubeViewVec(a, orient) {
+  return applyPose(orient.map(r => r[0] * a[0] + r[1] * a[1] + r[2] * a[2]), CUBE_VIEW);
+}
+
+function visibleFaces(orient) {
+  return CUBE_FACES.filter(f => cubeViewVec(f.n, orient)[2] > 1e-9).map(f => f.id);
+}
+
+// Canvas transform (device pixels) that maps the face's paint square onto its projected parallelogram.
+function faceLayout(face, orient, view) {
+  const [n, u, v] = [face.n, face.u, face.v].map(a => cubeViewVec(a, orient));
+  const p0 = [0, 1].map(i => n[i] / 2 - u[i] / 2 + v[i] / 2), sc = view.sc;
+  const m = [u[0] * sc, -u[1] * sc, -v[0] * sc, v[1] * sc, view.cx + p0[0] * sc, view.cy - p0[1] * sc];
+  const light = 0.45 + 0.55 * Math.max(0, n[0] * LIGHT_DIR[0] + n[1] * LIGHT_DIR[1] + n[2] * LIGHT_DIR[2]);
+  return { id: face.id, m, depth: n[2], light };
+}
+
+// Outline plus subdiv - 1 grid lines each way, built in paint space and stroked in device space.
+function strokeFaceLines(g, layout, view, subdiv) {
+  g.setTransform(...layout.m);
+  g.beginPath();
+  g.rect(0, 0, 1, 1);
+  for (let k = 1; k < subdiv; k++) {
+    g.moveTo(k / subdiv, 0); g.lineTo(k / subdiv, 1);
+    g.moveTo(0, k / subdiv); g.lineTo(1, k / subdiv);
+  }
+  g.setTransform(1, 0, 0, 1, 0, 0);
+  g.strokeStyle = view.dark ? '#0f172a' : '#475569';
+  g.lineWidth = Math.max(1, view.sc / 70);
+  g.stroke();
+}
+
+function drawCubeFace(g, layout, paintFace, view) {
+  g.setTransform(...layout.m);
+  g.fillStyle = view.dark ? '#94a3b8' : '#f8fafc';
+  g.fillRect(0, 0, 1, 1);
+  g.save();
+  g.beginPath(); g.rect(0, 0, 1, 1); g.clip();
+  paintFace(g, layout.id);
+  g.restore();
+  g.fillStyle = 'rgba(0,0,0,' + ((1 - layout.light) * 0.5).toFixed(3) + ')';
+  g.fillRect(0, 0, 1, 1);
+}
+
+// opts = { dark, subdiv }: subdiv 3 draws the 3×3 sticker grid; omit it for a plain face.
+function drawFacedCube(canvas, orient, paintFace, opts) {
+  const g = canvas.getContext('2d');
+  g.setTransform(1, 0, 0, 1, 0, 0);
+  g.clearRect(0, 0, canvas.width, canvas.height);
+  g.lineJoin = 'round';
+  const view = { cx: canvas.width / 2, cy: canvas.height / 2, sc: fitScale([[0, 0, 0]], canvas), dark: opts.dark };
+  const layouts = CUBE_FACES.filter(f => visibleFaces(orient).includes(f.id)).map(f => faceLayout(f, orient, view));
+  for (const layout of layouts.sort((a, b) => a.depth - b.depth)) {
+    drawCubeFace(g, layout, paintFace, view);
+    strokeFaceLines(g, layout, view, opts.subdiv || 1);
+  }
+}
+
 // ===== TRACKING ITEMS =====
 const KING_STEPS = [[1,0],[-1,0],[0,1],[0,-1],[1,1],[1,-1],[-1,1],[-1,-1]];
 const KNIGHT_MOVES = [[1,2],[2,1],[2,-1],[1,-2],[-1,-2],[-2,-1],[-2,1],[-1,2]];
 
-function squareName([f, r]) { return 'abcde'[f] + (r + 1); }
+function squareName([f, r]) { return 'abcdefgh'[f] + (r + 1); }
 
 function makeTracking(size, steps, count, rng) {
   const start = [Math.floor(rng() * size), Math.floor(rng() * size)];
@@ -639,7 +823,7 @@ function boardSquares(n) {
 function explainTracking(item) { return 'It ended on ' + squareName(item.end) + '.'; }
 
 registerDrill('trk', {
-  op: 'transform', name: 'Tracking',
+  op: 'transform', skill: 'tracking', name: 'Dot',
   light: makeLightTracking, deep: makeDeepTracking,
   timeline: trackingTimeline,
   render: renderTracking,
@@ -809,7 +993,7 @@ function makeMatOption(key, size, dark) {
   return b;
 }
 
-function renderMatrix(item, el) {
+function renderPatternMatrix(item, el) {
   const dark = item.kind === 'matD', deep = item.options.length > 2, size = matCellSize(deep);
   el.innerHTML = ''; el.className = item.kind;
   const q = makeDiv('q matQ', 'Which cell completes it?');
@@ -835,11 +1019,11 @@ function explainMatrix(item) {
 }
 
 registerDrill('mat', {
-  op: 'rules', name: 'Matrices',
+  hidden: true, skill: 'rules', op: 'rules', name: 'Matrices',
   light: (level, rng) => matrixItem('L', 1, 2, rng),
   deep: (level, rng) => matrixItem('D', CONFIG.mat.deepVarying(level), 6, rng),
   timeline: () => [],
-  render: renderMatrix,
+  render: renderPatternMatrix,
   answer: item => item.answer,
   options: item => item.options,
   explain: explainMatrix
@@ -990,7 +1174,7 @@ function explainSeries(item) {
 }
 
 registerDrill('ser', {
-  op: 'rules', name: 'Series',
+  hidden: true, skill: 'rules', op: 'rules', name: 'Series',
   light: (level, rng) => seriesItem('L', 1, rng),
   deep: (level, rng) => seriesItem('D', CONFIG.ser.deepVarying(level), rng),
   timeline: () => [],
@@ -1147,7 +1331,7 @@ function explainOdds(item) {
 }
 
 registerDrill('odd', {
-  op: 'odds', name: 'Odds',
+  hidden: true, skill: 'odds', op: 'odds', name: 'Odds',
   light: makeOddsLight,
   deep: makeOddsDeep,
   timeline: () => [],
@@ -1223,7 +1407,7 @@ function explainValue(item) {
 }
 
 registerDrill('ev', {
-  op: 'odds', name: 'Value',
+  hidden: true, skill: 'odds', op: 'odds', name: 'Value',
   light: makeEvLight,
   deep: makeEvDeep,
   timeline: () => [],
@@ -1330,7 +1514,7 @@ function explainSeq(item) {
 }
 
 registerDrill('seq', {
-  op: 'memory', name: 'Sequence',
+  hidden: true, skill: 'memory', op: 'memory', name: 'Sequence',
   light: makeSeqLight, deep: makeSeqDeep,
   timeline: seqTimeline,
   render: renderSeq,
@@ -1429,7 +1613,7 @@ function explainCards(item) {
 }
 
 registerDrill('crd', {
-  op: 'memory', name: 'Cards',
+  hidden: true, skill: 'memory', op: 'memory', name: 'Cards',
   light: makeCardsLight, deep: makeCardsDeep,
   timeline: cardsTimeline,
   render: renderCards,
@@ -1528,7 +1712,7 @@ function explainNim(item) {
 }
 
 registerDrill('nim', {
-  op: 'backward', name: 'Take-away',
+  hidden: true, skill: 'backward', op: 'backward', name: 'Take-away',
   light: makeNimLight, deep: makeNimDeep,
   timeline: () => [],
   render: renderNim,
@@ -1622,7 +1806,7 @@ function markReachMiss(el, item) {
 function explainReach(item) { return 'Shortest: ' + item.answer + ' moves.'; }
 
 registerDrill('rch', {
-  op: 'backward', name: 'Reach',
+  hidden: true, skill: 'backward', op: 'backward', name: 'Reach',
   light: makeReachLight, deep: makeReachDeep,
   timeline: () => [],
   render: renderReach,
@@ -1630,6 +1814,1670 @@ registerDrill('rch', {
   options: item => item.options,
   markMiss: markReachMiss,
   explain: explainReach
+});
+
+// ===== DIE =====
+// World frame: x right, y up, z toward the viewer. A move turns the whole die about a world axis.
+// Faces by world side at the identity: U (top), D, F (front, +z), B, R (+x), L. Opposite faces sum to 7;
+// U=1, F=2, R=3 makes 1-2-3 run counter-clockwise round their shared corner (right-handed).
+CONFIG.die = { lightMoves: lvl => (lvl < 4 ? 1 : 2), deepMoves: lvl => Math.min(3 + Math.floor(Math.max(0, lvl - 6) / 3), 6) };
+const DIE_NUMBERS = { U: 1, D: 6, F: 2, B: 5, R: 3, L: 4 };
+
+// rot: the world rotation. icon.to: the world side the top face goes to; icon.spin: +1 clockwise seen from above, -1 anticlockwise.
+// effect: what the first move does, for the miss line. undo: the move that cancels it.
+const DIE_MOVES = {
+  rollF: { rot: [[1, 0, 0], [0, 0, -1], [0, 1, 0]], icon: { to: 'F' }, cap: 'tip', undo: 'rollB', effect: 'Tip front: back comes up.' },
+  rollB: { rot: [[1, 0, 0], [0, 0, 1], [0, -1, 0]], icon: { to: 'B' }, cap: 'tip', undo: 'rollF', effect: 'Tip back: front comes up.' },
+  rollR: { rot: [[0, 1, 0], [-1, 0, 0], [0, 0, 1]], icon: { to: 'R' }, cap: 'tip', undo: 'rollL', effect: 'Tip right: left comes up.' },
+  rollL: { rot: [[0, -1, 0], [1, 0, 0], [0, 0, 1]], icon: { to: 'L' }, cap: 'tip', undo: 'rollR', effect: 'Tip left: right comes up.' },
+  spinCW: { rot: [[0, 0, -1], [0, 1, 0], [1, 0, 0]], icon: { spin: 1 }, cap: 'spin ↻', undo: 'spinCCW', effect: 'Spin: the top stays.' },
+  spinCCW: { rot: [[0, 0, 1], [0, 1, 0], [-1, 0, 0]], icon: { spin: -1 }, cap: 'spin ↺', undo: 'spinCW', effect: 'Spin: the top stays.' }
+};
+const DIE_MOVE_IDS = Object.keys(DIE_MOVES);
+
+
+// The body face pointing up is the one whose normal is row 1 of the orientation (the matrix is orthogonal).
+function dieTop(orient) {
+  return DIE_NUMBERS[CUBE_FACES.find(f => f.n.join() === orient[1].join()).id];
+}
+
+function topAfter(start, moves) {
+  return dieTop(moves.reduce((m, id) => matMul(DIE_MOVES[id].rot, m), start));
+}
+
+function randomDieMoves(count, rng) {
+  const moves = [];
+  while (moves.length < count) {
+    const prev = moves[moves.length - 1];
+    moves.push(pick(DIE_MOVE_IDS.filter(id => !prev || id !== DIE_MOVES[prev].undo), rng));
+  }
+  return moves;
+}
+
+function dieOptions(answer, count, rng) {
+  if (count === 6) return ['1', '2', '3', '4', '5', '6'];
+  const decoys = shuffle(['1', '2', '3', '4', '5', '6'].filter(n => n !== answer), rng).slice(0, count - 1);
+  return [answer, ...decoys].sort();
+}
+
+// The top must change, so the answer cannot be read off the start die.
+function makeDieItem(kind, moveCount, rng) {
+  for (let tries = 0; tries < 200; tries++) {
+    const start = pick(ROTATIONS, rng), moves = randomDieMoves(moveCount, rng), top = topAfter(start, moves);
+    if (top === dieTop(start)) continue;
+    return { kind, start, moves, answer: String(top), options: dieOptions(String(top), kind === 'dieD' ? 6 : 3, rng) };
+  }
+  throw new Error('die: no draw changed the top');
+}
+
+const PIPS = { 1: [[5, 5]], 2: [[3, 3], [7, 7]], 3: [[3, 3], [5, 5], [7, 7]], 4: [[3, 3], [7, 3], [3, 7], [7, 7]],
+  5: [[3, 3], [7, 3], [5, 5], [3, 7], [7, 7]], 6: [[3, 3], [7, 3], [3, 5], [7, 5], [3, 7], [7, 7]] };
+
+function paintDieFace(g, id) {
+  g.fillStyle = '#0f172a';
+  PIPS[DIE_NUMBERS[id]].forEach(([x, y]) => { g.beginPath(); g.arc(x / 10, y / 10, 0.085, 0, 2 * Math.PI); g.fill(); });
+}
+
+// Icon geometry comes from the same view as the die: screen = (x, -y) of the projected world vector, in a 100-unit box.
+const DIE_ICON = { cx: 50, cy: 56, s: 57 };
+const IDENTITY = [[1, 0, 0], [0, 1, 0], [0, 0, 1]];
+
+function iconPt(vec, k = 1) {
+  const p = cubeViewVec(vec, IDENTITY);
+  return [DIE_ICON.cx + p[0] * DIE_ICON.s * k, DIE_ICON.cy - p[1] * DIE_ICON.s * k];
+}
+
+function iconSum(...terms) {
+  return terms.reduce((acc, [vec, k]) => { const p = iconPt(vec, k); return [acc[0] + p[0] - DIE_ICON.cx, acc[1] + p[1] - DIE_ICON.cy]; }, [DIE_ICON.cx, DIE_ICON.cy]);
+}
+
+function iconCube() {
+  const shade = { U: '#e8edf4', F: '#b7c2d3', R: '#8d9bb0', B: '#b7c2d3', L: '#8d9bb0', D: '#8d9bb0' };
+  return visibleFaces(IDENTITY).map(id => {
+    const f = CUBE_FACES.find(x => x.id === id);
+    const pts = [[-1, -1], [1, -1], [1, 1], [-1, 1]].map(([a, b]) => iconSum([f.n, 0.5], [f.u, a * 0.5], [f.v, b * 0.5]));
+    return `<polygon points="${pts.map(p => p.map(x => x.toFixed(1)).join(',')).join(' ')}" fill="${shade[id]}" stroke="#334155" stroke-width="2" stroke-linejoin="round"/>`;
+  }).join('');
+}
+
+function arrowHead(tip, from) {
+  const dx = tip[0] - from[0], dy = tip[1] - from[1], len = Math.hypot(dx, dy) || 1, tx = dx / len, ty = dy / len;
+  const b = [tip[0] - tx * 13, tip[1] - ty * 13], w = 7;
+  return `${tip[0].toFixed(1)},${tip[1].toFixed(1)} ${(b[0] - ty * w).toFixed(1)},${(b[1] + tx * w).toFixed(1)} ${(b[0] + ty * w).toFixed(1)},${(b[1] - tx * w).toFixed(1)}`;
+}
+
+function arrowMarkup(d, head) {
+  const stroke = (c, w) => `<path d="${d}" fill="none" stroke="${c}" stroke-width="${w}" stroke-linecap="round"/>`;
+  const tri = c => `<polygon points="${head}" fill="${c}" stroke="${c}" stroke-width="${c === '#fff' ? 5 : 1}" stroke-linejoin="round"/>`;
+  return stroke('#fff', 10) + tri('#fff') + stroke('#d9480f', 5.5) + tri('#d9480f');
+}
+
+// A roll arrow lies on the top face, from its centre to the midpoint of the edge the die tips over.
+function rollArrow(to) {
+  const f = CUBE_FACES.find(x => x.id === to), start = iconSum([[0, 1, 0], 0.5], [f.n, -0.3]), end = iconSum([[0, 1, 0], 0.5], [f.n, 0.46]);
+  const d = `M${start[0].toFixed(1)},${start[1].toFixed(1)} L${end[0].toFixed(1)},${end[1].toFixed(1)}`;
+  return arrowMarkup(d, arrowHead(end, start));
+}
+
+// A spin arrow runs round the top face: front to left is clockwise seen from above.
+function spinArrow(sign) {
+  const at = a => iconSum([[0, 1, 0], 0.5], [[0, 0, 1], 0.4 * Math.cos(a)], [[-1, 0, 0], 0.4 * Math.sin(a)]);
+  const pts = Array.from({ length: 19 }, (_, i) => at(0.5 + sign * i * 15 * DEG));
+  const d = 'M' + pts.map(p => p.map(x => x.toFixed(1)).join(',')).join(' L');
+  return arrowMarkup(d, arrowHead(pts[18], pts[16]));
+}
+
+function dieIcon(moveId, size) {
+  const icon = DIE_MOVES[moveId].icon, svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  svg.setAttribute('viewBox', '0 0 100 100'); svg.setAttribute('width', size); svg.setAttribute('height', size);
+  svg.innerHTML = iconCube() + (icon.spin ? spinArrow(icon.spin) : rollArrow(icon.to));
+  return svg;
+}
+
+function dieMoveCell(moveId, size) {
+  const cell = makeDiv('dieMove', '');
+  cell.append(dieIcon(moveId, size), makeDiv('dieCap', DIE_MOVES[moveId].cap));
+  return cell;
+}
+
+// More than four moves wrap into rows of three; the start die takes the height that is left.
+function dieLayout(item) {
+  const deep = item.kind === 'dieD', w = screenWidth(), n = item.moves.length, rows = n > 4 ? 2 : 1;
+  const icon = deep ? 64 : 72, fixed = 180 + rows * (icon + 22) + (deep ? 150 : 90); // 20 spare for the miss line or the Next bar
+  const room = (window.innerHeight || 667) - fixed;
+  return { deep, icon, wrapW: (n > 4 ? 3 : n) * (icon + 6), side: Math.max(72, Math.min(w - 40, 220, room)) };
+}
+
+function renderDie(item, el) {
+  el.innerHTML = ''; el.className = item.kind;
+  const lay = dieLayout(item), canvas = makeFigureCanvas(lay.side, lay.side);
+  drawFacedCube(canvas, item.start, paintDieFace, { dark: lay.deep });
+  const moves = makeDiv('dieMoves', ''), opts = makeDiv('dieOpts', '');
+  moves.style.maxWidth = lay.wrapW + 'px';
+  item.moves.forEach(id => moves.appendChild(dieMoveCell(id, lay.icon)));
+  item.options.forEach(n => opts.appendChild(makeAnswerButton(n, n, 'matOpt dieOpt')));
+  el.append(makeDiv('q matQ', 'Which number ends on top?'), canvas, makeDiv('dieLegend', 'Arrow on top: the die tips over that edge. Opposite faces add to 7.'), moves, opts);
+}
+
+// Light has room for the opposite-faces rule; Deep lines stay within 36 characters.
+function explainDie(item) {
+  const line = 'Top: ' + item.answer + '. ' + DIE_MOVES[item.moves[0]].effect;
+  return item.kind === 'dieL' ? line + ' Opposites add to 7.' : line;
+}
+
+registerDrill('die', {
+  op: 'transform', skill: 'rotation', name: 'Die',
+  light: (level, rng) => makeDieItem('dieL', CONFIG.die.lightMoves(level), rng),
+  deep: (level, rng) => makeDieItem('dieD', CONFIG.die.deepMoves(level), rng),
+  timeline: () => [],
+  render: renderDie,
+  answer: item => item.answer,
+  options: item => item.options,
+  explain: explainDie
+});
+
+// ===== NET =====
+// A cube net: six cells on a grid (row down, column right), each with a glyph and a clockwise quarter-turn r.
+// Folding: the first cell is the front face F; a fold across a cell edge turns the frame (n, u right, v up).
+CONFIG.net = { pool: lvl => (lvl < 4 ? 4 : lvl < 10 ? 6 : 11) };
+const NETS = [
+  ['.X..', 'XXXX', '.X..'], ['X...', 'XXXX', '.X..'], ['.X..', 'XXXX', '..X.'], ['X...', 'XXXX', 'X...'],
+  ['X...', 'XXXX', '..X.'], ['XX..', '.XX.', '..XX'], ['X...', 'XXXX', '...X'],
+  ['XX..', '.XXX', '.X..'], ['XX..', '.XXX', '..X.'], ['XX..', '.XXX', '...X'], ['XXX..', '..XXX']
+];
+
+function netCells(rows) {
+  return rows.flatMap((row, r) => [...row].flatMap((ch, c) => (ch === 'X' ? [[r, c]] : [])));
+}
+
+// Glyphs in the unit paint square, upright at r = 0; none is symmetric under a turn or a mirror.
+function fillRects(g, colour, rects) { g.fillStyle = colour; rects.forEach(r => g.fillRect(...r)); }
+function fillPoly(g, pts) { g.beginPath(); pts.forEach(([x, y], i) => (i ? g.lineTo(x, y) : g.moveTo(x, y))); g.closePath(); g.fill(); }
+const NET_GLYPHS = [
+  { name: 'F', paint: g => fillRects(g, '#dc2626', [[0.28, 0.16, 0.15, 0.68], [0.28, 0.16, 0.46, 0.14], [0.28, 0.44, 0.34, 0.13]]) },
+  { name: 'flag', paint: g => { fillRects(g, '#2563eb', [[0.24, 0.14, 0.09, 0.72]]); fillPoly(g, [[0.33, 0.14], [0.8, 0.3], [0.33, 0.48]]); } },
+  { name: 'key', paint: g => {
+    fillRects(g, '#ea580c', [[0.42, 0.45, 0.42, 0.1], [0.72, 0.55, 0.09, 0.17]]);
+    g.beginPath(); g.arc(0.28, 0.5, 0.16, 0, 2 * Math.PI); g.arc(0.28, 0.5, 0.07, 0, 2 * Math.PI, true); g.fill();
+  } },
+  { name: 'moon', paint: g => {
+    g.fillStyle = '#7c3aed'; g.beginPath(); g.arc(0.46, 0.52, 0.32, -Math.PI / 2, Math.PI / 2); g.closePath(); g.fill();
+    g.beginPath(); g.arc(0.27, 0.26, 0.09, 0, 2 * Math.PI); g.fill();
+  } },
+  { name: 'arrow', paint: g => { fillRects(g, '#16a34a', [[0.43, 0.38, 0.14, 0.48], [0.57, 0.7, 0.2, 0.12]]); fillPoly(g, [[0.5, 0.1], [0.8, 0.42], [0.2, 0.42]]); } },
+  { name: 'L', paint: g => fillRects(g, '#0891b2', [[0.28, 0.14, 0.15, 0.72], [0.28, 0.72, 0.46, 0.14]]) }
+];
+
+function paintGlyph(g, id, r) {
+  g.save();
+  g.translate(0.5, 0.5); g.rotate(r * Math.PI / 2); g.translate(-0.5, -0.5);
+  NET_GLYPHS[id].paint(g);
+  g.restore();
+}
+
+const NET_FOLD = { E: (f) => ({ n: f.u, u: neg(f.n), v: f.v }), W: (f) => ({ n: neg(f.u), u: f.n, v: f.v }),
+  N: (f) => ({ n: f.v, u: f.u, v: neg(f.n) }), S: (f) => ({ n: neg(f.v), u: f.u, v: f.n }) };
+const NET_DIRS = { E: [0, 1], W: [0, -1], N: [-1, 0], S: [1, 0] };
+function neg(a) { return a.map(x => -x); }
+
+// 3D frame of every cell: breadth-first from cell 0, which sits on F with u = x, v = y.
+function netFrames(cells) {
+  const frames = [{ n: [0, 0, 1], u: [1, 0, 0], v: [0, 1, 0] }], queue = [0];
+  while (queue.length) {
+    const i = queue.shift();
+    for (const d of Object.keys(NET_DIRS)) {
+      const j = cells.findIndex(c => c[0] === cells[i][0] + NET_DIRS[d][0] && c[1] === cells[i][1] + NET_DIRS[d][1]);
+      if (j >= 0 && !frames[j]) { frames[j] = NET_FOLD[d](frames[i]); queue.push(j); }
+    }
+  }
+  return frames;
+}
+
+// Quarter turns k with: the cell frame is the face frame turned k times clockwise (u -> -v, v -> u).
+function frameTurns(face, frame) {
+  let u = face.u, v = face.v;
+  for (let k = 0; k < 4; k++) {
+    if (u.join() === frame.u.join()) return k;
+    [u, v] = [neg(v), u];
+  }
+  throw new Error('net: frame mismatch');
+}
+
+// Folded cube as body face id -> { g, r } in that face's paint frame.
+function foldNetFaces(cells, glyphs) {
+  const faces = {};
+  netFrames(cells).forEach((fr, i) => {
+    const face = CUBE_FACES.find(f => f.n.join() === fr.n.join());
+    faces[face.id] = { g: glyphs[i].g, r: (glyphs[i].r + frameTurns(face, fr)) % 4 };
+  });
+  return faces;
+}
+
+// A random net from the level's pool, mirrored at random; shuffled glyphs at random turns.
+function randomNet(level, rng) {
+  const netId = Math.floor(rng() * CONFIG.net.pool(level)), rows = NETS[netId];
+  const fr = rng() < 0.5, fc = rng() < 0.5, R = rows.length - 1, C = rows[0].length - 1;
+  const cells = netCells(rows).map(([r, c]) => [fr ? R - r : r, fc ? C - c : c]);
+  const ids = shuffle([0, 1, 2, 3, 4, 5], rng), glyphs = ids.map(g => ({ g, r: Math.floor(rng() * 4) }));
+  return { netId, cells, glyphs };
+}
+
+function makeNetLight(level, rng) {
+  const net = randomNet(level, rng), faces = foldNetFaces(net.cells, net.glyphs), mark = Math.floor(rng() * 6);
+  const markedFace = Object.keys(faces).find(id => faces[id].g === net.glyphs[mark].g);
+  const n = CUBE_FACES.find(f => f.id === markedFace).n, opp = CUBE_FACES.find(f => f.n.join() === neg(n).join()).id;
+  const answer = faces[opp].g, others = shuffle([0, 1, 2, 3, 4, 5].filter(g => g !== answer && g !== net.glyphs[mark].g), rng);
+  const options = shuffle([answer, others[0], others[1]], rng).map(String);
+  return { kind: 'netL', ...net, mark, answer: String(answer), options };
+}
+
+// What a cube shows: per visible face its world normal, glyph and the world direction of the glyph's top.
+function shownGlyphs(faces, orient) {
+  return visibleFaces(orient).map(id => {
+    const f = CUBE_FACES.find(x => x.id === id), r = faces[id].r, up = [f.v, f.u, neg(f.v), neg(f.u)][r];
+    return { n: applyMat(orient, f.n).join(), g: faces[id].g, up: applyMat(orient, up).join() };
+  });
+}
+
+function cubePicture(faces, orient) {
+  return shownGlyphs(faces, orient).map(s => s.n + ':' + s.g + ':' + s.up).sort().join('|');
+}
+
+function foldsTo(truth, opt) {
+  const shown = cubePicture(opt.faces, opt.orient);
+  return ROTATIONS.some(q => cubePicture(truth, q) === shown);
+}
+
+// Two pictures could be one cube: some turn of b agrees with a wherever they share a side or a glyph.
+function picturesFit(a, b) {
+  const A = shownGlyphs(a.faces, a.orient), B = shownGlyphs(b.faces, b.orient), turn = (q, v) => applyMat(q, v.split(',').map(Number)).join();
+  return ROTATIONS.some(q => B.every(s => A.every(x => {
+    const y = { n: turn(q, s.n), g: s.g, up: turn(q, s.up) };
+    return (x.n !== y.n && x.g !== y.g) || (x.n === y.n && x.g === y.g && x.up === y.up);
+  })));
+}
+
+// Ruling EE: the truth must not be the option that fits the most others, or it can be found without the net.
+function truthLeads(cubes) {
+  const counts = cubes.map((a, i) => cubes.filter((b, j) => j !== i && picturesFit(a, b)).length);
+  return counts.slice(1).every(n => n < counts[0]);
+}
+
+// Decoy: two faces swapped (one visible) or one visible glyph turned 90 degrees.
+function netDecoy(truth, rng) {
+  const orient = pick(ROTATIONS, rng), faces = JSON.parse(JSON.stringify(truth)), seen = visibleFaces(orient);
+  const a = pick(seen, rng);
+  if (rng() < 0.5) faces[a].r = (faces[a].r + (rng() < 0.5 ? 1 : 3)) % 4;
+  else { const b = pick(Object.keys(faces).filter(id => id !== a), rng); [faces[a], faces[b]] = [faces[b], faces[a]]; }
+  return { orient, faces };
+}
+
+// Truth first, then three decoys that do not fold from the net and differ from every option so far.
+function netCubes(truth, rng) {
+  const cubes = [{ orient: pick(ROTATIONS, rng), faces: truth }];
+  for (let tries = 0; cubes.length < 4; tries++) {
+    if (tries > 200) throw new Error('net: no distinct decoys');
+    const d = netDecoy(truth, rng), pic = cubePicture(d.faces, d.orient);
+    if (!foldsTo(truth, d) && cubes.every(c => cubePicture(c.faces, c.orient) !== pic)) cubes.push(d);
+  }
+  return cubes;
+}
+
+function makeNetDeep(level, rng) {
+  const net = randomNet(level, rng), truth = foldNetFaces(net.cells, net.glyphs);
+  for (let tries = 0; tries < 100; tries++) {
+    const cubes = netCubes(truth, rng);
+    if (truthLeads(cubes)) continue;
+    const order = shuffle([0, 1, 2, 3], rng);
+    return { kind: 'netD', ...net, cubes: order.map(i => cubes[i]), answer: String(order.indexOf(0)), options: ['0', '1', '2', '3'] };
+  }
+  throw new Error('net: the truth always fits the most options');
+}
+
+// Flat net from the same glyph painters; the marked cell (Light) gets a yellow fill and an inset ring.
+function drawNet(canvas, item, cell, dark) {
+  const g = canvas.getContext('2d'), dpr = canvas.width / parseFloat(canvas.style.width), s = cell * dpr;
+  item.cells.forEach(([r, c], i) => {
+    g.setTransform(s, 0, 0, s, (c * cell + 2) * dpr, (r * cell + 2) * dpr);
+    g.fillStyle = i === item.mark ? '#fde68a' : dark ? '#94a3b8' : '#f8fafc';
+    g.fillRect(0, 0, 1, 1);
+    if (i === item.mark) { g.strokeStyle = '#d97706'; g.lineWidth = 0.08; g.strokeRect(0.08, 0.08, 0.84, 0.84); }
+    paintGlyph(g, item.glyphs[i].g, item.glyphs[i].r);
+    g.strokeStyle = dark ? '#0f172a' : '#475569'; g.lineWidth = 1.5 / cell; g.strokeRect(0, 0, 1, 1);
+  });
+}
+
+function netCanvas(item, cell) {
+  const rows = Math.max(...item.cells.map(c => c[0])) + 1, cols = Math.max(...item.cells.map(c => c[1])) + 1;
+  const canvas = makeFigureCanvas(cols * cell + 4, rows * cell + 4);
+  canvas.className = 'netCanvas';
+  drawNet(canvas, item, cell, item.kind === 'netD');
+  return canvas;
+}
+
+function glyphButton(id, size) {
+  const b = makeAnswerButton('', String(id), 'matOpt netOpt'), c = makeFigureCanvas(size, size), g = c.getContext('2d');
+  g.setTransform(c.width, 0, 0, c.height, 0, 0);
+  paintGlyph(g, id, 0);
+  b.appendChild(c);
+  return b;
+}
+
+function cubeButton(cube, i, side) {
+  const b = makeAnswerButton('', String(i), 'matOpt netOpt'), c = makeFigureCanvas(side, side);
+  drawFacedCube(c, cube.orient, (g, id) => paintGlyph(g, cube.faces[id].g, cube.faces[id].r), { dark: true });
+  b.appendChild(c);
+  return b;
+}
+
+// Deep: the net shrinks first; the 2x2 cubes keep at least 100 px (145 at 375x667, 120 at 320x568).
+function netSizes(item) {
+  const w = screenWidth(), h = window.innerHeight || 667, cols = Math.max(...item.cells.map(c => c[1])) + 1;
+  if (item.kind === 'netL') return { cell: Math.min(Math.floor((w - 40) / cols), 72) };
+  const rows = Math.max(...item.cells.map(c => c[0])) + 1, cell = Math.min(Math.floor((w - 40) / cols), Math.floor((h - 460) / rows), 52);
+  return { cell: Math.max(cell, 28), cube: Math.max(100, Math.min(Math.floor((w - 60) / 2), Math.floor((h - 220 - rows * cell) / 2), 160)) };
+}
+
+function renderNet(item, el) {
+  el.innerHTML = ''; el.className = item.kind;
+  const sz = netSizes(item), opts = makeDiv('netOpts', '');
+  if (item.kind === 'netL') item.options.forEach(id => opts.appendChild(glyphButton(+id, 56)));
+  else item.cubes.forEach((cube, i) => opts.appendChild(cubeButton(cube, i, sz.cube)));
+  const q = item.kind === 'netL' ? 'Fold it up. Which symbol is opposite the yellow square?' : 'Which cube folds from this net?';
+  el.append(makeDiv('q matQ', q), netCanvas(item, sz.cell), opts);
+}
+
+registerDrill('net', {
+  op: 'transform', skill: 'rotation', name: 'Net',
+  light: makeNetLight,
+  deep: makeNetDeep,
+  timeline: () => [],
+  render: renderNet,
+  answer: item => item.answer,
+  options: item => item.options,
+  explain: item => (item.kind === 'netL' ? 'Opposite the yellow square: the ' + NET_GLYPHS[+item.answer].name + '.' : 'Each wrong cube swaps or turns one.')
+});
+
+// ===== INSTRUCTION TURNS =====
+// Turns act on the voxels in the world frame (x, y, z); the camera pose stays fixed for the start and every option.
+// + is counter-clockwise looking from the axis tip toward the origin (right-hand rule).
+CONFIG.rti = { cubes: lvl => Math.min(5 + Math.floor(lvl / 5), 7), lightHalfFrom: 4, deepTurns: lvl => (lvl < 10 ? 2 : 3) };
+const AXIS_NAMES = ['x', 'y', 'z'];
+const QUARTER_TURNS = [[[1, 0, 0], [0, 0, -1], [0, 1, 0]], [[0, 0, 1], [0, 1, 0], [-1, 0, 0]], [[0, -1, 0], [1, 0, 0], [0, 0, 1]]];
+
+function turnMatrix(axis, deg) {
+  let m = IDENTITY;
+  for (let q = (((deg / 90) % 4) + 4) % 4; q > 0; q--) m = matMul(QUARTER_TURNS[axis], m);
+  return m;
+}
+
+function turnsMatrix(turns) { return turns.reduce((m, t) => matMul(turnMatrix(t.axis, t.deg), m), IDENTITY); }
+
+function trivialStabiliser(vox) {
+  const key = shapeKey(vox);
+  return ROTATIONS.filter(m => shapeKey(rotate(vox, m)) === key).length === 1;
+}
+
+// Spec §5: a chiral shape that no turn maps onto itself, so distinct turns give distinct pictures.
+function rtiShape(n, rng) {
+  for (let i = 0; i < 200; i++) {
+    const v = randomChiralPolycube(n, rng);
+    if (trivialStabiliser(v)) return v;
+  }
+  throw new Error('rti: no asymmetric polycube of size ' + n);
+}
+
+// A corner view near CUBE_VIEW: all three axis tips lean toward the viewer, so "seen from the tip" matches the screen.
+function rtiPose(rng) {
+  for (let i = 0; i < 200; i++) {
+    const pose = { yaw: -(20 + rng() * 50) * DEG, pitch: (18 + rng() * 30) * DEG, roll: (rng() * 40 - 20) * DEG };
+    if ([[1, 0, 0], [0, 1, 0], [0, 0, 1]].every(a => applyPose(a, pose)[2] >= 0.3)) return pose;
+  }
+  throw new Error('rti: no corner pose');
+}
+
+function randomTurns(count, withHalf, rng) {
+  const turns = [];
+  while (turns.length < count) {
+    const prev = turns[turns.length - 1];
+    turns.push({ axis: pick([0, 1, 2].filter(a => !prev || a !== prev.axis), rng), deg: pick(withHalf ? [90, -90, 180] : [90, -90], rng) });
+  }
+  return turns;
+}
+
+// One-mistake edits of a turn list: wrong direction, wrong axis, wrong order.
+function turnEdits(turns) {
+  const out = [], at = (i, f) => ts => ts.map((s, j) => (j === i ? f(s) : s));
+  turns.forEach((t, i) => {
+    if (t.deg !== 180) out.push({ kind: 'dir', f: at(i, s => ({ ...s, deg: -s.deg })) });
+    [1, 2].forEach(k => out.push({ kind: 'axis', f: at(i, s => ({ ...s, axis: (s.axis + k) % 3 })) }));
+    if (i + 1 < turns.length) out.push({ kind: 'order', f: ts => ts.map((s, j) => ts[j === i ? i + 1 : j === i + 1 ? i : j]) });
+  });
+  return out;
+}
+
+// Light: truth and one mistake. Deep: truth, mistake a, mistake b and both, so every option is one mistake
+// from two others and two from the last: no option sits in the middle of the set.
+function optionLists(turns, deep, rng) {
+  const edits = turnEdits(turns), a = pick(edits, rng);
+  if (!deep) return [turns, a.f(turns)];
+  const b = pick(edits.filter(e => e.kind !== a.kind), rng);
+  return [turns, a.f(turns), b.f(turns), b.f(a.f(turns))];
+}
+
+function tryRti(kind, level, rng) {
+  const deep = kind === 'rtiD', shape = rtiShape(CONFIG.rti.cubes(level), rng), pose = rtiPose(rng);
+  const turns = randomTurns(deep ? CONFIG.rti.deepTurns(level) : 1, deep || level >= CONFIG.rti.lightHalfFrom, rng);
+  const figs = optionLists(turns, deep, rng).map(ts => rotate(shape, turnsMatrix(ts)));
+  const keys = [shape, ...figs].map(shapeKey);
+  if (new Set(keys).size !== keys.length) return null;
+  if (![shape, ...figs].every(v => allCubesVisible(v, pose, CONFIG.rot.minCubeVisible))) return null;
+  const order = shuffle(figs.map((_, i) => i), rng);
+  return { kind, shape, pose, turns, figs: order.map(i => figs[i]), answer: String(order.indexOf(0)), options: order.map((_, i) => String(i)) };
+}
+
+function makeRti(kind, level, rng) {
+  for (let i = 0; i < 200; i++) {
+    const item = tryRti(kind, level, rng);
+    if (item) return item;
+  }
+  throw new Error('rti: no valid item');
+}
+
+// Axis colours blue, amber, green (no red); lighter variants on the Deep background.
+const RTI_AXIS = { light: ['#3b5bdb', '#b45309', '#15803d'], dark: ['#91a7ff', '#fbbf24', '#4ade80'] };
+const AXIS_GLYPHS = [[[[-1, -1], [1, 1]], [[1, -1], [-1, 1]]], [[[-1, -1], [0, 0.1], [1, -1]], [[0, 0.1], [0, 1.1]]],
+  [[[-1, -1], [1, -1], [-1, 1], [1, 1]]]];
+
+function strokePaths(g, paths, at, s) {
+  g.beginPath();
+  paths.forEach(p => p.forEach(([x, y], i) => (i ? g.lineTo(at[0] + x * s, at[1] + y * s) : g.moveTo(at[0] + x * s, at[1] + y * s))));
+  g.stroke();
+}
+
+// One axis: halo then colour; a shaft from the centre, an arrow head and the letter drawn as strokes.
+function drawAxis(g, a, view, colour) {
+  const p = applyPose([0, 1, 2].map(i => (i === a ? 1 : 0)), view.pose), d = [p[0], -p[1]], len = Math.hypot(...d), u = d.map(x => x / len);
+  const tip = [view.cx + d[0] * view.reach, view.cy + d[1] * view.reach], k = view.px, n = [-u[1], u[0]];
+  const head = [[tip[0] - u[0] * 9 * k + n[0] * 4.5 * k, tip[1] - u[1] * 9 * k + n[1] * 4.5 * k], tip, [tip[0] - u[0] * 9 * k - n[0] * 4.5 * k, tip[1] - u[1] * 9 * k - n[1] * 4.5 * k]];
+  const label = [tip[0] + u[0] * 11 * k, tip[1] + u[1] * 11 * k];
+  [[view.halo, 6], [colour, 2.5]].forEach(([c, w]) => {
+    g.strokeStyle = c; g.lineWidth = w * k;
+    strokePaths(g, [[[view.cx, view.cy], tip], head], [0, 0], 1);
+    strokePaths(g, AXIS_GLYPHS[a], label, 4.5 * k);
+  });
+}
+
+// The start figure, a little smaller than its canvas so the three axes reach past it.
+function drawRtiStart(canvas, item, dark) {
+  const g = canvas.getContext('2d'), sc = fitScale(item.shape, canvas) * 0.74, px = canvas.width / parseFloat(canvas.style.width);
+  g.clearRect(0, 0, canvas.width, canvas.height);
+  g.lineJoin = 'round'; g.lineCap = 'round';
+  const view = { cx: canvas.width / 2, cy: canvas.height / 2, sc, dark, pose: item.pose, px, reach: canvas.width / 2 - 18 * px, halo: dark ? '#1d2333' : '#fff' };
+  for (const poly of facePolygons(item.shape, item.pose)) fillPolygon(g, poly, view);
+  [0, 1, 2].forEach(a => drawAxis(g, a, view, RTI_AXIS[dark ? 'dark' : 'light'][a]));
+}
+
+function turnText(t) { return (t.deg === 180 ? '180' : t.deg > 0 ? '+90' : '−90') + '°'; }
+
+function turnLines(item) {
+  return item.turns.map((t, i) => `<div class="rtiTurn">${i ? 'then' : 'Turn'} ${turnText(t)} about <b class="ax${t.axis}">${AXIS_NAMES[t.axis]}</b></div>`).join('');
+}
+
+// Legend: the axis tip seen head-on (a dot in a ring) with a counter-clockwise arrow round it.
+function legendSvg() {
+  const at = a => [17 + 12 * Math.cos(a * DEG), 17 - 12 * Math.sin(a * DEG)], pts = Array.from({ length: 15 }, (_, i) => at(-50 + i * 18));
+  const end = pts[14], t = [-Math.sin(202 * DEG), -Math.cos(202 * DEG)], n = [-t[1], t[0]];
+  const head = [[end[0] + t[0] * 6, end[1] + t[1] * 6], [end[0] + n[0] * 4, end[1] + n[1] * 4], [end[0] - n[0] * 4, end[1] - n[1] * 4]];
+  const f = ps => ps.map(p => p.map(x => x.toFixed(1)).join(',')).join(' ');
+  return `<svg viewBox="0 0 34 34" width="30" height="30"><circle cx="17" cy="17" r="4.5" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="17" cy="17" r="1.6" fill="currentColor"/>` +
+    `<polyline points="${f(pts)}" fill="none" stroke="currentColor" stroke-width="2"/><polygon points="${f(head)}" fill="currentColor"/></svg>`;
+}
+
+// Height left after the bar, question, grid padding and the miss line or Next bar. Light stacks the
+// start over the turn lines; Deep puts them side by side so the 2x2 grid keeps its height.
+function rtiSizes(deep) {
+  const w = screenWidth(), h = window.innerHeight || 667;
+  if (!deep) {
+    const opt = Math.min(Math.floor((w - 52) / 2), 170);
+    return { opt, start: Math.max(120, Math.min(w - 60, h - 233 - opt, 260)) };
+  }
+  const room = h - 190, opt = Math.max(90, Math.min(Math.floor((w - 52) / 2), Math.floor(room * 0.27)));
+  return { opt, start: Math.max(110, Math.min(w - 165, room - 2 * opt, 230)) };
+}
+
+function rtiOption(item, i, side) {
+  const b = makeAnswerButton('', String(i), 'matOpt rtiOpt'), c = makeFigureCanvas(side, side);
+  drawPolycube(c, item.figs[i], item.pose, item.kind === 'rtiD');
+  b.appendChild(c);
+  return b;
+}
+
+function renderRti(item, el) {
+  el.innerHTML = ''; el.className = item.kind;
+  const deep = item.kind === 'rtiD', sz = rtiSizes(deep), start = makeFigureCanvas(sz.start, sz.start);
+  start.className = 'rtiStart';
+  drawRtiStart(start, item, deep);
+  const top = makeDiv('rtiTop', ''), side = makeDiv('rtiSide', turnLines(item));
+  side.appendChild(makeDiv('rtiLegend', legendSvg() + '<span>+ turns counter-clockwise, seen from the arrow tip</span>'));
+  top.append(start, side);
+  const opts = makeDiv('rtiOpts', '');
+  item.figs.forEach((_, i) => opts.appendChild(rtiOption(item, i, sz.opt)));
+  el.append(makeDiv('q matQ', 'Which is the result?'), top, opts);
+}
+
+// Where the first turn sends the next axis round, e.g. "+90° about x: y goes to z."
+function explainRti(item) {
+  const t = item.turns[0], from = (t.axis + 1) % 3, to = applyMat(turnMatrix(t.axis, t.deg), [0, 1, 2].map(i => (i === from ? 1 : 0)));
+  const k = to.findIndex(x => x !== 0), dest = (to[k] < 0 ? '−' : '') + AXIS_NAMES[k];
+  const effect = AXIS_NAMES[from] + ' goes to ' + dest + '.';
+  return item.kind === 'rtiL' ? turnText(t) + ' about ' + AXIS_NAMES[t.axis] + ': ' + effect : 'First turn: ' + effect;
+}
+
+registerDrill('rti', {
+  op: 'transform', skill: 'rotation', name: 'Instructions',
+  light: (level, rng) => makeRti('rtiL', level, rng),
+  deep: (level, rng) => makeRti('rtiD', level, rng),
+  timeline: () => [],
+  render: renderRti,
+  answer: item => item.answer,
+  options: item => item.options,
+  explain: explainRti
+});
+
+// ===== CHESS =====
+// Real pieces move on a board that hides them. Each step shows the moving piece on its square and an arrow to
+// where it goes; the answer screen shows an empty board. Two pieces (Deep 10+): both shown at the start only.
+const CHESS_GLYPH = { rook: '♜', bishop: '♝', knight: '♞', king: '♚', queen: '♛' }; // filled forms: they stay legible in one colour
+const ROOK_DIRS = [[1, 0], [-1, 0], [0, 1], [0, -1]], BISHOP_DIRS = [[1, 1], [1, -1], [-1, 1], [-1, -1]];
+
+function onBoard(size, [f, r]) { return f >= 0 && r >= 0 && f < size && r < size; }
+function sameSq(a, b) { return a[0] === b[0] && a[1] === b[1]; }
+
+// Squares the piece may move to. Sliders stop before `other` (no passing through, no landing on it).
+function chessDestinations(type, from, other, size) {
+  const free = s => onBoard(size, s) && !(other && sameSq(s, other));
+  if (type === 'knight') return KNIGHT_MOVES.map(([a, b]) => [from[0] + a, from[1] + b]).filter(free);
+  const dirs = type === 'rook' ? ROOK_DIRS : type === 'bishop' ? BISHOP_DIRS : KING_STEPS, reach = type === 'king' ? 1 : size;
+  const out = [];
+  for (const [df, dr] of dirs) {
+    for (let k = 1; k <= reach; k++) {
+      const s = [from[0] + df * k, from[1] + dr * k];
+      if (!free(s)) break;
+      out.push(s);
+    }
+  }
+  return out;
+}
+
+// Pieces move in turn (0, 1, 0, ...); the question names one of them. Null when a piece has no legal move (a bishop boxed in a corner).
+function tryChess(kind, { size, types, count }, rng) {
+  const cells = Array.from({ length: size * size }, (_, i) => [i % size, Math.floor(i / size)]);
+  const first = pick(cells, rng);
+  const starts = types.length > 1 ? [first, pick(cells.filter(c => !sameSq(c, first)), rng)] : [first];
+  const pos = starts.slice(), moves = [];
+  for (let i = 0; i < count; i++) {
+    const p = i % types.length, other = types.length > 1 ? pos[1 - p] : null;
+    const dests = chessDestinations(types[p], pos[p], other, size);
+    if (!dests.length) return null;
+    const to = pick(dests, rng);
+    moves.push({ p, from: pos[p], to });
+    pos[p] = to;
+  }
+  const ask = Math.floor(rng() * types.length);
+  return { kind, size, types, starts, moves, ask, end: pos[ask] };
+}
+
+function makeChess(kind, spec, rng) {
+  for (let attempt = 0; attempt < 50; attempt++) {
+    const item = tryChess(kind, spec, rng);
+    if (item) return item;
+  }
+  throw new Error('no chess item');
+}
+
+function makeLightChess(level, rng) {
+  const item = makeChess('chsL', { size: 5, types: [pick(CONFIG.chs.lightPieces(level), rng)], count: CONFIG.chs.lightMoves(level) }, rng);
+  return { ...item, startMs: CONFIG.chs.lightStartMs, flashMs: CONFIG.chs.lightFlashMs(level) };
+}
+
+function makeDeepChess(level, rng) {
+  const lvl = Math.max(6, level), pool = CONFIG.chs.deepPieces(lvl), types = [pick(pool, rng)];
+  if (lvl >= CONFIG.chs.twoPiecesFrom) types.push(pick(pool.filter(t => t !== types[0]), rng));
+  const size = lvl >= CONFIG.chs.bigBoardFrom ? 8 : 5;
+  const item = makeChess('chsD', { size, types, count: CONFIG.chs.deepMoves(lvl) }, rng);
+  return { ...item, startMs: CONFIG.chs.deepStartMs, flashMs: CONFIG.chs.deepFlashMs };
+}
+
+function chessTimeline(item) {
+  return [{ phase: 'start', ms: item.startMs }, ...item.moves.map((_, index) => ({ phase: 'moves', ms: item.flashMs, index }))];
+}
+
+function chessName(item) { const t = item.types[item.ask]; return t[0].toUpperCase() + t.slice(1); }
+function explainChess(item) { return chessName(item) + ' ended on ' + squareName(item.end) + '.'; }
+
+registerDrill('chs', {
+  op: 'transform', skill: 'tracking', name: 'Chess',
+  light: makeLightChess, deep: makeDeepChess,
+  timeline: chessTimeline,
+  render: renderChess,
+  answer: item => squareName(item.end),
+  options: item => boardSquares(item.size),
+  markMiss: markChessMiss,
+  explain: explainChess
+});
+
+// ----- Chess drawing -----
+// One cell size per screen width: 8 files must leave every square a comfortable tap target at 320 px.
+function chessCell(width, n) { return Math.floor(Math.min(width - 40, 330) / n); }
+
+function chessQuestion(item, phase) {
+  if (phase !== 'answer') return phase === 'start' ? 'Start here' : 'Follow the moves';
+  return item.types.length > 1 ? 'Where is the ' + item.types[item.ask] + ' now?' : 'Where does it end?';
+}
+
+// Pieces on view: all of them at the start, only the moving one during a step, none for the answer.
+function chessShown(item, phase, index) {
+  if (phase === 'start') return item.types.map((type, i) => ({ type, sq: item.starts[i] }));
+  if (phase !== 'moves') return [];
+  const m = item.moves[index];
+  return [{ type: item.types[m.p], sq: m.from }];
+}
+
+function makeChessSquare(sq, shown, phase) {
+  const el = phase === 'answer' ? makeAnswerButton('', squareName(sq), 'sq') : document.createElement('div');
+  el.className = 'sq' + ((sq[0] + sq[1]) % 2 ? '' : ' dk');
+  const here = shown.find(s => sameSq(s.sq, sq));
+  if (here) el.textContent = CHESS_GLYPH[here.type] + '︎'; // U+FE0E: text presentation, never colour emoji
+  return el;
+}
+
+function makeChessBoard(item, phase, shown) {
+  const n = item.size, board = document.createElement('div');
+  board.className = 'board';
+  board.style.setProperty('--n', n);
+  board.style.setProperty('--cell', chessCell(screenWidth(), n) + 'px');
+  board.style.gridTemplateColumns = 'auto repeat(' + n + ', var(--cell))';
+  for (let r = n - 1; r >= 0; r--) {
+    board.appendChild(makeLabel(String(r + 1)));
+    for (let f = 0; f < n; f++) board.appendChild(makeChessSquare([f, r], shown, phase));
+  }
+  board.appendChild(makeLabel(''));
+  for (let f = 0; f < n; f++) board.appendChild(makeLabel('abcdefgh'[f]));
+  return board;
+}
+
+function boardSvg(board, n, inner) {
+  const cell = board.querySelector('.sq').offsetWidth || parseFloat(board.style.getPropertyValue('--cell'));
+  const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  svg.setAttribute('class', 'path'); svg.setAttribute('viewBox', '0 0 ' + n + ' ' + n);
+  svg.setAttribute('width', cell * n); svg.setAttribute('height', cell * n);
+  svg.innerHTML = inner;
+  return svg;
+}
+
+// Arrow from the edge of the piece to the target square's centre, in board units (1 = one square).
+function chessArrowSvg(n, m) {
+  const c = ([f, r]) => [f + .5, n - r - .5], [x1, y1] = c(m.from), [x2, y2] = c(m.to);
+  const len = Math.hypot(x2 - x1, y2 - y1), ux = (x2 - x1) / len, uy = (y2 - y1) / len;
+  const tx = x2 - ux * .12, ty = y2 - uy * .12, bx = tx - ux * .3, by = ty - uy * .3;
+  const sx = x1 + ux * .3, sy = y1 + uy * .3, px = -uy * .16, py = ux * .16;
+  return '<line x1="' + sx + '" y1="' + sy + '" x2="' + bx + '" y2="' + by + '" stroke="#e09b2d" stroke-width=".11" stroke-linecap="round"/>'
+    + '<polygon fill="#e09b2d" points="' + tx + ',' + ty + ' ' + (bx + px) + ',' + (by + py) + ' ' + (bx - px) + ',' + (by - py) + '"/>';
+}
+
+function renderChess(item, el, phase, index) {
+  el.innerHTML = '';
+  el.className = item.kind;
+  const q = document.createElement('div'); q.className = 'q'; q.textContent = chessQuestion(item, phase);
+  const board = makeChessBoard(item, phase, chessShown(item, phase, index));
+  el.append(q, board);
+  if (phase === 'moves') board.appendChild(boardSvg(board, item.size, chessArrowSvg(item.size, item.moves[index])));
+}
+
+// Replays the asked piece's path over the board and outlines the right square.
+function markChessMiss(el, item) {
+  const n = item.size, board = el.querySelector('.board');
+  board.querySelector('[data-answer="' + squareName(item.end) + '"]').classList.add('right');
+  const pts = [item.starts[item.ask], ...item.moves.filter(m => m.p === item.ask).map(m => m.to)];
+  const xy = ([f, r]) => (f + .5) + ',' + (n - r - .5);
+  board.appendChild(boardSvg(board, n, '<polyline pathLength="1" fill="none" stroke="#e09b2d" stroke-width=".09" stroke-linejoin="round" points="' + pts.map(xy).join(' ') + '"/>'));
+}
+
+// ===== RUBIK =====
+// A 3×3×3 cube in cubie units: cubies at -1..1 per axis, stickers half a unit outside them. World frame as the die:
+// x right, y up, z to the viewer. Sticker id = face id + paint index (row * 3 + col) in the CUBE_FACES paint frame,
+// which is also the cross-net frame, so the 3D view and the net share one layout. Colours: the standard Western scheme.
+CONFIG.cub = {
+  lightTurns: lvl => (lvl < 5 ? 1 : 2), lightHalfFrom: 3,
+  deepTurns: lvl => Math.min(6, 3 + Math.floor(Math.max(0, lvl - 6) / 3)),
+  lightStartMs: 1600, lightFlashMs: lvl => Math.max(1400, 2400 - 100 * lvl),
+  deepStartMs: 2000, deepFlashMs: 1800
+};
+const RUBIK_COLOUR = { U: '#f8fafc', D: '#facc15', F: '#16a34a', B: '#2563eb', R: '#dc2626', L: '#f97316' };
+const RUBIK_NAME = { U: 'white', D: 'yellow', F: 'green', B: 'blue', R: 'red', L: 'orange' };
+const RUBIK_FACE_IDS = ['U', 'D', 'F', 'B', 'L', 'R'];
+
+const STICKERS = CUBE_FACES.flatMap(f => Array.from({ length: 9 }, (_, k) => ({
+  id: f.id + k, face: f.id, n: f.n,
+  cubie: [0, 1, 2].map(i => f.n[i] + (k % 3 - 1) * f.u[i] + (1 - Math.floor(k / 3)) * f.v[i])
+})));
+
+function dot3(a, b) { return a[0] * b[0] + a[1] * b[1] + a[2] * b[2]; }
+function faceNormal(id) { return CUBE_FACES.find(f => f.id === id).n; }
+function stickerAt(cubie, n) { return STICKERS.findIndex(s => s.cubie.join() === cubie.join() && s.n.join() === n.join()); }
+
+// Rotation by -90° × q about the face normal a (q = 1 clockwise seen from outside the face, -1 anticlockwise, 2 half):
+// Rodrigues R = cos I + sin [a]× + (1 - cos) a aᵀ, exact in integers.
+function layerMatrix(a, q) {
+  const cos = q === 2 ? -1 : 0, sin = q === 2 ? 0 : -q, cross = [[0, -a[2], a[1]], [a[2], 0, -a[0]], [-a[1], a[0], 0]];
+  return [0, 1, 2].map(i => [0, 1, 2].map(j => (i === j ? cos : 0) + sin * cross[i][j] + (1 - cos) * a[i] * a[j] + 0));
+}
+
+// perm[i] = the sticker slot that sticker i moves to. A sticker moves when its cubie lies in the turning layer.
+const TURN_PERMS = {};
+function turnPerm(face, q) {
+  const key = face + q, a = faceNormal(face), m = layerMatrix(a, q);
+  TURN_PERMS[key] = TURN_PERMS[key] || STICKERS.map((s, i) => (dot3(s.cubie, a) === 1 ? stickerAt(applyMat(m, s.cubie), applyMat(m, s.n)) : i));
+  return TURN_PERMS[key];
+}
+
+function trackSticker(start, turns) { return turns.reduce((s, t) => turnPerm(t.face, t.q)[s], start); }
+
+// The arrow runs along the turning layer over the two visible side faces. A quarter turn: from the middle of the strip
+// the stickers leave to the middle of the strip they reach. A half turn: two heads, and the second leg crosses the whole
+// `to` face and runs past its far edge, toward the hidden face opposite `from` where those stickers land.
+function turnArrow(face, q) {
+  const a = faceNormal(face), dir = q === 2 ? 1 : q, m = layerMatrix(a, dir);
+  const [n1, n2] = visibleFaces(IDENTITY).map(faceNormal).filter(n => dot3(n, a) === 0);
+  const [from, to] = applyMat(m, n1).join() === n2.join() ? [n1, n2] : [n2, n1];
+  const at = (x, kx, y, ky) => [0, 1, 2].map(i => a[i] + kx * x[i] + ky * y[i]);
+  const head = q === 2 ? at(to, 1.5, from, -1.85) : at(to, 1.5, from, 0);
+  return { tail: at(from, 1.5, to, 0), corner: at(from, 1.5, to, 1.5), head, heads: q === 2 ? 2 : 1, q: dir, from, to };
+}
+
+// A visible turning face also gets a curved arrow on itself: an arc over the edge-sticker centres (radius 1 round the
+// centre), from the sticker on the far side from the band arrow's tail to where the turn takes it, so the two arrows
+// do not cross. Null for a hidden face.
+function turnSpin(face, q) {
+  if (!visibleFaces(IDENTITY).includes(face)) return null;
+  const a = faceNormal(face), e1 = turnArrow(face, q).from.map(x => -x), e2 = [a[1] * e1[2] - a[2] * e1[1], a[2] * e1[0] - a[0] * e1[2], a[0] * e1[1] - a[1] * e1[0]];
+  const sweep = -Math.PI / 2 * q, pt = th => [0, 1, 2].map(i => 1.5 * a[i] + Math.cos(th) * e1[i] + Math.sin(th) * e2[i]);
+  return { start: pt(0), end: applyMat(layerMatrix(a, q), pt(0)), heads: q === 2 ? 2 : 1, pts: Array.from({ length: 13 }, (_, k) => pt(sweep * k / 12)) };
+}
+
+function cubeTurnPool(halves) { return RUBIK_FACE_IDS.flatMap(face => (halves ? [1, -1, 2] : [1, -1]).map(q => ({ face, q }))); }
+
+// The first turn moves the dot; a face never turns twice in a row.
+function drawCubeTurns(marked, count, pool, rng) {
+  const turns = [pick(pool.filter(t => turnPerm(t.face, t.q)[marked] !== marked), rng)];
+  while (turns.length < count) turns.push(pick(pool.filter(t => t.face !== turns[turns.length - 1].face), rng));
+  return turns;
+}
+
+// The dot starts on a visible face, never on a centre (centres never move), and must end somewhere new.
+function makeCubeItem(kind, count, halves, rng) {
+  const vis = visibleFaces(IDENTITY), starts = STICKERS.map((s, i) => i).filter(i => vis.includes(STICKERS[i].face) && STICKERS[i].id[1] !== '4');
+  for (let tries = 0; tries < 100; tries++) {
+    const marked = pick(starts, rng), turns = drawCubeTurns(marked, count, cubeTurnPool(halves), rng), end = trackSticker(marked, turns);
+    if (end !== marked) return { kind, marked, turns, end };
+  }
+  throw new Error('cube: no draw moved the dot');
+}
+
+function makeLightCube(level, rng) {
+  const item = makeCubeItem('cubL', CONFIG.cub.lightTurns(level), level >= CONFIG.cub.lightHalfFrom, rng);
+  return { ...item, startMs: CONFIG.cub.lightStartMs, flashMs: CONFIG.cub.lightFlashMs(level) };
+}
+
+function makeDeepCube(level, rng) {
+  const item = makeCubeItem('cubD', CONFIG.cub.deepTurns(level), true, rng);
+  return { ...item, startMs: CONFIG.cub.deepStartMs, flashMs: CONFIG.cub.deepFlashMs };
+}
+
+function cubeTimeline(item) {
+  return [{ phase: 'start', ms: item.startMs }, ...item.turns.map((_, index) => ({ phase: 'moves', ms: item.flashMs, index }))];
+}
+
+// Light names both faces (Deep stays within 36 characters); the net shows the exact sticker.
+function explainCube(item) {
+  const from = RUBIK_NAME[STICKERS[item.marked].face], to = RUBIK_NAME[STICKERS[item.end].face];
+  if (item.kind === 'cubD') return 'It ended on the ' + to + ' face.';
+  return from === to ? 'It stayed on the ' + to + ' face but moved round.' : 'It moved from the ' + from + ' face to the ' + to + ' face.';
+}
+
+registerDrill('cub', {
+  op: 'transform', skill: 'tracking', name: 'Cube',
+  light: makeLightCube, deep: makeDeepCube,
+  timeline: cubeTimeline,
+  render: renderCube,
+  answer: item => STICKERS[item.end].id,
+  options: () => STICKERS.map(s => s.id),
+  markMiss: markCubeMiss,
+  explain: explainCube
+});
+
+// ----- Cube drawing -----
+const CUBE_LIT = '#e879f9', CUBE_DIM = { light: '#cbd5e1', dark: '#64748b' };
+const NET_SPOT = { U: [2, 1], L: [1, 2], F: [2, 2], R: [3, 2], B: [4, 2], D: [2, 3] }; // grid column, row of each face block
+const CUBE_QUESTION = { start: 'Find the dot', moves: 'Follow the turns', answer: 'Where is the dot now?' };
+
+// Black plastic, then nine inset stickers; colourOf(k) gives sticker k's fill.
+function paintStickers(g, colourOf) {
+  g.fillStyle = '#111827'; g.fillRect(0, 0, 1, 1);
+  for (let k = 0; k < 9; k++) {
+    g.fillStyle = colourOf(k);
+    g.fillRect((k % 3) / 3 + 0.035, Math.floor(k / 3) / 3 + 0.035, 1 / 3 - 0.07, 1 / 3 - 0.07);
+  }
+}
+
+// The marked sticker: a black dot in a white ring, legible on all six colours.
+function paintDot(g, k) {
+  const x = (k % 3 + 0.5) / 3, y = (Math.floor(k / 3) + 0.5) / 3;
+  [['#fff', 0.115], ['#000', 0.075]].forEach(([c, r]) => { g.fillStyle = c; g.beginPath(); g.arc(x, y, r, 0, 2 * Math.PI); g.fill(); });
+}
+
+function paintStart(item, withDot) {
+  const m = STICKERS[item.marked];
+  return (g, id) => {
+    paintStickers(g, () => RUBIK_COLOUR[id]);
+    if (withDot && m.face === id) paintDot(g, +m.id[1]);
+  };
+}
+
+// A turn step: the turning layer lit, the rest dimmed; centres keep their colour so each face stays named.
+function paintTurn(turn, dark) {
+  const a = faceNormal(turn.face);
+  return (g, id) => paintStickers(g, k => {
+    if (k === 4) return RUBIK_COLOUR[id];
+    return dot3(STICKERS.find(s => s.id === id + k).cubie, a) === 1 ? CUBE_LIT : CUBE_DIM[dark ? 'dark' : 'light'];
+  });
+}
+
+function cubeScreen(canvas, p) {
+  const sc = fitScale([[0, 0, 0]], canvas), v = cubeViewVec(p.map(x => x / 3), IDENTITY);
+  return [canvas.width / 2 + v[0] * sc, canvas.height / 2 - v[1] * sc];
+}
+
+// One arrow head at tip pointing away from back, size s in device pixels.
+function traceHead(g, tip, back, s) {
+  const dx = tip[0] - back[0], dy = tip[1] - back[1], l = Math.hypot(dx, dy), ux = dx / l, uy = dy / l;
+  g.moveTo(tip[0], tip[1]);
+  g.lineTo(tip[0] - ux * s - uy * s * 0.6, tip[1] - uy * s + ux * s * 0.6);
+  g.lineTo(tip[0] - ux * s + uy * s * 0.6, tip[1] - uy * s - ux * s * 0.6);
+  g.closePath();
+}
+
+// Outlined orange polyline (device pixels) with one head at the end, or two in a row.
+function strokeArrow(g, pts, heads, sc) {
+  const h = pts[pts.length - 1], b = pts[pts.length - 2], l = Math.hypot(h[0] - b[0], h[1] - b[1]), s = sc * 0.15;
+  const tips = heads === 2 ? [h, [h[0] + (b[0] - h[0]) / l * s * 1.1, h[1] + (b[1] - h[1]) / l * s * 1.1]] : [h];
+  g.setTransform(1, 0, 0, 1, 0, 0); g.lineJoin = 'round'; g.lineCap = 'round';
+  [['#fff', sc * 0.09, 2], ['#c2410c', sc * 0.045, 0]].forEach(([col, w, grow]) => {
+    g.strokeStyle = col; g.fillStyle = col; g.lineWidth = w;
+    g.beginPath(); pts.forEach((p, i) => (i ? g.lineTo(...p) : g.moveTo(...p))); g.stroke();
+    g.beginPath(); tips.forEach(tip => traceHead(g, tip, b, s + grow)); g.fill(); if (grow) g.stroke();
+  });
+}
+
+function drawTurnArrow(canvas, turn) {
+  const g = canvas.getContext('2d'), arr = turnArrow(turn.face, turn.q), spin = turnSpin(turn.face, turn.q), sc = fitScale([[0, 0, 0]], canvas);
+  strokeArrow(g, [arr.tail, arr.corner, arr.head].map(p => cubeScreen(canvas, p)), arr.heads, sc);
+  if (spin) strokeArrow(g, spin.pts.map(p => cubeScreen(canvas, p)), spin.heads, sc);
+}
+
+// Big cube for the start and turn steps; the answer screen keeps a small one above the net for orientation.
+function cubeSide(phase) {
+  const room = (window.innerHeight || 667) - 270;
+  return phase === 'answer' ? Math.max(56, Math.min(110, room - 190)) : Math.max(120, Math.min(screenWidth() - 60, 260, room));
+}
+
+function cubeCanvas(item, phase, index) {
+  const side = cubeSide(phase), canvas = makeFigureCanvas(side, side), dark = item.kind === 'cubD';
+  if (phase !== 'moves') drawFacedCube(canvas, IDENTITY, paintStart(item, phase === 'start'), { dark, subdiv: 3 });
+  else {
+    drawFacedCube(canvas, IDENTITY, paintTurn(item.turns[index], dark), { dark, subdiv: 3 });
+    drawTurnArrow(canvas, item.turns[index]);
+    setTimer(() => { canvas.style.visibility = 'hidden'; }, item.flashMs * 0.85);
+  }
+  return canvas;
+}
+
+function netCell(width) { return Math.min(32, Math.floor((Math.min(width, 480) - 36) / 12)); }
+
+function tint(hex) {
+  return '#' + [1, 3, 5].map(i => Math.round(parseInt(hex.slice(i, i + 2), 16) * 0.55 + 255 * 0.45).toString(16).padStart(2, '0')).join('');
+}
+
+// Cross net in the CUBE_FACES paint frames; each face is tinted by its centre colour, the centre in full colour.
+function makeCubeNet() {
+  const net = makeDiv('cubNet', '');
+  net.style.setProperty('--cell', netCell(screenWidth()) + 'px');
+  for (const f of CUBE_FACES) {
+    const block = makeDiv('cubFace', '');
+    block.style.gridColumn = NET_SPOT[f.id][0]; block.style.gridRow = NET_SPOT[f.id][1];
+    for (let k = 0; k < 9; k++) {
+      const b = makeAnswerButton('', f.id + k, 'cubSq');
+      b.style.background = k === 4 ? RUBIK_COLOUR[f.id] : tint(RUBIK_COLOUR[f.id]);
+      block.appendChild(b);
+    }
+    net.appendChild(block);
+  }
+  return net;
+}
+
+function renderCube(item, el, phase, index) {
+  el.innerHTML = ''; el.className = item.kind;
+  el.append(makeDiv('q', CUBE_QUESTION[phase]), cubeCanvas(item, phase, index));
+  if (phase === 'answer') el.appendChild(makeCubeNet());
+  else el.appendChild(makeDiv('cubLegend', 'The lit layer turns the way the arrow points. Two heads: a half turn.'));
+}
+
+// The dot reappears where it ended (outlined); a ring marks where it started.
+function markCubeMiss(el, item) {
+  const right = el.querySelector('[data-answer="' + STICKERS[item.end].id + '"]');
+  right.classList.add('right');
+  right.appendChild(makeDiv('cubDot', ''));
+  el.querySelector('[data-answer="' + STICKERS[item.marked].id + '"]').classList.add('was');
+}
+
+// ===== LINEAR MAPS =====
+// Shared by the matrix scenes (mfw, mbw, mpt, mco). mat2 / mat3 are row-major nested arrays, [[a, b], [c, d]]:
+// column j is where basis vector j goes. A picture is the L shape mapped by M, drawn with its basis arrows.
+// Public interface:
+//   matMul(A, B), det(M), applyMat(M, v), matKey(M), transposeMat(M), isIdentityMat(M)
+//   readable(M) -> smallest singular value >= MAT_MIN_SV (so non-singular, never flat)
+//   randomMatrix(n, lo, hi, rng) -> readable, not the identity
+//   matrixDecoys(M, count, rng) -> count (1-3) one-mistake decoys, distinct pictures, entries within max(1, max|M|)
+//   pictureKey(M) -> exact key of the mapped shape (same key = same picture)
+//   L_SHAPE_2D, L_SHAPE_3D (half-unit voxels), shapePoints(n)
+//   gridRangeFor(mats, least) -> shared 2D grid half-width;  drawGrid2D(svgSize, M, { range, dark, start, dot }) -> svg
+//   shared3DFit(mats) -> fit (one camera for the start and every image);  minPairMove(mats, fit) -> share of the box
+//   drawShape3D(canvas, M, { dark, fit, ghost }) (M null: the blue start);  renderMatrix(M) -> bracketed element
+//   wellShaped(M) -> |entries| <= 2, singular values in [0.5, 3 × smallest]: never a sliver;  pictureArea(M, fit) -> 3D hull area / box area
+//   explain helpers: minusSign(x), columnText(M, j)
+const L_SHAPE_2D = [[0, 0], [1, 0], [1, 0.4], [0.4, 0.4], [0.4, 1.6], [0, 1.6]];
+// Half-unit voxels: an x arm to 1, a y arm to 1.5 and a tab up z at the x end, so no axis swap maps it onto itself.
+const L_SHAPE_3D = [[0, 0, 0], [1, 0, 0], [1, 0, 1], [0, 1, 0], [0, 2, 0]];
+const MAT_VOXEL = 0.5, MAT_MIN_SV = 0.35;
+const MAT_VIEW = { yaw: -35 * DEG, pitch: 24 * DEG, roll: 0 };
+// Arrow colours for x, y, z (no red; CSS .mtx .c0-.c2 repeats them); the start shape is blue, the image amber.
+const MAT_ARROW = { light: ['#15803d', '#a21caf', '#0e7490'], dark: ['#4ade80', '#e879f9', '#22d3ee'] };
+
+function applyMat(M, v) { return M.map(r => r.reduce((s, x, j) => s + x * v[j], 0)); }
+function matMul(A, B) { return A.map(r => B[0].map((_, j) => r.reduce((s, x, k) => s + x * B[k][j], 0))); }
+function minorOf(M, j) { return M.slice(1).map(r => r.filter((_, k) => k !== j)); }
+function det(M) { return M.length === 1 ? M[0][0] : M[0].reduce((s, x, j) => s + (j % 2 ? -x : x) * det(minorOf(M, j)), 0); }
+function matKey(M) { return M.map(r => r.join(',')).join(';'); }
+function transposeMat(M) { return M[0].map((_, j) => M.map(r => r[j])); }
+function isIdentityMat(M) { return M.every((r, i) => r.every((x, j) => x === (i === j ? 1 : 0))); }
+
+// Smallest singular value >= MAT_MIN_SV, i.e. MᵀM − c²I is positive definite (Sylvester: leading minors > 0).
+// So the picture is never flat (det 0) or nearly flat.
+function readable(M) {
+  const c2 = MAT_MIN_SV * MAT_MIN_SV, S = matMul(transposeMat(M), M).map((r, i) => r.map((x, j) => x - (i === j ? c2 : 0)));
+  return S.every((_, k) => det(S.slice(0, k + 1).map(r => r.slice(0, k + 1))) > 1e-9);
+}
+
+// Integer entries lo..hi; readable (so non-singular) and never the identity.
+function randomMatrix(n, lo, hi, rng) {
+  for (let i = 0; i < 200; i++) {
+    const M = Array.from({ length: n }, () => Array.from({ length: n }, () => lo + Math.floor(rng() * (hi - lo + 1))));
+    if (readable(M) && !isIdentityMat(M)) return M;
+  }
+  throw new Error('randomMatrix: no readable matrix');
+}
+
+// Shape points the picture is made of: the L corners, or every voxel corner of the 3D shape.
+function shapePoints(n) {
+  if (n === 2) return L_SHAPE_2D;
+  const pts = [];
+  L_SHAPE_3D.forEach(v => [0, 1].forEach(a => [0, 1].forEach(b => [0, 1].forEach(c => pts.push([v[0] + a, v[1] + b, v[2] + c].map(x => x * MAT_VOXEL))))));
+  return pts;
+}
+
+function pictureKey(M) {
+  const key = p => applyMat(M, p).map(x => Math.round(x * 1000) + 0).join();
+  return [...new Set(shapePoints(M.length).map(key))].sort().join(';');
+}
+
+// One-mistake edits of M. cells = the entries an edit touches; edits on disjoint cells commute.
+function matrixEdits(M, rng) {
+  const n = M.length, cells = [], out = [];
+  M.forEach((r, i) => r.forEach((_, j) => cells.push(i * n + j)));
+  const at = (c, f) => X => X.map((r, i) => r.map((x, j) => (i * n + j === c ? f(x) : x)));
+  out.push({ kind: 'transpose', cells: cells.filter(c => c % n !== Math.floor(c / n)), f: transposeMat });
+  for (let a = 0; a < n; a++) for (let b = a + 1; b < n; b++) {
+    out.push({ kind: 'swap', cells: cells.filter(c => c % n === a || c % n === b), f: X => X.map(r => r.map((x, j) => r[j === a ? b : j === b ? a : j])) });
+  }
+  cells.filter(c => M[Math.floor(c / n)][c % n] !== 0).forEach(c => out.push({ kind: 'flip', cells: [c], f: at(c, x => -x) }));
+  // ±1 at random; an out-of-range result is dropped later, so an entry at the edge moves in only half the time
+  // and the truth is no more often the extreme value than a decoy.
+  cells.forEach(c => { const d = rng() < 0.5 ? -1 : 1; out.push({ kind: 'bump', cells: [c], f: at(c, x => x + d) }); });
+  return out;
+}
+
+// An edit kind uniformly, then an edit of that kind, touching none of the avoided cells.
+function pickEdit(edits, avoid, rng) {
+  const ok = edits.filter(e => !e.cells.some(c => avoid.includes(c)));
+  if (!ok.length) return null;
+  const kind = pick([...new Set(ok.map(e => e.kind))], rng);
+  return pick(ok.filter(e => e.kind === kind), rng);
+}
+
+// Decoys a(M), b(M), b(a(M)) for two commuting edits: every option is one edit from two others and two from
+// the last, so no option sits in the middle of the set. Entries stay within M's own range, max(1, max|M|).
+// Only edits whose result is a valid, new picture are offered, so kinds stay balanced among what can occur.
+function matrixDecoys(M, count, rng) {
+  const cap = Math.max(1, ...M.flat().map(Math.abs)), key = pictureKey(M);
+  const fits = X => X.flat().every(x => Math.abs(x) <= cap) && readable(X) && !isIdentityMat(X);
+  for (let i = 0; i < 100; i++) {
+    const edits = matrixEdits(M, rng).filter(e => fits(e.f(M)) && pictureKey(e.f(M)) !== key), a = pickEdit(edits, [], rng);
+    if (!a) continue;
+    if (count === 1) return [a.f(M)];
+    const pair = e => { const X = [a.f(M), e.f(M), e.f(a.f(M))]; return fits(X[2]) && new Set([key, ...X.map(pictureKey)]).size === 4; };
+    const b = pickEdit(edits.filter(pair), a.cells, rng);
+    if (b) return [a.f(M), b.f(M), b.f(a.f(M))].slice(0, count);
+  }
+  throw new Error('matrixDecoys: none for ' + matKey(M));
+}
+
+function minusSign(x) { return x < 0 ? '−' + -x : String(x); }
+
+// Bracketed matrix. Column j has class cj, coloured like basis arrow j (CSS .mtx .cj; Deep under #deepItem),
+// so "column j = where axis j goes" shows.
+function renderMatrix(M) {
+  const d = makeDiv('mtx', '');
+  d.style.setProperty('--n', M.length);
+  M.flat().forEach((x, k) => { const s = document.createElement('span'); s.textContent = minusSign(x); s.className = 'c' + (k % M.length); d.appendChild(s); });
+  return d;
+}
+
+const SVG_NS = 'http://www.w3.org/2000/svg';
+function svgEl(tag, attrs) {
+  const e = document.createElementNS(SVG_NS, tag);
+  for (const k in attrs) e.setAttribute(k, attrs[k]);
+  return e;
+}
+const svgPts = pts => pts.map(([x, y]) => x + ',' + -y).join(' ');
+
+// Arrow from the origin to tip; k = grid units per pixel so widths and heads keep their screen size.
+function svgArrow(tip, colour, k, faint) {
+  const len = Math.hypot(...tip), u = tip.map(x => x / len), n = [-u[1], u[0]], h = Math.min(9 * k, len * 0.45);
+  const base = tip.map((x, i) => x - u[i] * h), side = s => base.map((x, i) => x + n[i] * s * h * 0.5);
+  const g = svgEl('g', { class: 'mArrow', stroke: colour, fill: colour, opacity: faint ? 0.55 : 1 });
+  g.append(svgEl('line', { x1: 0, y1: 0, x2: base[0], y2: -base[1], 'stroke-width': (faint ? 1.6 : 2.4) * k }), svgEl('polygon', { points: svgPts([tip, side(1), side(-1)]), stroke: 'none' }));
+  return g;
+}
+
+function svgGridLines(svg, R, k, dark) {
+  for (let i = -R; i <= R; i++) {
+    const c = i ? (dark ? '#33405c' : '#d3ddee') : (dark ? '#6b7894' : '#8a9bb8'), w = (i ? 1 : 1.4) * k;
+    svg.append(svgEl('line', { x1: i, y1: -R, x2: i, y2: R, stroke: c, 'stroke-width': w }), svgEl('line', { x1: -R, y1: i, x2: R, y2: i, stroke: c, 'stroke-width': w }));
+  }
+}
+
+// opts = { range, dark, start (default true), dot }: grid −range…range, faint start L with its basis arrows,
+// the amber image with its arrows (M null: start only), an optional dot. svgSize in CSS px.
+function drawGrid2D(svgSize, M, opts) {
+  const R = opts.range, k = 2 * R / svgSize, cols = MAT_ARROW[opts.dark ? 'dark' : 'light'];
+  const svg = svgEl('svg', { width: svgSize, height: svgSize, viewBox: `${-R} ${-R} ${2 * R} ${2 * R}` });
+  svgGridLines(svg, R, k, opts.dark);
+  const layer = (m, cls, fill, faint) => {
+    svg.appendChild(svgEl('polygon', { class: cls, points: svgPts(L_SHAPE_2D.map(p => applyMat(m, p))), fill, 'fill-opacity': faint ? 0.3 : 0.6, stroke: fill, 'stroke-width': 1.5 * k, 'stroke-linejoin': 'round' }));
+    [0, 1].forEach(j => svg.appendChild(svgArrow([m[0][j], m[1][j]], cols[j], k, faint)));
+  };
+  if (opts.start !== false) layer([[1, 0], [0, 1]], 'mStart', '#5b7cff', !!M);
+  if (M) layer(M, 'mImage', opts.dark ? '#ffb347' : '#f59e0b', false);
+  if (opts.dot) svg.appendChild(svgEl('circle', { class: 'mDot', cx: opts.dot[0], cy: -opts.dot[1], r: 5 * k, fill: opts.dark ? '#9fb6ff' : '#1a5fb4' }));
+  return svg;
+}
+
+function cross3(a, b) { return [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]]; }
+
+// Outward normal of the mapped face: det(M)·M⁻ᵀ d, from the column cross products, times the sign of det.
+function mappedNormal(M, d) {
+  const c = [0, 1, 2].map(j => M.map(r => r[j])), s = Math.sign(det(M));
+  const cof = [cross3(c[1], c[2]), cross3(c[2], c[0]), cross3(c[0], c[1])];
+  return [0, 1, 2].map(i => s * (d[0] * cof[0][i] + d[1] * cof[1][i] + d[2] * cof[2][i]));
+}
+
+// Exterior faces of L_SHAPE_3D mapped by M, then the fixed view; back faces dropped by the mapped normal.
+// Painter order: voxel centre depth (Ruling E), then face depth.
+function matFacePolygons(M) {
+  const view = p => applyPose(applyMat(M, p.map(x => x * MAT_VOXEL)), MAT_VIEW), polys = [];
+  for (const { v, d } of exteriorFaces(L_SHAPE_3D)) {
+    const n = applyPose(mappedNormal(M, d), MAT_VIEW), len = Math.hypot(...n);
+    if (n[2] <= 1e-9 * len) continue;
+    const pts = faceCorners(v, d, [-0.5, -0.5, -0.5]).map(view), lit = (n[0] * LIGHT_DIR[0] + n[1] * LIGHT_DIR[1] + n[2] * LIGHT_DIR[2]) / len;
+    polys.push({ v, d, cubeDepth: view(v.map(x => x + 0.5))[2], depth: pts.reduce((s, p) => s + p[2], 0) / 4, pts: pts.map(p => [p[0], p[1]]), light: 0.45 + 0.55 * Math.max(0, lit) });
+  }
+  return polys.sort((p, q) => p.cubeDepth - q.cubeDepth || p.depth - q.depth);
+}
+
+// Projected points of a 3D picture: the origin, the three arrow tips and every shape corner, in a fixed order.
+function picturePoints3D(M) {
+  const pts = [[0, 0, 0], ...[0, 1, 2].map(j => M.map(r => r[j])), ...shapePoints(3).map(p => applyMat(M, p))];
+  return pts.map(p => applyPose(p, MAT_VIEW).slice(0, 2));
+}
+
+// One camera for a set of pictures (as the 2D grid range): the box holding every image of mats, so they share
+// scale and origin. fit = { cx, cy, span } in view units. Pass IDENTITY among mats to include the start.
+function shared3DFit(mats) {
+  const pts = mats.flatMap(picturePoints3D), xs = pts.map(p => p[0]), ys = pts.map(p => p[1]);
+  const [x0, x1, y0, y1] = [Math.min(...xs), Math.max(...xs), Math.min(...ys), Math.max(...ys)];
+  return { cx: (x0 + x1) / 2, cy: (y0 + y1) / 2, span: Math.max(x1 - x0, y1 - y0) };
+}
+
+// The smallest difference between two pictures: the largest point move, as a share of the fit box.
+function minPairMove(mats, fit) {
+  const P = mats.map(picturePoints3D);
+  let least = Infinity;
+  for (let a = 0; a < P.length; a++) for (let b = a + 1; b < P.length; b++) {
+    least = Math.min(least, Math.max(...P[a].map((p, k) => Math.hypot(p[0] - P[b][k][0], p[1] - P[b][k][1]))) / fit.span);
+  }
+  return least;
+}
+
+// Singular values of M, smallest first: square roots of the eigenvalues of MᵀM (cyclic Jacobi sweeps).
+function singularValues(M) {
+  const n = M.length, S = matMul(transposeMat(M), M);
+  for (let sweep = 0; sweep < 12; sweep++) {
+    for (let p = 0; p < n; p++) for (let q = p + 1; q < n; q++) {
+      if (Math.abs(S[p][q]) < 1e-12) continue;
+      const th = 0.5 * Math.atan2(2 * S[p][q], S[p][p] - S[q][q]), c = Math.cos(th), s = Math.sin(th);
+      for (let k = 0; k < n; k++) { const a = S[k][p], b = S[k][q]; S[k][p] = c * a + s * b; S[k][q] = -s * a + c * b; }
+      for (let k = 0; k < n; k++) { const a = S[p][k], b = S[q][k]; S[p][k] = c * a + s * b; S[q][k] = -s * a + c * b; }
+    }
+  }
+  return S.map((r, i) => Math.sqrt(Math.max(0, r[i]))).sort((a, b) => a - b);
+}
+
+// Not a sliver: small entries, and no direction stretched more than 3 times as much as the least stretched one.
+const WELL_MIN_SV = 0.5, WELL_MAX_RATIO = 3, WELL_MAX_ENTRY = 2;
+function wellShaped(M) {
+  if (M.flat().some(x => Math.abs(x) > WELL_MAX_ENTRY)) return false;
+  const sv = singularValues(M);
+  return sv[0] >= WELL_MIN_SV - 1e-9 && sv[sv.length - 1] <= WELL_MAX_RATIO * sv[0] + 1e-9;
+}
+
+// Area of the convex hull of the drawn shape (3D) as a share of the box area span².
+function pictureArea(M, fit) {
+  const pts = shapePoints(3).map(p => applyPose(applyMat(M, p), MAT_VIEW).slice(0, 2)).sort((a, b) => a[0] - b[0] || a[1] - b[1]);
+  const cross = (o, a, b) => (a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0]);
+  const half = list => list.reduce((h, p) => {
+    while (h.length > 1 && cross(h[h.length - 2], h[h.length - 1], p) <= 0) h.pop();
+    return h.concat([p]);
+  }, []);
+  const hull = [...half(pts).slice(0, -1), ...half([...pts].reverse()).slice(0, -1)];
+  const area = Math.abs(hull.reduce((s, p, i) => s + p[0] * hull[(i + 1) % hull.length][1] - hull[(i + 1) % hull.length][0] * p[1], 0)) / 2;
+  return area / (fit.span * fit.span);
+}
+
+function draw3DArrow(g, tip, colour, view) {
+  const T = [view.cx + tip[0] * view.sc, view.cy - tip[1] * view.sc], d = [T[0] - view.cx, T[1] - view.cy], len = Math.hypot(...d) || 1;
+  const u = d.map(x => x / len), n = [-u[1], u[0]], h = Math.min(9 * view.px, len * 0.45), B = T.map((x, i) => x - u[i] * h);
+  [[view.dark ? '#1d2333' : '#fff', 5.5], [colour, 2.5]].forEach(([c, w]) => {
+    g.strokeStyle = c; g.fillStyle = c; g.lineWidth = w * view.px;
+    g.beginPath(); g.moveTo(view.cx, view.cy); g.lineTo(B[0], B[1]); g.stroke();
+    g.beginPath(); g.moveTo(...T); g.lineTo(B[0] + n[0] * h * 0.5, B[1] + n[1] * h * 0.5); g.lineTo(B[0] - n[0] * h * 0.5, B[1] - n[1] * h * 0.5); g.closePath();
+    if (c === colour) g.fill(); else g.stroke();
+  });
+}
+
+// The 3D shape mapped by M (null: the blue start), shaded faces then the three basis arrows on top.
+// opts = { dark, fit, ghost }: fit from shared3DFit, so every picture of an item uses one camera (default: its own).
+// ghost: faint unit basis arrows (the start's axes, same camera) behind the shape, as the 2D grid shows the faint start.
+function drawShape3D(canvas, M, opts) {
+  const m = M || IDENTITY, polys = matFacePolygons(m), g = canvas.getContext('2d'), dark = opts.dark;
+  const tips = [0, 1, 2].map(j => applyPose(m.map(r => r[j]), MAT_VIEW)), fit = opts.fit || shared3DFit([m]);
+  const sc = Math.min(canvas.width, canvas.height) * 0.8 / fit.span;
+  const view = { sc, cx: canvas.width / 2 - sc * fit.cx, cy: canvas.height / 2 + sc * fit.cy, dark, px: canvas.width / (parseFloat(canvas.style.width) || canvas.width) };
+  g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, canvas.width, canvas.height);
+  g.lineJoin = 'round'; g.lineCap = 'round';
+  if (opts.ghost) {
+    g.globalAlpha = 0.5;
+    [0, 1, 2].forEach(j => draw3DArrow(g, applyPose(IDENTITY.map(r => r[j]), MAT_VIEW), MAT_ARROW[dark ? 'dark' : 'light'][j], view));
+    g.globalAlpha = 1;
+  }
+  const base = M ? [255, 179, 71] : [91, 124, 255];
+  for (const poly of polys) {
+    const f = 0.5 + 0.5 * (poly.light - 0.45) / 0.55;
+    tracePolygon(g, poly.pts, view);
+    g.fillStyle = `rgb(${base.map(c => Math.round(c * f)).join(',')})`; g.fill();
+    g.strokeStyle = dark ? '#111827' : '#fff'; g.lineWidth = 1.2 * view.px; g.stroke();
+  }
+  tips.forEach((t, j) => draw3DArrow(g, t, MAT_ARROW[dark ? 'dark' : 'light'][j], view));
+}
+
+// ===== FORWARD =====
+// See the matrix and the start picture; pick where the shape lands. Light 2×2 in {−1, 0, 1}, 2 options;
+// Deep 2×2 in −2…2, 4 options; 3×3 from Deep 10 (entries ±1, ±2 from 13).
+CONFIG.mfw = { lightNonzero: lvl => (lvl < 4 ? 2 : lvl < 7 ? 3 : 4), deep3dFrom: 10, deep3dWideFrom: 13 };
+
+const nonzeros = M => M.flat().filter(x => x !== 0).length;
+
+function mfwMatrix(deep, level, rng) {
+  if (!deep) return randomMatrix(2, -1, 1, rng);
+  if (level < CONFIG.mfw.deep3dFrom) return randomMatrix(2, -2, 2, rng);
+  const hi = level < CONFIG.mfw.deep3dWideFrom ? 1 : 2;
+  return randomMatrix(3, -hi, hi, rng);
+}
+
+// Shared grid half-width: every option's shape and arrows fit with a quarter cell to spare.
+// Light keeps −4…4; Deep goes down to −3…3 so small images stay large in the small option boxes.
+function gridRangeFor(mats, least) {
+  const far = Math.max(...mats.flatMap(m => [...L_SHAPE_2D, [1, 0], [0, 1]].flatMap(p => applyMat(m, p).map(Math.abs))));
+  return Math.max(least, Math.ceil(far + 0.25));
+}
+
+// Light below level 7 keeps every option as sparse as the truth (no "simpler one" shortcut).
+// 3D: one camera for the options; two options closer than MFW_MIN_MOVE of the box are too alike to tell apart.
+// The start keeps its own fit: under the options' camera it shrank to ~25 px at 320×568.
+const MFW_MIN_MOVE = 0.08;
+function tryMfw(kind, level, rng) {
+  const deep = kind === 'mfwD', M = mfwMatrix(deep, level, rng), limit = deep ? 9 : CONFIG.mfw.lightNonzero(level);
+  if (nonzeros(M) > limit) return null;
+  const all = [M, ...matrixDecoys(M, deep ? 3 : 1, rng)];
+  if (all.some(m => nonzeros(m) > limit)) return null;
+  if (M.length === 3 && deep && all.some(m => !wellShaped(m))) return null;
+  const order = shuffle(all.map((_, i) => i), rng), mats = order.map(i => all[i]), item = { kind, M, mats, answer: String(order.indexOf(0)), options: mats.map((_, i) => String(i)) };
+  if (M.length === 2) return { ...item, range: gridRangeFor(mats, deep ? 3 : 4) };
+  const fit = shared3DFit(mats);
+  return minPairMove(mats, fit) < MFW_MIN_MOVE ? null : { ...item, fit };
+}
+
+function makeMfw(kind, level, rng) {
+  for (let i = 0; i < 200; i++) {
+    const item = tryMfw(kind, level, rng);
+    if (item) return item;
+  }
+  throw new Error('mfw: no valid item');
+}
+
+// Height left after the bar, question, padding and the miss line or Next bar (as rtiSizes).
+function mfwSizes(deep, n) {
+  const w = screenWidth(), h = window.innerHeight || 667, mw = n === 3 ? 130 : 104;
+  if (!deep) {
+    const opt = Math.min(Math.floor((w - 32) / 2), 170);
+    return { opt, start: Math.max(110, Math.min(w - mw - 36, h - 250 - opt, 220)) };
+  }
+  const room = h - 190, opt = Math.max(90, Math.min(Math.floor((w - 32) / 2), Math.floor(room * 0.32)));
+  return { opt, start: Math.max(100, Math.min(w - mw - 36, room - 2 * opt - 12, 220)) };
+}
+
+// The start (M null) or an option's image: an SVG grid in 2D, a canvas in 3D (options share item.fit).
+function matPicture(item, M, side) {
+  const dark = item.kind.endsWith('D');
+  if (item.M.length === 2) return drawGrid2D(side, M, { range: item.range, dark });
+  const c = makeFigureCanvas(side, side);
+  drawShape3D(c, M, { dark, fit: M ? item.fit : undefined });
+  return c;
+}
+
+function renderMfw(item, el) {
+  el.innerHTML = ''; el.className = 'mfw ' + item.kind;
+  const deep = item.kind === 'mfwD', sz = mfwSizes(deep, item.M.length), top = makeDiv('mfwTop', ''), start = makeDiv('mfwStart', '');
+  start.appendChild(matPicture(item, null, sz.start));
+  top.append(renderMatrix(item.M), start);
+  const opts = makeDiv('mfwOpts', '');
+  item.mats.forEach((M, i) => {
+    const b = makeAnswerButton('', String(i), 'matOpt mfwOpt');
+    b.appendChild(matPicture(item, M, sz.opt - 6));
+    opts.appendChild(b);
+  });
+  el.append(makeDiv('q', 'Where does the shape go?'), top, opts);
+}
+
+// No-break spaces keep "x → (0, −1)" on one line.
+function columnText(M, j) { return AXIS_NAMES[j] + '\u00a0→\u00a0(' + M.map(r => minusSign(r[j])).join(',\u00a0') + ')'; }
+
+// 2D: both columns. 3D (Deep, ≤ 36 chars): the column changed by the most decoys (first on a tie).
+function explainMfw(item) {
+  const M = item.M;
+  if (M.length === 3) {
+    const changed = [0, 1, 2].map(c => item.mats.filter(m => m.some((r, i) => r[c] !== M[i][c])).length);
+    const j = changed.indexOf(Math.max(...changed));
+    return 'Column ' + (j + 1) + ': ' + columnText(M, j) + '.';
+  }
+  const cols = columnText(M, 0) + ', ' + columnText(M, 1) + '.';
+  return item.kind === 'mfwL' ? 'Columns = where x and y go: ' + cols : 'Columns: ' + cols;
+}
+
+registerDrill('mfw', {
+  op: 'transform', skill: 'matrices', name: 'Matrix forward',
+  light: (level, rng) => makeMfw('mfwL', level, rng),
+  deep: (level, rng) => makeMfw('mfwD', level, rng),
+  timeline: () => [],
+  render: renderMfw,
+  answer: item => item.answer,
+  options: item => item.options,
+  explain: explainMfw
+});
+
+// ===== BACKWARD =====
+// See the start (blue) and the image (amber) with the basis arrows; pick the matrix that did it.
+// Light 2×2 in {−1, 0, 1}, 2 options; Deep 4 options, 2×2 in −2…2, 3×3 from Deep 10 (as Forward). Options are
+// M and its matrixDecoys, so each draws a different picture and exactly one matches the one shown.
+function tryMbw(kind, level, rng) {
+  const deep = kind === 'mbwD', M = mfwMatrix(deep, level, rng), limit = deep ? 9 : CONFIG.mfw.lightNonzero(level);
+  if (nonzeros(M) > limit) return null;
+  const all = [M, ...matrixDecoys(M, deep ? 3 : 1, rng)];
+  if (all.some(m => nonzeros(m) > limit)) return null;
+  if (M.length === 3 && deep && all.some(m => !wellShaped(m))) return null;
+  const order = shuffle(all.map((_, i) => i), rng), mats = order.map(i => all[i]);
+  const item = { kind, M, mats, answer: String(order.indexOf(0)), options: mats.map((_, i) => String(i)) };
+  if (M.length === 2) return { ...item, range: gridRangeFor([M], deep ? 3 : 4) };
+  const fit = shared3DFit([IDENTITY, M]);
+  // The picture is drawn with `fit` (start axes and image), so measure the option gaps against that box.
+  return minPairMove(mats, fit) < MFW_MIN_MOVE ? null : { ...item, fit };
+}
+
+function makeMbw(kind, level, rng) {
+  for (let i = 0; i < 200; i++) {
+    const item = tryMbw(kind, level, rng);
+    if (item) return item;
+  }
+  throw new Error('mbw: no valid item');
+}
+
+// Picture side and option height from the room left under the bar and question (as mfwSizes).
+function mbwSizes(deep, n) {
+  const w = screenWidth(), h = window.innerHeight || 667, room = h - 190, rows = deep ? 2 : 1, rowH = n === 3 ? 104 : 88;
+  const opts = rows * rowH + (rows - 1) * 8 + 16, side = Math.min(w - 32, room - opts - 10, 300);
+  return { pic: Math.max(100, side), wide: w - 32, rowH };
+}
+
+function mbwPicture(item, sz) {
+  const dark = item.kind.endsWith('D');
+  if (item.M.length === 2) return drawGrid2D(sz.pic, item.M, { range: item.range, dark });
+  const c = makeFigureCanvas(sz.wide, sz.pic);
+  drawShape3D(c, item.M, { dark, fit: item.fit, ghost: true });
+  return c;
+}
+
+function renderMbw(item, el) {
+  el.innerHTML = ''; el.className = 'mbw ' + item.kind;
+  const sz = mbwSizes(item.kind === 'mbwD', item.M.length), top = makeDiv('mbwTop', ''), opts = makeDiv('mbwOpts', '');
+  top.appendChild(mbwPicture(item, sz));
+  item.mats.forEach((M, i) => {
+    const b = makeAnswerButton('', String(i), 'matOpt mfwOpt mbwOpt');
+    b.style.minHeight = sz.rowH + 'px';
+    b.appendChild(renderMatrix(M));
+    opts.appendChild(b);
+  });
+  el.append(makeDiv('q', 'Which matrix did this?'), top, opts);
+}
+
+// The column changed by the most options (first on a tie) is the one that tells the truth from the decoys.
+// Light says the intuition in full; Deep (≤ 36 chars) keeps the column.
+function explainMbw(item) {
+  const M = item.M, changed = M.map((_, c) => item.mats.filter(m => m.some((r, i) => r[c] !== M[i][c])).length);
+  const j = changed.indexOf(Math.max(...changed)), tuple = '(' + M.map(r => minusSign(r[j])).join(',\u00a0') + ')';
+  if (item.kind === 'mbwD') return columnText(M, j) + ':\u00a0column\u00a0' + (j + 1) + '.';
+  return AXIS_NAMES[j] + '\u00a0went\u00a0to\u00a0' + tuple + ', so column ' + (j + 1) + ' is ' + tuple + '.';
+}
+
+registerDrill('mbw', {
+  op: 'transform', skill: 'matrices', name: 'Matrix backward',
+  light: (level, rng) => makeMbw('mbwL', level, rng),
+  deep: (level, rng) => makeMbw('mbwD', level, rng),
+  timeline: () => [],
+  render: renderMbw,
+  answer: item => item.answer,
+  options: item => item.options,
+  explain: explainMbw
+});
+
+// ===== POINT =====
+// See the matrix and a marked point (x, y); tap the grid point it lands on. Light: entries in {−1, 0, 1}, point
+// coordinates −2…2, grid −3…3. Deep: entries −2…2 (−3…3 from level 12), point −3…3, grid −6…6. The image always lies in
+// the grid and never equals the point. From Deep 8 the point is off both axes (an axis point makes a column the answer).
+// Tap targets are one button per grid point, key "x,y".
+CONFIG.mpt = { lightPoint: 2, lightRange: 3, deepPoint: 3, deepRange: 6, deepWideFrom: 12, deepOffAxisFrom: 8 };
+
+// Every nonzero lattice point of the point box whose image lies in the grid, is not the point, and (Deep ≥ 8) is off the axes.
+function mptPoints(M, deep, level) {
+  const c = CONFIG.mpt, reach = deep ? c.deepPoint : c.lightPoint, range = deep ? c.deepRange : c.lightRange, out = [];
+  for (let x = -reach; x <= reach; x++) for (let y = -reach; y <= reach; y++) {
+    const img = applyMat(M, [x, y]), onAxis = deep && level >= c.deepOffAxisFrom && (x === 0 || y === 0);
+    if ((x || y) && !onAxis && img.every(v => Math.abs(v) <= range) && (img[0] !== x || img[1] !== y)) out.push([x, y]);
+  }
+  return out;
+}
+
+function makeMpt(kind, level, rng) {
+  const deep = kind === 'mptD', c = CONFIG.mpt, hi = deep ? (level >= c.deepWideFrom ? 3 : 2) : 1;
+  for (let i = 0; i < 200; i++) {
+    const M = randomMatrix(2, -hi, hi, rng), pts = mptPoints(M, deep, level);
+    if (!pts.length) continue;
+    const p = pick(pts, rng), range = deep ? c.deepRange : c.lightRange, to = applyMat(M, p), keys = [];
+    for (let x = -range; x <= range; x++) for (let y = -range; y <= range; y++) keys.push(x + ',' + y);
+    return { kind, M, p, to, range, answer: to.join(','), options: keys };
+  }
+  throw new Error('mpt: no valid item');
+}
+
+// Cell size: the board (2·range + 1 cells wide, so edge targets fit) must fit the width and the height left under
+// the bar, question and matrix (and, in Light, the miss line); at most 48 px; at 320 px Deep 13×13 gives 23 px.
+function mptCell(item) {
+  const w = screenWidth(), h = window.innerHeight || 667, n = 2 * item.range + 1, left = h - 190 - 70 - (item.kind === 'mptL' ? 40 : 0);
+  return Math.max(22, Math.min(48, Math.floor(Math.min(w - 16, left) / n)));
+}
+
+// Faint basis arrows (where x and y go) under the grid, the start point as a dot with its coordinates.
+function mptSvg(item, cell) {
+  const dark = item.kind === 'mptD', R = item.range, side = 2 * R * cell, k = 2 * R / side;
+  const svg = drawGrid2D(side, null, { range: R, dark, start: false, dot: item.p });
+  const cols = MAT_ARROW[dark ? 'dark' : 'light'];
+  [0, 1].forEach(j => svg.appendChild(svgArrow([item.M[0][j], item.M[1][j]], cols[j], k, true)));
+  svg.style.left = svg.style.top = cell / 2 + 'px';
+  return svg;
+}
+
+function mptHit(item, cell, [x, y]) {
+  const R = item.range, b = makeAnswerButton('', x + ',' + y, 'mptHit');
+  b.style.cssText = `width:${cell}px;height:${cell}px;left:${(x + R) * cell}px;top:${(R - y) * cell}px`;
+  return b;
+}
+
+function mptBoard(item, cell) {
+  const R = item.range, board = makeDiv('mptBoard', ''), dark = item.kind === 'mptD';
+  board.style.width = board.style.height = (2 * R + 1) * cell + 'px';
+  board.appendChild(mptSvg(item, cell));
+  const lab = makeDiv('mptLab', pointText(item.p));
+  lab.style.color = dark ? '#9fb6ff' : '#1a5fb4';
+  lab.style.left = (item.p[0] + R + 0.5) * cell + 6 + 'px'; lab.style.top = (R - item.p[1] + 0.5) * cell - 20 + 'px';
+  board.appendChild(lab);
+  item.options.forEach(key => board.appendChild(mptHit(item, cell, key.split(',').map(Number))));
+  return board;
+}
+
+function pointText(v) { return '(' + v.map(minusSign).join(',\u00a0') + ')'; }
+
+function renderMpt(item, el) {
+  el.innerHTML = ''; el.className = 'mpt ' + item.kind;
+  const top = makeDiv('mfwTop mptTop', '');
+  top.append(renderMatrix(item.M), mptBoard(item, mptCell(item)));
+  el.append(makeDiv('q', 'Where does ' + pointText(item.p) + ' land?'), top);
+}
+
+// "1·2 − 1·1": one row of M applied to p. A negative second factor is bracketed unless bare is set (Deep, tight).
+function rowText(row, p, bare) {
+  return row.map((m, j) => {
+    const v = p[j] < 0 && !bare ? '(' + minusSign(p[j]) + ')' : minusSign(p[j]), t = Math.abs(m) + '·' + v;
+    return j === 0 ? (m < 0 ? '−' : '') + t : (m < 0 ? ' − ' : ' + ') + t;
+  }).join('');
+}
+
+// The first form that fits: the sums for both rows, the same without spaces, without the arrow or brackets, the result alone.
+function explainMpt(item) {
+  const limit = item.kind === 'mptL' ? 60 : 36, p = pointText(item.p), res = pointText(item.to), tuple = rs => '(' + rs.join(', ') + ')';
+  const rows = item.M.map(r => rowText(r, item.p)), bare = item.M.map(r => rowText(r, item.p, true).replace(/ /g, ''));
+  const forms = [p + ' → ' + tuple(rows) + ' = ' + res, '→ ' + tuple(rows.map(r => r.replace(/ /g, ''))) + ' = ' + res,
+    tuple(bare) + ' = ' + res, p + ' → ' + res];
+  return forms.find(t => t.length <= limit) || forms[3];
+}
+
+// Rings the right point. The basis arrows give way to the two steps (x times column 1 from the origin, then y times
+// column 2 on from its tip), each with a label at its head, e.g. "−2·x".
+function markMpt(el, item) {
+  el.querySelector('[data-answer="' + item.answer + '"]').classList.add('right');
+  const board = el.querySelector('.mptBoard'), svg = board.querySelector('svg'), R = item.range, cell = parseFloat(board.querySelector('.mptHit').style.width);
+  const k = 2 * R / parseFloat(svg.getAttribute('width')), cols = MAT_ARROW[item.kind === 'mptD' ? 'dark' : 'light'], M = item.M;
+  svg.querySelectorAll(':scope > .mArrow').forEach(a => a.remove());
+  let at = [0, 0];
+  [0, 1].forEach(j => {
+    const tip = [M[0][j] * item.p[j], M[1][j] * item.p[j]];
+    if (tip[0] || tip[1]) {
+      const g = svgEl('g', { class: 'mStep', transform: `translate(${at[0]} ${-at[1]})` });
+      g.appendChild(svgArrow(tip, cols[j], k, false));
+      svg.appendChild(g);
+      const lab = makeDiv('mptLab', (j ? (item.p[j] < 0 ? '−' : '+') : minusSign(item.p[j])) + (j ? Math.abs(item.p[j]) : '') + '·' + AXIS_NAMES[j]);
+      lab.style.color = cols[j];
+      const len = Math.hypot(...tip), off = [tip[0] / len * 20, -tip[1] / len * 14];
+      lab.style.left = Math.max(0, (at[0] + tip[0] + R + 0.5) * cell + off[0] - 14) + 'px'; lab.style.top = (R - at[1] - tip[1] + 0.5) * cell + off[1] - 7 + 'px';
+      board.appendChild(lab);
+    }
+    at = [at[0] + tip[0], at[1] + tip[1]];
+  });
+}
+
+registerDrill('mpt', {
+  op: 'transform', skill: 'matrices', name: 'Matrix point',
+  light: (level, rng) => makeMpt('mptL', level, rng),
+  deep: (level, rng) => makeMpt('mptD', level, rng),
+  timeline: () => [],
+  render: renderMpt,
+  answer: item => item.answer,
+  options: item => item.options,
+  explain: explainMpt,
+  markMiss: markMpt
+});
+
+// ===== COMPOSE =====
+// "First A, then B": pick the picture of B·A. Options: B·A, A·B (wrong order), plus A alone and B alone in Deep.
+// A and B alone are visible-content decoys: a player who can apply A or B to the start picture can drop them.
+// A and B are named geometric transforms: turns and flips below Light 4, shears from Light 4, stretches in Deep; 3D from Deep 10.
+// Every option must be wellShaped (no slivers); in 3D each also fills 15% of the drawn box.
+
+const mcoMat2 = (...r) => [[r[0], r[1]], [r[2], r[3]]];
+const MCO_2D = [
+  ['turn 90°', mcoMat2(0, -1, 1, 0)], ['turn −90°', mcoMat2(0, 1, -1, 0)], ['half turn', mcoMat2(-1, 0, 0, -1)],
+  ['flip x-axis', mcoMat2(1, 0, 0, -1)], ['flip y-axis', mcoMat2(-1, 0, 0, 1)], ['flip y = x', mcoMat2(0, 1, 1, 0)], ['flip y = −x', mcoMat2(0, -1, -1, 0)],
+  ['shear x', mcoMat2(1, 1, 0, 1)], ['shear −x', mcoMat2(1, -1, 0, 1)], ['shear y', mcoMat2(1, 0, 1, 1)], ['shear −y', mcoMat2(1, 0, -1, 1)]
+];
+const MCO_2D_STRETCH = [['stretch x', mcoMat2(2, 0, 0, 1)], ['stretch y', mcoMat2(1, 0, 0, 2)]];
+
+function mcoDiag(k, v) { return [0, 1, 2].map(i => [0, 1, 2].map(j => (i !== j ? 0 : i === k ? v : 1))); }
+// Turn by 90° (sign ±1, or 0 for a half turn) about axis k, right-handed: sign 1 sends axis k+1 to axis k+2.
+function mcoTurn(k, sign) {
+  const i = (k + 1) % 3, j = (k + 2) % 3, M = mcoDiag(k, 1), c = sign ? 0 : -1, s = sign;
+  M[i][i] = M[j][j] = c; M[i][j] = -s; M[j][i] = s;
+  return M;
+}
+function mcoShear(i, j, sign) { const M = mcoDiag(0, 1); M[i][j] = sign; return M; }
+
+function mcoTransforms3D() {
+  const out = [], sg = v => (v < 0 ? '−' : '');
+  [0, 1, 2].forEach(k => {
+    const ax = AXIS_NAMES[k];
+    out.push(['turn 90° ' + ax, mcoTurn(k, 1)], ['turn −90° ' + ax, mcoTurn(k, -1)], ['half turn ' + ax, mcoTurn(k, 0)]);
+    out.push(['flip ' + ax, mcoDiag(k, -1)], ['stretch ' + ax, mcoDiag(k, 2)]);
+    [0, 1, 2].filter(j => j !== k).forEach(j => [1, -1].forEach(v => out.push(['shear ' + ax + (v < 0 ? '−' : '+') + AXIS_NAMES[j], mcoShear(k, j, v)])));
+  });
+  return out;
+}
+const MCO_3D = mcoTransforms3D();
+
+// The options for the pair, or null when the item is bad: commuting pair, identity or sliver picture, or two
+// options drawing the same picture.
+function mcoOptions(A, B, deep) {
+  const BA = matMul(B, A), AB = matMul(A, B);
+  if (matKey(BA) === matKey(AB)) return null;
+  const all = deep ? [BA, AB, A, B] : [BA, AB];
+  if (all.some(m => !wellShaped(m) || isIdentityMat(m))) return null;
+  return new Set(all.map(pictureKey)).size === all.length ? all : null;
+}
+
+function mcoPick(deep, level, rng) {
+  const n = deep && level >= CONFIG.mfw.deep3dFrom ? 3 : 2;
+  const pool = n === 3 ? MCO_3D : deep ? [...MCO_2D, ...MCO_2D_STRETCH] : level < 4 ? MCO_2D.slice(0, 7) : MCO_2D;
+  return [pool[Math.floor(rng() * pool.length)], pool[Math.floor(rng() * pool.length)]];
+}
+
+// Named transforms mostly have equal Σ|entries|, so B·A sits in a top group of 3 or 4 tied options. "Guess among the
+// largest" then wins 1/3 or 1/4 of the time. Measured over 3 seeds × 5000 Deep items: 0.305 without the thin-out,
+// 0.290 with it (half of the groups of 3 dropped).
+function mcoTied3(all) {
+  const sums = all.map(m => m.flat().reduce((s, x) => s + Math.abs(x), 0)), top = Math.max(...sums);
+  return sums[0] === top && sums.filter(x => x === top).length === 3;
+}
+
+function tryMco(kind, level, rng) {
+  const deep = kind === 'mcoD', [[nameA, A], [nameB, B]] = mcoPick(deep, level, rng);
+  const all = mcoOptions(A, B, deep);
+  if (!all || (deep && mcoTied3(all) && rng() < 0.5)) return null;
+  const order = shuffle(all.map((_, i) => i), rng), mats = order.map(i => all[i]);
+  const item = { kind, A, B, names: [nameA, nameB], M: all[0], mats, answer: String(order.indexOf(0)), options: mats.map((_, i) => String(i)) };
+  if (A.length === 2) return { ...item, range: gridRangeFor(mats, 3) };
+  const fit = shared3DFit(mats);
+  return minPairMove(mats, fit) < MFW_MIN_MOVE || mats.some(m => pictureArea(m, fit) < MCO_MIN_AREA) ? null : { ...item, fit };
+}
+const MCO_MIN_AREA = 0.15; // 0.25 is out of reach: the hull of the L fills at most 0.29 of the box, 4% of items reach 0.25
+
+function makeMco(kind, level, rng) {
+  for (let i = 0; i < 200; i++) {
+    const item = tryMco(kind, level, rng);
+    if (item) return item;
+  }
+  throw new Error('mco: no valid item');
+}
+
+// As mfwSizes, but the start picture shares the top row with two matrices.
+function mcoSizes(deep, n) {
+  const sz = mfwSizes(deep, n), mw = n === 3 ? 196 : 140;
+  return { opt: sz.opt, start: Math.max(84, Math.min(sz.start, screenWidth() - mw - 24)) };
+}
+
+function mcoMatrix(label, M, cls) {
+  const d = makeDiv('mcoMat', '');
+  d.append(makeDiv('mcoLab ' + cls, label), renderMatrix(M));
+  return d;
+}
+
+function renderMco(item, el) {
+  el.innerHTML = ''; el.className = 'mco ' + item.kind;
+  const deep = item.kind === 'mcoD', sz = mcoSizes(deep, item.A.length), top = makeDiv('mfwTop', ''), start = makeDiv('mfwStart', '');
+  start.appendChild(matPicture(item, null, sz.start));
+  top.append(mcoMatrix('First A', item.A, 'mcoA'), mcoMatrix('then B', item.B, 'mcoB'), start);
+  const opts = makeDiv('mfwOpts', '');
+  item.mats.forEach((M, i) => {
+    const b = makeAnswerButton('', String(i), 'matOpt mfwOpt');
+    b.appendChild(matPicture(item, M, sz.opt - 6));
+    opts.appendChild(b);
+  });
+  el.append(makeDiv('q', 'Which picture is B·A?'), top, opts);
+}
+
+// The rule with the two transform names, the names alone, the rule with the product's columns, or the rule:
+// the first that fits (Light 60, Deep 36).
+function explainMco(item) {
+  const limit = item.kind === 'mcoL' ? 60 : 36, rule = 'B·A: apply A first, then B.', named = 'A: ' + item.names[0] + ', B: ' + item.names[1];
+  const cols = item.M.map((_, j) => columnText(item.M, j)).join(', ') + '.';
+  const forms = [rule + ' ' + named + '.', named + ' → B·A.', rule + ' ' + cols, rule];
+  return forms.find(t => t.length <= limit);
+}
+
+registerDrill('mco', {
+  op: 'transform', skill: 'matrices', name: 'Matrix compose',
+  light: (level, rng) => makeMco('mcoL', level, rng),
+  deep: (level, rng) => makeMco('mcoD', level, rng),
+  timeline: () => [],
+  render: renderMco,
+  answer: item => item.answer,
+  options: item => item.options,
+  explain: explainMco
 });
 
 // ===== STATE =====
@@ -1718,7 +3566,7 @@ function correctMs(state, drill, from, to) {
 
 function progressLine(state, now) {
   let best = null;
-  for (const drill of Object.keys(DRILLS)) {
+  for (const drill of visibleDrills()) {
     const cur = correctMs(state, drill, now - 7 * DAY_MS, now);
     const prev = correctMs(state, drill, now - 14 * DAY_MS, now - 7 * DAY_MS);
     if (cur.length < 10 || prev.length < 10) continue;
@@ -1916,7 +3764,7 @@ function nextLightItem() {
   clearTimers();
   document.getElementById('lightFlash').className = '';
   updateCorner();
-  const ids = Object.keys(DRILLS), id = ids[Math.floor(Math.random() * ids.length)];
+  const id = pickLightDrill();
   app.item = DRILLS[id].light(itemLevel(app.state, id, 'L'), makeItemRng());
   playItem(app.item, document.getElementById('lightItem'));
 }
@@ -2032,27 +3880,33 @@ function showDeepSummary() {
 
 function nextDeepItem() {
   clearTimers();
-  const set = app.deepSet, el = deepEl();
+  const set = app.deepSet;
   document.getElementById('deepNext').hidden = true;
   document.getElementById('deepStatus').textContent = '';
   if (set.results.length >= CONFIG.deepSetSize) return showDeepSummary();
-  document.getElementById('deepCount').textContent = 'puzzle ' + (set.results.length + 1) + ' / ' + CONFIG.deepSetSize;
-  app.item = DRILLS[set.drill].deep(itemLevel(app.state, set.drill, 'D'), makeItemRng());
-  playItem(app.item, el);
+  playDeepScene(pickDeepScene(set.skill, set.drill, makeItemRng()));
 }
 
-function startDeep(drill) {
+// set.drill is the scene now playing, so the next pick can avoid it.
+function playDeepScene(drill) {
+  const set = app.deepSet;
+  set.drill = drill;
+  document.getElementById('deepCount').textContent = 'puzzle ' + (set.results.length + 1) + ' / ' + CONFIG.deepSetSize;
+  app.item = DRILLS[drill].deep(itemLevel(app.state, drill, 'D'), makeItemRng());
+  playItem(app.item, deepEl());
+}
+
+function startDeep(skill) {
   app.mode = 'D';
-  app.deepSet = { drill, results: [] };
+  app.deepSet = { skill, drill: null, results: [] };
   showScreen('deep');
   guarded(nextDeepItem);
 }
 
-// Ruling W: ✕ and Done go back to the operation's drill menu, one tap from the next set.
+// Ruling W: ✕ and Done go back to the skill menu, one tap from the next set.
 function exitDeep() {
-  const op = DRILLS[app.deepSet.drill].op;
   app.item = null; app.locked = true; app.deepSet = null;
-  showDeepSub(op);
+  showDeepSkills();
 }
 
 // Leaving the app drops the item unrecorded, so time away never counts as an answer.
@@ -2076,39 +3930,26 @@ function menuButton(label, key, value) {
   return b;
 }
 
-// An operation opens once at least one of its drills is registered.
-function showDeepPick() {
-  const menu = document.getElementById('opMenu');
+// A skill opens once it has at least one visible scene; hidden skills are left out.
+function showDeepSkills() {
+  const menu = document.getElementById('skillMenu');
   menu.innerHTML = '';
-  for (const op of OPERATIONS) {
-    const b = menuButton(op.name, 'op', op.id);
-    b.disabled = !op.drills.some(id => DRILLS[id]);
+  for (const k of SKILLS.filter(k => !skillHidden(k.id))) {
+    const b = menuButton(k.name, 'skill', k.id);
+    b.disabled = !scenesOf(k.id).length;
     menu.appendChild(b);
   }
   showScreen('deepPick');
 }
 
-function showDeepSub(opId) {
-  const op = OPERATIONS.find(o => o.id === opId), menu = document.getElementById('drillMenu');
-  document.getElementById('subTitle').textContent = op.name;
-  menu.innerHTML = '';
-  op.drills.filter(id => DRILLS[id]).forEach(id => menu.appendChild(menuButton(DRILLS[id].name, 'drill', id)));
-  showScreen('deepSub');
-}
-
 function wireDeep() {
-  document.getElementById('goDeep').addEventListener('click', showDeepPick);
+  document.getElementById('goDeep').addEventListener('click', showDeepSkills);
   document.getElementById('pickExit').addEventListener('click', showStart);
-  document.getElementById('subExit').addEventListener('click', showDeepPick);
   document.getElementById('deepExit').addEventListener('click', exitDeep);
   document.getElementById('deepNext').addEventListener('click', () => guarded(nextDeepItem));
   document.getElementById('deepPick').addEventListener('click', e => {
-    const btn = e.target.closest('[data-op]');
-    if (btn) showDeepSub(btn.dataset.op);
-  });
-  document.getElementById('deepSub').addEventListener('click', e => {
-    const btn = e.target.closest('[data-drill]');
-    if (btn) startDeep(btn.dataset.drill);
+    const btn = e.target.closest('[data-skill]');
+    if (btn) startDeep(btn.dataset.skill);
   });
   document.getElementById('deep').addEventListener('click', e => {
     const btn = e.target.closest('[data-answer]');
@@ -2294,6 +4135,60 @@ test('off-centre shape stays inside the canvas margin', () => {
   }
 });
 
+const IDENTITY3 = [[1, 0, 0], [0, 1, 0], [0, 0, 1]];
+const FACE_RGB = { U: [220, 30, 30], D: [30, 200, 30], F: [30, 30, 220], B: [220, 200, 30], L: [30, 200, 200], R: [200, 30, 200] };
+function paintSolid(g, id) { g.fillStyle = 'rgb(' + FACE_RGB[id] + ')'; g.fillRect(0, 0, 1, 1); }
+// A pixel "is" face id's colour when each channel matches up to the renderer's light shading.
+function rgbMatches(d, k, id) {
+  const c = FACE_RGB[id], s = d[k] / c[0];
+  return d[k + 3] === 255 && s > 0.5 && [1, 2].every(j => Math.abs(d[k + j] - c[j] * s) < 12);
+}
+test('faced cube: CUBE_FACES are unit, orthogonal and right-handed', () => {
+  assert(CUBE_FACES.length === 6 && new Set(CUBE_FACES.map(f => f.id)).size === 6, 'six ids');
+  const dot = (a, b) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+  CUBE_FACES.forEach(({ id, n, u, v }) => {
+    assert(dot(n, n) === 1 && dot(u, u) === 1 && dot(v, v) === 1 && !dot(n, u) && !dot(n, v) && !dot(u, v), 'orthonormal ' + id);
+    assert(det3([u, v, n]) === 1, 'right-handed ' + id);
+  });
+});
+test('faced cube: identity shows 3 faces; all 24 rotations show 3', () => {
+  assert(visibleFaces(IDENTITY3).length === 3, 'identity');
+  ROTATIONS.forEach((m, i) => assert(visibleFaces(m).length === 3, 'rotation ' + i));
+});
+test('faced cube: each visible face shows its own colour, hidden ones none', () => {
+  const W = 120, c = document.createElement('canvas'); c.width = c.height = W;
+  drawFacedCube(c, IDENTITY3, paintSolid, { dark: false });
+  const d = c.getContext('2d').getImageData(0, 0, W, W).data, vis = visibleFaces(IDENTITY3);
+  for (const id of Object.keys(FACE_RGB)) {
+    let n = 0;
+    for (let k = 0; k < d.length; k += 4) if (rgbMatches(d, k, id)) n++;
+    assert(vis.includes(id) ? n > 600 : n === 0, id + ' pixels ' + n);
+  }
+});
+test('faced cube: a mark at a face\'s (0.2, 0.2) lands on its projected corner', () => {
+  const W = 200, c = document.createElement('canvas'); c.width = c.height = W;
+  const m = ROTATIONS[5], id = visibleFaces(m)[0], f = CUBE_FACES.find(x => x.id === id), sc = fitScale([[0, 0, 0]], c);
+  drawFacedCube(c, m, (g, fid) => { if (fid === id) { g.fillStyle = 'rgb(' + FACE_RGB.U + ')'; g.fillRect(0.15, 0.15, 0.1, 0.1); } }, { dark: false });
+  const d = c.getContext('2d').getImageData(0, 0, W, W).data;
+  // Independent oracle: paint (s, t) is the 3D point n/2 + (s - 0.5) u + (0.5 - t) v, then orient, then the view pose.
+  const pixel = (s, t) => {
+    const p = [0, 1, 2].map(i => f.n[i] / 2 + (s - 0.5) * f.u[i] + (0.5 - t) * f.v[i]);
+    const q = applyPose(m.map(r => r[0] * p[0] + r[1] * p[1] + r[2] * p[2]), CUBE_VIEW);
+    return (Math.round(W / 2 - q[1] * sc) * W + Math.round(W / 2 + q[0] * sc)) * 4;
+  };
+  assert(rgbMatches(d, pixel(0.2, 0.2), 'U'), 'mark at (0.2, 0.2)');
+  assert(!rgbMatches(d, pixel(0.8, 0.8), 'U') && !rgbMatches(d, pixel(0.8, 0.2), 'U'), 'not at other corners');
+});
+test('faced cube: subdiv 3 draws grid lines inside a face', () => {
+  const W = 160, c = document.createElement('canvas'); c.width = c.height = W;
+  const plain = () => { c.width = W; drawFacedCube(c, IDENTITY3, paintSolid, { dark: true }); return c.getContext('2d').getImageData(0, 0, W, W).data; };
+  const a = plain(); c.width = W; drawFacedCube(c, IDENTITY3, paintSolid, { dark: true, subdiv: 3 });
+  const b = c.getContext('2d').getImageData(0, 0, W, W).data;
+  let diff = 0;
+  for (let k = 0; k < a.length; k += 4) if (a[k] !== b[k] || a[k + 1] !== b[k + 1]) diff++;
+  assert(diff > 150, 'grid pixels ' + diff);
+});
+
 test('tracking: moves stay on board and end is right, 1000 draws', () => {
   const rng = makeRng(6);
   for (let i = 0; i < 1000; i++) {
@@ -2382,7 +4277,7 @@ test('progressLine', () => {
     s.history.push([now - 10 * day, 'rot', 'L', 1, 1, 2000]);
     s.history.push([now - 2 * day, 'rot', 'L', 1, 1, 1760]);
   }
-  assert(progressLine(s, now) === 'rotation: 12% faster than last week', progressLine(s, now));
+  assert(progressLine(s, now) === 'blocks: 12% faster than last week', progressLine(s, now));
   assert(progressLine(defaultState(), now) === null, 'no data');
 });
 
@@ -2403,7 +4298,7 @@ test('progressLine: equal medians give null; slower gives exact string', () => {
     return s;
   };
   assert(progressLine(fill(2000, 2000), now) === null, 'equal');
-  assert(progressLine(fill(2000, 2200), now) === 'rotation: 10% slower than last week', 'slower');
+  assert(progressLine(fill(2000, 2200), now) === 'blocks: 10% slower than last week', 'slower');
 });
 test('progressLine: Deep answers in either week do not change the line', () => {
   const day = 864e5, now = 30 * day, s = defaultState();
@@ -2435,18 +4330,19 @@ test('light: tracking answer screen has a button per square', () => {
 });
 
 test('deep: a set is 3 puzzles then a summary', () => {
-  app.state = defaultState(); startDeep('rot');
+  app.state = defaultState(); startDeep('rotation');
   for (let k = 0; k < 3; k++) { readyToAnswer(); answer(String(app.item.answer)); nextDeepItem(); }
   assert(document.querySelector('#deep .summary'), 'summary shown');
   assert(app.state.history.filter(h => h[2] === 'D').length === 3, '3 records');
   document.getElementById('deepDone').click();
-  assert(document.getElementById('deepSub').classList.contains('active') && document.getElementById('subTitle').textContent === 'Transform', 'Done opens the drill menu');
-  startDeep('odd');
+  const skillMenuOpen = () => document.getElementById('deepPick').classList.contains('active') && document.querySelectorAll('#deepPick [data-skill]').length === 3;
+  assert(skillMenuOpen(), 'Done opens the skill menu');
+  startDeep('tracking');
   exitDeep(); // what #deepExit runs (listeners are not wired in test mode)
-  assert(document.getElementById('deepSub').classList.contains('active') && document.getElementById('subTitle').textContent === 'Odds' && !app.deepSet, '✕ opens the drill menu');
+  assert(skillMenuOpen() && !app.deepSet, '✕ opens the skill menu');
 });
 test('deep: items use the deep level', () => {
-  app.state = defaultState(); startDeep('rot');
+  app.state = defaultState(); startDeep('rotation'); clearTimers(); playDeepScene('rot');
   assert(app.item.target.vox.length === CONFIG.rot.cubes(6), '10 cubes at skill 1');
 });
 
@@ -2478,7 +4374,7 @@ test('start screen refreshes the progress line each time it is shown', () => {
   }
   showStart();
   const box = document.getElementById('progress');
-  assert(!box.hidden && box.textContent === 'rotation: 12% faster than last week', box.textContent);
+  assert(!box.hidden && box.textContent === 'blocks: 12% faster than last week', box.textContent);
 });
 test('guarded: one retry after a throw, then the start screen', () => {
   let calls = 0;
@@ -2955,7 +4851,7 @@ test('deep ramps start at the Deep entry level (skill 1 + 5)', () => {
 test('every drill question uses one font size; cards miss uses the default outline', () => {
   const host = document.createElement('div'), rng = makeRng(12);
   document.body.appendChild(host);
-  ALL_DRILL_IDS.forEach(id => ['light', 'deep'].forEach(m => {
+  ALL_DRILL_IDS.filter(id => DRILLS[id]).forEach(id => ['light', 'deep'].forEach(m => {
     DRILLS[id].render(DRILLS[id][m](6, rng), host, 'answer');
     const q = host.querySelector('.q');
     assert(q && getComputedStyle(q).fontSize === '18px', id + ' ' + m + ' question ' + (q && getComputedStyle(q).fontSize));
@@ -2990,12 +4886,72 @@ test('start halves say only LIGHT and DEEP', () => {
   assert(document.getElementById('goLight').textContent.trim() === 'LIGHT', 'light');
   assert(document.getElementById('goDeep').textContent.trim() === 'DEEP', 'deep');
 });
-test('deep menu: five operations, transform opens rotation and tracking', () => {
-  showDeepPick();
-  assert(document.querySelectorAll('#deepPick [data-op]').length === 5, 'five');
-  showDeepSub('transform');
-  const ids = [...document.querySelectorAll('#deepSub [data-drill]')].map(b => b.dataset.drill).join();
-  assert(ids === 'rot,trk', ids);
+test('deep menu: three skills, all open; a skill starts a set of its scenes', () => {
+  app.state = defaultState(); showDeepSkills();
+  const btns = [...document.querySelectorAll('#deepPick [data-skill]')];
+  assert(btns.map(b => b.textContent).join() === 'Rotation,Tracking,Matrices', btns.map(b => b.textContent).join());
+  assert(btns.map(b => b.disabled).join() === 'false,false,false', 'every skill has a visible scene');
+  startDeep('tracking');
+  assert(DRILLS[drillOf(app.item)].skill === 'tracking' && app.deepSet.skill === 'tracking', 'tracking set');
+  exitDeep();
+});
+test('v3: only transform scenes are visible', () => {
+  assert(visibleDrills().every(id => !DRILLS[id].hidden && DRILLS[id].skill), 'visible');
+  ['mat','ser','odd','ev','seq','crd','nim','rch'].forEach(id => assert(DRILLS[id].hidden, id + ' hidden'));
+});
+test('v3: old save keeps levels for all drills', () => {
+  const old = { v:1, skill:{ rot:4, trk:3, mat:5 }, run:{ rot:0, trk:0, mat:0 }, streak:0, history:[[1,'mat','L',5,1,900]] };
+  const s = loadState({ getItem: () => JSON.stringify(old), setItem() {} });
+  assert(s.skill.rot === 4 && s.skill.trk === 3 && s.skill.mat === 5 && s.history.length === 1, 'kept');
+  assert(s.skill.die === 1 && s.skill.mco === 1, 'new scenes default');
+});
+test('v3: a save with all ten old drills keeps every level, run, recent and history row', () => {
+  const ids = ['rot','trk','mat','ser','odd','ev','seq','crd','nim','rch'], old = { v: 1, skill: {}, run: {}, recent: {}, streak: 0, history: [] };
+  ids.forEach((id, i) => { old.skill[id] = 1 + i; old.run[id] = i; old.recent[id] = [1, 0]; old.history.push([i, id, 'L', 1 + i, 1, 900]); });
+  const s = loadState({ getItem: () => JSON.stringify(old), setItem() {} });
+  ids.forEach((id, i) => assert(s.skill[id] === 1 + i && s.run[id] === i && s.recent[id].join() === '1,0', id));
+  assert(JSON.stringify(s.history) === JSON.stringify(old.history), 'history');
+});
+test('v3: deep skill menu and scene picking', () => {
+  showDeepSkills();
+  assert(document.querySelectorAll('#deepPick [data-skill]').length === 3, 'three skills');
+  const r = makeRng(5); let prev = null;
+  for (let i = 0; i < 50; i++) { const s = pickDeepScene('rotation', prev, r); assert(DRILLS[s].skill === 'rotation', 'skill'); prev = s; }
+  assert(pickDeepScene('tracking', 'trk', r) === 'trk' || scenesOf('tracking').length > 1, 'single scene repeats');
+});
+test('v3: progress line ignores hidden drills', () => {
+  const day = 864e5, now = 30 * day, s = defaultState();
+  for (let i = 0; i < 12; i++) { s.history.push([now - 10*day,'mat','L',1,1,2000]); s.history.push([now - 2*day,'mat','L',1,1,1000]); }
+  assert(progressLine(s, now) === null, 'hidden mat not reported');
+});
+test('v3: Light picks only visible scenes, skills evenly', () => {
+  const r = makeRng(6), seen = {};
+  for (let i = 0; i < 400; i++) { const id = pickLightDrill(r); seen[id] = (seen[id] || 0) + 1; }
+  assert(Object.keys(seen).every(id => visibleDrills().includes(id)), 'visible only: ' + Object.keys(seen));
+  const bySkill = {};
+  for (const id in seen) bySkill[DRILLS[id].skill] = (bySkill[DRILLS[id].skill] || 0) + seen[id];
+  const open = SKILLS.filter(k => scenesOf(k.id).length);
+  open.forEach(k => assert(Math.abs(bySkill[k.id] - 400 / open.length) < 60, k.id + ' ' + bySkill[k.id]));
+});
+test('ruling CC: un-hiding a drill is flipping its flag', () => {
+  DRILLS.mat.hidden = false;
+  try {
+    app.state = defaultState(); showDeepSkills();
+    const rules = document.querySelector('#deepPick [data-skill="rules"]');
+    assert(rules && rules.textContent === 'Rules' && !rules.disabled, 'Rules button');
+    const r = makeRng(9);
+    assert(Array.from({ length: 200 }, () => pickLightDrill(r)).includes('mat'), 'Light can pick mat');
+  } finally { DRILLS.mat.hidden = true; }
+  showDeepSkills();
+  assert(!document.querySelector('#deepPick [data-skill="rules"]'), 'Rules gone again');
+});
+test('v3: deep set never repeats a scene back to back when the skill has two', () => {
+  const real = DRILLS.trk.skill;
+  DRILLS.trk.skill = 'rotation';
+  try {
+    const r = makeRng(7); let prev = 'rot';
+    for (let i = 0; i < 30; i++) { const s = pickDeepScene('rotation', prev, r); assert(s !== prev, 'repeat at ' + i); prev = s; }
+  } finally { DRILLS.trk.skill = real; }
 });
 
 // Red means a hue within 25 degrees of pure red with real saturation.
@@ -3075,8 +5031,10 @@ test('light miss style has no red: flash, reason, tracking path', () => {
   host.remove();
   assert(!isReddish(stroke), 'path ' + stroke);
 });
+// A Deep screen playing one given drill (hidden drills have no skill set to start from).
+function startDeepScene(id) { startDeep('rotation'); clearTimers(); playDeepScene(id); }
 test('deep miss shows the reason and keeps Next', () => {
-  app.state = defaultState(); startDeep('nim');
+  app.state = defaultState(); startDeepScene('nim');
   const item = app.item;
   readyToAnswer();
   answer(item.options.find(o => o !== item.answer));
@@ -3084,20 +5042,20 @@ test('deep miss shows the reason and keeps Next', () => {
   assert(deepEl().querySelector('.q').textContent === nimQuestion(item), 'Take-away question kept');
   assert(!document.getElementById('deepNext').hidden && app.item === item, 'Next waits');
   exitDeep();
-  app.state = defaultState(); startDeep('rch');
+  app.state = defaultState(); startDeepScene('rch');
   const r = app.item;
   readyToAnswer();
   answer(r.options.find(o => o !== r.answer));
   assert(deepEl().querySelector('.q').textContent === reachQuestion(r) && deepEl().querySelector('.why').textContent === DRILLS.rch.explain(r), 'Reach keeps question');
   exitDeep();
-  app.state = defaultState(); startDeep('mat');
+  app.state = defaultState(); startDeepScene('mat');
   readyToAnswer();
   answer(app.item.options.find(o => o !== app.item.answer));
   assert(deepEl().querySelectorAll('.q').length === 1 && deepEl().querySelector('.q.why'), 'Matrices reason replaces the question');
   exitDeep();
 });
 test('explain: 50 items per drill and mode give a non-empty line of at most 60 chars', () => {
-  ALL_DRILL_IDS.forEach(id => {
+  ALL_DRILL_IDS.filter(id => DRILLS[id]).forEach(id => {
     const d = DRILLS[id], rng = makeRng(77 + id.length);
     for (let i = 0; i < 100; i++) {
       const mode = i % 2 ? 'deep' : 'light', s = d.explain(d[mode](1 + (i >> 1) % 15, rng));
@@ -3128,6 +5086,1016 @@ test('explain: exact lines for fixed items', () => {
   eq(ex('nim', { kind: 'nimL', pile: 9, takes: [1, 2], answer: 'no' }), 'Every move from 9 loses.');
   eq(ex('nim', { kind: 'nimD', pile: 23, takes: [1, 2, 3], answer: '3' }), 'Take 3 leaves 20, a losing pile.');
   eq(ex('rch', { kind: 'rchL', answer: '5' }), 'Shortest: 5 moves.');
+});
+
+// ===== DIE TESTS =====
+// Oracle: six face numbers kept by world position, moved by cycles of positions (no matrices).
+const DIE_CYCLES = {
+  rollF: [['U', 'F', 'D', 'B']], rollB: [['U', 'B', 'D', 'F']],
+  rollR: [['U', 'R', 'D', 'L']], rollL: [['U', 'L', 'D', 'R']],
+  spinCW: [['F', 'L', 'B', 'R']], spinCCW: [['F', 'R', 'B', 'L']]
+};
+function oracleDieTop(start, moves) {
+  let at = {};
+  CUBE_FACES.forEach(w => {
+    const body = CUBE_FACES.find(b => dieDir(start, b.n).join() === w.n.join());
+    at[w.id] = DIE_NUMBERS[body.id];
+  });
+  for (const mv of moves) {
+    const next = { ...at };
+    DIE_CYCLES[mv].forEach(c => c.forEach((pos, i) => { next[c[(i + 1) % 4]] = at[pos]; }));
+    at = next;
+  }
+  return at.U;
+}
+function dieDir(m, v) { return applyMat(m, v); }
+function allDieSequences(maxLen) {
+  let out = [[]], layer = [[]];
+  for (let n = 1; n <= maxLen; n++) {
+    layer = layer.flatMap(s => DIE_MOVE_IDS.map(m => [...s, m]));
+    out = out.concat(layer);
+  }
+  return out.slice(1);
+}
+
+test('die: opposite faces sum to 7, 1-2-3 counter-clockwise (right-handed) at a corner', () => {
+  const n = id => CUBE_FACES.find(f => f.id === id).n;
+  CUBE_FACES.forEach(f => {
+    const opp = CUBE_FACES.find(g => g.n.every((x, i) => x === -f.n[i]));
+    assert(DIE_NUMBERS[f.id] + DIE_NUMBERS[opp.id] === 7, 'sum 7 ' + f.id);
+  });
+  const at = k => n(CUBE_FACES.find(f => DIE_NUMBERS[f.id] === k).id);
+  assert(det3([at(1), at(2), at(3)]) === 1, 'handedness');
+});
+test('die: each move icon agrees with the rotation it stands for', () => {
+  const up = [0, 1, 0], front = [0, 0, 1], left = [-1, 0, 0];
+  const dirOf = id => CUBE_FACES.find(f => f.id === id).n;
+  DIE_MOVE_IDS.forEach(id => {
+    const mv = DIE_MOVES[id], icon = mv.icon;
+    assert(ROTATIONS.some(r => JSON.stringify(r) === JSON.stringify(mv.rot)), 'proper rotation ' + id);
+    if (icon.spin === undefined) return assert(dieDir(mv.rot, up).join() === dirOf(icon.to).join(), 'top goes to ' + icon.to + ' ' + id);
+    assert(dieDir(mv.rot, up).join() === up.join(), 'spin keeps the top ' + id);
+    assert((dieDir(mv.rot, front).join() === left.join()) === (icon.spin === 1), 'spin sense ' + id);
+  });
+  assert(DIE_MOVE_IDS.length === 6, 'six moves');
+});
+test('die: topAfter on the identity die', () => {
+  const I = ROTATIONS.find(r => r.every((row, i) => row[i] === 1));
+  const want = { rollF: 5, rollB: 2, rollR: 4, rollL: 3, spinCW: 1, spinCCW: 1 };
+  DIE_MOVE_IDS.forEach(m => assert(topAfter(I, [m]) === want[m], m + ' got ' + topAfter(I, [m])));
+  assert(topAfter(I, []) === 1, 'no moves');
+});
+test('die: topAfter equals the permutation oracle, 24 starts x all 1-3 move sequences', () => {
+  const seqs = allDieSequences(3);
+  assert(seqs.length === 6 + 36 + 216, 'sequence count');
+  ROTATIONS.forEach(s => seqs.forEach(q => {
+    const a = topAfter(s, q), b = oracleDieTop(s, q);
+    assert(a === b && a >= 1 && a <= 6, 'top ' + a + ' vs ' + b + ' ' + q.join());
+  }));
+});
+test('die: start die is the same top as dieTop(start)', () => {
+  ROTATIONS.forEach(s => assert(dieTop(s) === oracleDieTop(s, []), 'start top'));
+});
+test('die: Light 1-2 moves, 3 sorted options; Deep 3 + floor((lvl-6)/3) moves, six buttons', () => {
+  const rng = makeRng(5);
+  for (let i = 0; i < 150; i++) {
+    const lvl = 1 + i % 10, L = DRILLS.die.light(lvl, rng);
+    assert(L.moves.length >= 1 && L.moves.length <= 2 && L.options.length === 3, 'light shape');
+    assert(L.options.join() === [...L.options].sort().join(), 'light sorted');
+    assert(oracleDieTop(L.start, L.moves) === +L.answer && dieTop(L.start) !== +L.answer, 'light answer moves the top');
+    const dl = 6 + i % 10, D = DRILLS.die.deep(dl, rng);
+    assert(D.moves.length === Math.min(6, 3 + Math.floor((dl - 6) / 3)), 'deep length ' + dl);
+    assert(D.options.join() === '1,2,3,4,5,6', 'deep options');
+    assert(oracleDieTop(D.start, D.moves) === +D.answer && dieTop(D.start) !== +D.answer, 'deep answer moves the top');
+  }
+});
+test('die: no move undoes the previous one', () => {
+  const rng = makeRng(6), inv = { rollF: 'rollB', rollB: 'rollF', rollL: 'rollR', rollR: 'rollL', spinCW: 'spinCCW', spinCCW: 'spinCW' };
+  for (let i = 0; i < 100; i++) {
+    const m = DRILLS.die.deep(15, rng).moves;
+    m.slice(1).forEach((x, j) => assert(inv[m[j]] !== x, 'no undo ' + m.join()));
+  }
+});
+test('die: render shows start die, one icon per move, legend, one button per option', () => {
+  const rng = makeRng(7);
+  ['light', 'deep'].forEach(mode => {
+    const item = DRILLS.die[mode](mode === 'deep' ? 12 : 5, rng), el = document.createElement('div');
+    DRILLS.die.render(item, el, 'answer');
+    assert(el.querySelector('canvas'), 'start die canvas');
+    assert(el.querySelectorAll('.dieMove').length === item.moves.length, 'icons');
+    assert([...el.querySelectorAll('.dieMove')].every(m => m.querySelector('svg') && m.querySelector('.dieCap').textContent.length > 0), 'icon + caption');
+    assert(el.querySelector('.dieLegend').textContent.length > 0, 'legend');
+    assert(el.querySelectorAll('[data-answer]').length === item.options.length, 'buttons');
+  });
+});
+test('die: each effect line matches the simulation on the identity die', () => {
+  const side = { back: 'B', front: 'F', left: 'L', right: 'R' }, up = [0, 1, 0];
+  const dirOf = id => CUBE_FACES.find(f => f.id === id).n;
+  DIE_MOVE_IDS.forEach(id => {
+    const mv = DIE_MOVES[id], m = /^Tip (\w+): (\w+) comes up\.$/.exec(mv.effect);
+    if (!m) return assert(/^Spin: the top stays\.$/.test(mv.effect) && applyMat(mv.rot, up).join() === up.join(), 'spin ' + id);
+    assert(side[m[1]] === mv.icon.to, 'tip side ' + id);
+    assert(applyMat(mv.rot, dirOf(side[m[2]])).join() === up.join(), 'comes up ' + id);
+  });
+});
+test('die: fuzz 300', () => { fuzzDrill('die', 300); });
+test('die: explain names the final top and the first move', () => {
+  const I = ROTATIONS.find(r => r.every((row, i) => row[i] === 1));
+  assert(DRILLS.die.explain({ kind: 'dieL', start: I, moves: ['rollF', 'spinCW'], answer: '5' }) === 'Top: 5. Tip front: back comes up. Opposites add to 7.', 'roll');
+  assert(DRILLS.die.explain({ kind: 'dieD', start: I, moves: ['spinCCW', 'rollR'], answer: '4' }) === 'Top: 4. Spin: the top stays.', 'spin');
+});
+
+// ===== NET TESTS =====
+// Oracle: roll a cube behind the paper across the net cells (cycles of world labels, no frames or matrices).
+// The face pressed against the paper is the world +z side 'F'; viewer at +z, x right, y up the screen.
+const NET_ROLL = {
+  E: { R: 'F', F: 'L', L: 'B', B: 'R' }, W: { L: 'F', F: 'R', R: 'B', B: 'L' },
+  N: { U: 'F', F: 'D', D: 'B', B: 'U' }, S: { D: 'F', F: 'U', U: 'B', B: 'D' }
+};
+const NET_STEP = { E: [0, 1, 'W'], W: [0, -1, 'E'], N: [-1, 0, 'S'], S: [1, 0, 'N'] };
+const LABEL_VEC = { U: [0, 1, 0], D: [0, -1, 0], F: [0, 0, 1], B: [0, 0, -1], R: [1, 0, 0], L: [-1, 0, 0] };
+function rollCube(at, dir) {
+  const p = NET_ROLL[dir], mv = l => p[l] || l, next = {};
+  Object.keys(at).forEach(l => { next[mv(l)] = { ...at[l], up: mv(at[l].up) }; });
+  return next;
+}
+// Returns world label -> { g, up label } after stamping every cell; throws if a face is stamped twice.
+function oracleFold(cells, glyphs) {
+  let at = {}; const seen = new Set();
+  Object.keys(LABEL_VEC).forEach(l => { at[l] = { cell: -1, up: 'U' }; });
+  const visit = i => {
+    seen.add(i);
+    assert(at.F.cell === -1, 'face stamped twice');
+    at.F = { cell: i, g: glyphs[i].g, up: ['U', 'R', 'D', 'L'][glyphs[i].r] };
+    Object.keys(NET_STEP).forEach(d => {
+      const [dr, dc, back] = NET_STEP[d], j = cells.findIndex(c => c[0] === cells[i][0] + dr && c[1] === cells[i][1] + dc);
+      if (j < 0 || seen.has(j)) return;
+      at = rollCube(at, d); visit(j); at = rollCube(at, back);
+    });
+  };
+  visit(0);
+  assert(seen.size === 6 && Object.values(at).every(x => x.cell >= 0), 'net covers six faces');
+  return at;
+}
+function oracleOpposite(at, g) {
+  const l = Object.keys(at).find(k => at[k].g === g), v = LABEL_VEC[l];
+  return at[Object.keys(LABEL_VEC).find(k => LABEL_VEC[k].every((x, i) => x === -v[i]))].g;
+}
+// What a cube option shows, read through the renderer contract: visible face normals, glyph, glyph-up direction.
+function shownFaces(opt) {
+  return visibleFaces(opt.orient).map(id => {
+    const f = CUBE_FACES.find(x => x.id === id), r = opt.faces[id].r, neg = a => a.map(x => -x);
+    const up = [f.v, f.u, neg(f.v), neg(f.u)][r];
+    return { n: applyMat(opt.orient, f.n), g: opt.faces[id].g, up: applyMat(opt.orient, up) };
+  });
+}
+function oracleConsistent(at, opt) {
+  const shown = shownFaces(opt), key = (v, q) => applyMat(q, v).join();
+  return ROTATIONS.some(q => shown.every(s => {
+    const l = Object.keys(LABEL_VEC).find(k => key(LABEL_VEC[k], q) === s.n.join());
+    return at[l].g === s.g && key(LABEL_VEC[at[l].up], q) === s.up.join();
+  }));
+}
+function netPicture(opt) { return shownFaces(opt).map(s => s.n + ':' + s.g + ':' + s.up).sort().join('|'); }
+
+test('net: eleven distinct nets, each folds to six faces by rolling', () => {
+  assert(NETS.length === 11, 'count');
+  const canon = cells => {
+    const forms = [];
+    for (let k = 0; k < 8; k++) {
+      let p = cells.map(([r, c]) => (k & 1 ? [c, r] : [r, c])).map(([r, c]) => [k & 2 ? -r : r, k & 4 ? -c : c]);
+      const mr = Math.min(...p.map(x => x[0])), mc = Math.min(...p.map(x => x[1]));
+      forms.push(p.map(([r, c]) => [r - mr, c - mc].join()).sort().join(';'));
+    }
+    return forms.sort()[0];
+  };
+  assert(new Set(NETS.map(n => canon(netCells(n)))).size === 11, 'distinct up to symmetry');
+  const plain = Array.from({ length: 6 }, (_, i) => ({ g: i, r: 0 }));
+  NETS.forEach(n => oracleFold(netCells(n), plain));
+});
+test('net: generator fold agrees with the rolling oracle on every net and rotation', () => {
+  const rng = makeRng(41);
+  NETS.forEach(n => {
+    for (let t = 0; t < 20; t++) {
+      const cells = netCells(n), glyphs = cells.map((c, i) => ({ g: i, r: Math.floor(rng() * 4) }));
+      const faces = foldNetFaces(cells, glyphs), at = oracleFold(cells, glyphs);
+      ROTATIONS.forEach(q => assert(oracleConsistent(at, { orient: q, faces }), 'fold ' + n.join('/')));
+    }
+  });
+});
+test('net: glyphs are asymmetric under rotation and reflection', () => {
+  const c = document.createElement('canvas'); c.width = c.height = 32;
+  const g = c.getContext('2d', { willReadFrequently: true });
+  NET_GLYPHS.forEach((gl, id) => {
+    const imgs = [];
+    for (let k = 0; k < 8; k++) {
+      g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, 32, 32);
+      g.setTransform(k & 4 ? -32 : 32, 0, 0, 32, k & 4 ? 32 : 0, 0);
+      paintGlyph(g, id, k & 3);
+      imgs.push(g.getImageData(0, 0, 32, 32).data.filter((x, i) => i % 4 === 3));
+    }
+    imgs.forEach((a, i) => imgs.slice(i + 1).forEach(b => {
+      const diff = a.reduce((n, x, j) => n + (Math.abs(x - b[j]) > 128 ? 1 : 0), 0);
+      assert(diff >= 30, gl.name + ' transforms look alike (' + diff + ' px)');
+    }));
+  });
+});
+test('net: Light opposite answer matches the oracle on every net', () => {
+  const rng = makeRng(42), used = new Set();
+  for (let i = 0; i < 400; i++) {
+    const item = DRILLS.net.light(10, rng);
+    used.add(item.netId);
+    const at = oracleFold(item.cells, item.glyphs), marked = item.glyphs[item.mark].g;
+    assert(item.answer === String(oracleOpposite(at, marked)), 'opposite');
+    assert(item.options.length === 3 && !item.options.includes(String(marked)), 'three options, marked not offered');
+  }
+  assert(used.size === 11, 'all nets at level 10: ' + used.size);
+  for (let i = 0; i < 60; i++) assert(DRILLS.net.light(2, rng).netId < 4, 'four common nets at low levels');
+});
+test('net: Deep has exactly one consistent cube over 300 items, pictures distinct', () => {
+  const rng = makeRng(43), nets = new Set();
+  for (let i = 0; i < 300; i++) {
+    const lvl = 6 + i % 10, item = DRILLS.net.deep(lvl, rng), at = oracleFold(item.cells, item.glyphs);
+    if (lvl < 10) assert(item.netId < 6, 'six nets below Deep 10'); else nets.add(item.netId);
+    const ok = item.cubes.map(o => oracleConsistent(at, o));
+    assert(item.cubes.length === 4 && ok.filter(Boolean).length === 1 && ok[+item.answer], 'exactly one: ' + ok);
+    assert(new Set(item.cubes.map(netPicture)).size === 4, 'distinct pictures');
+  }
+  assert(nets.size === 11, 'all nets from Deep 10: ' + nets.size);
+});
+test('net: render draws the net and one button per option', () => {
+  const rng = makeRng(44);
+  ['light', 'deep'].forEach(mode => {
+    const item = DRILLS.net[mode](mode === 'deep' ? 12 : 5, rng), el = document.createElement('div');
+    DRILLS.net.render(item, el, 'answer');
+    assert(el.querySelector('canvas.netCanvas'), 'net canvas');
+    const btns = [...el.querySelectorAll('[data-answer]')];
+    assert(btns.length === (mode === 'deep' ? 4 : 3) && btns.every(b => b.querySelector('canvas')), 'buttons with pictures');
+  });
+});
+test('net: Deep truth never has strictly the most picture-compatible partners (300 items)', () => {
+  const rng = makeRng(46), rot = (q, s) => ({ n: applyMat(q, s.n).join(), g: s.g, up: applyMat(q, s.up).join() });
+  const fits = (A, B) => A.every(x => B.every(y => (x.n !== y.n && x.g !== y.g) || (x.n === y.n && x.g === y.g && x.up === y.up)));
+  const I = ROTATIONS.find(r => r.every((row, i) => row[i] === 1));
+  const compat = (a, b) => ROTATIONS.some(q => fits(shownFaces(a).map(s => rot(I, s)), shownFaces(b).map(s => rot(q, s))));
+  for (let i = 0; i < 300; i++) {
+    const item = DRILLS.net.deep(6 + i % 10, rng), c = item.cubes;
+    const counts = c.map((a, j) => c.filter((b, k) => k !== j && compat(a, b)).length), t = +item.answer;
+    assert(counts.some((n, j) => j !== t && n >= counts[t]), 'truth leads: ' + counts + ' answer ' + t);
+  }
+});
+test('net: fuzz 300', () => { fuzzDrill('net', 300); });
+test('net: explain lines fit', () => {
+  const rng = makeRng(45);
+  const L = DRILLS.net.light(5, rng), D = DRILLS.net.deep(12, rng);
+  assert(DRILLS.net.explain(L) === 'Opposite the yellow square: the ' + NET_GLYPHS[+L.answer].name + '.', 'light');
+  assert(DRILLS.net.explain(L).length <= 60 && DRILLS.net.explain(D).length <= 36, 'lengths');
+});
+
+// ===== INSTRUCTION TURN TESTS =====
+// Oracle: right-hand rule by Rodrigues' formula, applied turn by turn to the start voxels (no generator matrices).
+function oracleTurn(vox, t) {
+  const k = [0, 1, 2].map(i => (i === t.axis ? 1 : 0)), c = Math.round(Math.cos(t.deg * DEG)), s = Math.round(Math.sin(t.deg * DEG));
+  return vox.map(v => {
+    const kx = [k[1] * v[2] - k[2] * v[1], k[2] * v[0] - k[0] * v[2], k[0] * v[1] - k[1] * v[0]], kv = k[0] * v[0] + k[1] * v[1] + k[2] * v[2];
+    return [0, 1, 2].map(i => v[i] * c + kx[i] * s + k[i] * kv * (1 - c));
+  });
+}
+function oracleResult(item) { return item.turns.reduce(oracleTurn, item.shape); }
+function rtiOverlap(a, b) {
+  const A = new Set(normalize(a).map(v => v.join())); return normalize(b).filter(v => A.has(v.join())).length;
+}
+
+test('rti: stabiliser check rejects symmetric shapes, generated shapes are asymmetric', () => {
+  assert(!trivialStabiliser([[0, 0, 0], [1, 0, 0], [2, 0, 0]]), 'rod');
+  const screw = [[0, 0, 0], [1, 0, 0], [1, 1, 0], [1, 1, 1]];
+  assert(isChiral(screw) && !trivialStabiliser(screw), 'chiral screw has a half-turn symmetry');
+  assert(trivialStabiliser([[0, 0, 0], [1, 0, 0], [1, 1, 0], [1, 1, 1], [2, 0, 0]]), 'asymmetric five');
+  const rng = makeRng(51);
+  for (let i = 0; i < 40; i++) {
+    const v = rtiShape(5 + i % 3, rng), k = shapeKey(v);
+    assert(isChiral(v) && ROTATIONS.filter(m => shapeKey(rotate(v, m)) === k).length === 1, 'trivial stabiliser');
+  }
+});
+test('rti: + is counter-clockwise seen from the axis tip', () => {
+  const eq = (a, b) => a.join() === b.join();
+  assert(eq(applyMat(turnMatrix(2, 90), [1, 0, 0]), [0, 1, 0]), 'z: x to y');
+  assert(eq(applyMat(turnMatrix(0, 90), [0, 1, 0]), [0, 0, 1]), 'x: y to z');
+  assert(eq(applyMat(turnMatrix(1, 90), [0, 0, 1]), [1, 0, 0]), 'y: z to x');
+  assert(eq(applyMat(turnMatrix(1, -90), [1, 0, 0]), [0, 0, 1]), 'y -90: x to z');
+  assert(eq(applyMat(turnMatrix(0, 180), [0, 1, 0]), [0, -1, 0]), 'x 180: y flips');
+});
+test('rti: exactly one option is the turned shape, options distinct, none is the start (300 items)', () => {
+  const rng = makeRng(52);
+  for (let i = 0; i < 300; i++) {
+    const deep = i % 2 === 1, lvl = deep ? 6 + i % 10 : 1 + i % 10, item = DRILLS.rti[deep ? 'deep' : 'light'](lvl, rng);
+    const want = shapeKey(oracleResult(item)), keys = item.figs.map(shapeKey);
+    assert(item.options.length === (deep ? 4 : 2) && keys.length === item.options.length, 'option count');
+    assert(keys.filter(k => k === want).length === 1 && keys[+item.answer] === want, 'exactly one: ' + i);
+    assert(new Set(keys).size === keys.length && !keys.includes(shapeKey(item.shape)), 'distinct, not the start');
+    assert(item.turns.length === (deep ? (lvl < 10 ? 2 : 3) : 1), 'turn count');
+    if (!deep && lvl < 4) assert(item.turns.every(t => t.deg !== 180), 'Light quarter turns first');
+    item.turns.forEach((t, j) => assert(!j || t.axis !== item.turns[j - 1].axis, 'axis changes each turn'));
+  }
+});
+test('rti: one camera for all figures, axes toward the viewer, every cube visible', () => {
+  const rng = makeRng(53);
+  for (let i = 0; i < 40; i++) {
+    const item = DRILLS.rti[i % 2 ? 'deep' : 'light'](6 + i % 10, rng);
+    assert([[1, 0, 0], [0, 1, 0], [0, 0, 1]].every(a => applyPose(a, item.pose)[2] >= 0.3), 'axes toward viewer');
+    [item.shape, ...item.figs].forEach(v => assert(allCubesVisible(v, item.pose, CONFIG.rot.minCubeVisible), 'visible'));
+  }
+});
+test('rti: render shows start, turn lines, legend and one picture button per option', () => {
+  const rng = makeRng(54);
+  ['light', 'deep'].forEach(mode => {
+    const item = DRILLS.rti[mode](mode === 'deep' ? 12 : 5, rng), el = document.createElement('div');
+    DRILLS.rti.render(item, el, 'answer');
+    const lines = [...el.querySelectorAll('.rtiTurn')].map(d => d.textContent);
+    assert(lines.length === item.turns.length && /^Turn (\+90|−90|180)° about [xyz]$/.test(lines[0]), 'first line: ' + lines[0]);
+    lines.slice(1).forEach(l => assert(/^then (\+90|−90|180)° about [xyz]$/.test(l), 'then line: ' + l));
+    assert(el.querySelector('canvas.rtiStart') && el.querySelector('.rtiLegend svg'), 'start and legend');
+    const btns = [...el.querySelectorAll('[data-answer]')];
+    assert(btns.length === item.options.length && btns.every(b => b.querySelector('canvas')), 'buttons');
+  });
+});
+test('rti: Deep "most typical option" picks the answer near chance (300 items)', () => {
+  const rng = makeRng(55);
+  let hit = 0;
+  for (let i = 0; i < 300; i++) {
+    const item = DRILLS.rti.deep(6 + i % 10, rng), f = item.figs;
+    const sums = f.map((a, j) => f.reduce((s, b, k) => s + (k === j ? 0 : rtiOverlap(a, b)), 0)), top = Math.max(...sums);
+    const best = sums.map((s, j) => (s === top ? j : -1)).filter(j => j >= 0);
+    if (best.includes(+item.answer)) hit += 1 / best.length;
+  }
+  assert(hit / 300 < 0.33, 'typical-option rate ' + (hit / 300).toFixed(2));
+});
+test('rti: fuzz 300', () => { fuzzDrill('rti', 300); });
+test('rti: explain lines fit', () => {
+  const rng = makeRng(56);
+  for (let i = 0; i < 30; i++) {
+    const L = DRILLS.rti.light(1 + i % 10, rng), D = DRILLS.rti.deep(6 + i % 10, rng);
+    assert(DRILLS.rti.explain(L).length <= 60 && DRILLS.rti.explain(D).length <= 36, 'lengths');
+  }
+  assert(DRILLS.rti.explain({ kind: 'rtiL', turns: [{ axis: 0, deg: 90 }] }) === '+90° about x: y goes to z.', 'light text');
+});
+
+// ===== CHESS TESTS =====
+// Independent validator: replays the moves from the start squares with plain geometry (no generator helpers).
+function chessMoveLegal(type, { from, to, other }, size) {
+  const df = to[0] - from[0], dr = to[1] - from[1], ax = Math.abs(df), ay = Math.abs(dr);
+  if (to[0] < 0 || to[1] < 0 || to[0] >= size || to[1] >= size || (!ax && !ay)) return false;
+  if (other && other[0] === to[0] && other[1] === to[1]) return false;
+  if (type === 'knight') return ax * ay === 2;
+  const line = { rook: !ax || !ay, bishop: ax === ay, queen: !ax || !ay || ax === ay, king: ax <= 1 && ay <= 1 }[type];
+  if (!line) return false;
+  const steps = Math.max(ax, ay);
+  for (let k = 1; k < steps; k++) {
+    const f = from[0] + Math.sign(df) * k, r = from[1] + Math.sign(dr) * k;
+    if (other && other[0] === f && other[1] === r) return false;
+  }
+  return true;
+}
+function chessReplay(item) {
+  const pos = item.starts.map(s => s.slice());
+  item.moves.forEach((m, i) => {
+    assert(m.p === i % item.types.length, 'pieces alternate');
+    assert(m.from.join() === pos[m.p].join(), 'move starts where the piece is');
+    assert(chessMoveLegal(item.types[m.p], { from: m.from, to: m.to, other: item.types.length > 1 ? pos[1 - m.p] : null }, item.size), 'legal ' + item.types[m.p] + ' ' + m.from + '>' + m.to);
+    pos[m.p] = m.to;
+  });
+  return pos[item.ask];
+}
+
+test('chess: squareName covers 8 files and trk names are unchanged', () => {
+  assert(squareName([7, 7]) === 'h8' && squareName([0, 0]) === 'a1' && squareName([4, 2]) === 'e3', 'names');
+  assert(boardSquares(8).length === 64 && boardSquares(5).join() === boardSquares(5).filter(s => 'abcde'.includes(s[0])).join(), 'boards');
+});
+test('chess: every move legal, answer on board, config as briefed (300 items)', () => {
+  const rng = makeRng(61), seen = new Set();
+  for (let i = 0; i < 300; i++) {
+    const deep = i % 2 === 1, lvl = deep ? 6 + (i >> 1) % 10 : 1 + (i >> 1) % 10;
+    const item = DRILLS.chs[deep ? 'deep' : 'light'](lvl, rng), end = chessReplay(item);
+    assert(end.join() === item.end.join() && onBoardTest(end, item.size), 'end on board');
+    assert(DRILLS.chs.answer(item) === squareName(end), 'answer');
+    if (!deep) assert(item.size === 5 && item.types.length === 1 && item.moves.length >= 3 && item.moves.length <= 5, 'light shape');
+    else {
+      assert(item.size === (lvl >= 10 ? 8 : 5) && item.types.length === (lvl >= 10 ? 2 : 1), 'deep size/pieces ' + lvl);
+      assert(item.moves.length >= 3 && item.moves.length <= 8 && (lvl >= 12 || !item.types.includes('queen')), 'deep moves/queen');
+      assert(new Set(item.types).size === item.types.length, 'two pieces differ');
+    }
+    item.types.forEach(t => seen.add((deep ? 'D' : 'L') + t));
+  }
+  ['Lrook', 'Lking', 'Lbishop', 'Lknight', 'Dqueen'].forEach(k => assert(seen.has(k), 'piece seen ' + k));
+});
+function onBoardTest(sq, n) { return sq.every(v => v >= 0 && v < n); }
+
+test('chess: render shows glyphs in text form, hides pieces for the answer, arrow per step', () => {
+  const rng = makeRng(62), item = DRILLS.chs.deep(11, rng), el = document.createElement('div');
+  DRILLS.chs.render(item, el, 'start');
+  const glyphs = [...el.querySelectorAll('.sq')].map(s => s.textContent).filter(Boolean);
+  assert(glyphs.length === 2 && glyphs.every(g => g.endsWith('︎')), 'both pieces at start, text presentation');
+  DRILLS.chs.render(item, el, 'moves', 0);
+  assert([...el.querySelectorAll('.sq')].filter(s => s.textContent).length === 1 && el.querySelector('svg polygon'), 'one piece and an arrow');
+  DRILLS.chs.render(item, el, 'answer');
+  assert(![...el.querySelectorAll('.sq')].some(s => s.textContent) && !el.querySelector('svg'), 'empty board');
+  assert(el.querySelector('.q').textContent === 'Where is the ' + item.types[item.ask] + ' now?', 'question');
+  DRILLS.chs.render(DRILLS.chs.light(3, rng), el, 'answer');
+  assert(el.querySelector('.q').textContent === 'Where does it end?', 'one-piece question');
+});
+test('chess: two-piece question names the piece only in the answer phase', () => {
+  const item = DRILLS.chs.deep(11, makeRng(62)), el = document.createElement('div'), name = item.types[item.ask];
+  assert(item.types.length === 2, 'two pieces');
+  [['start', 0], ['moves', 0], ['answer', 0]].forEach(([phase, i]) => {
+    DRILLS.chs.render(item, el, phase, i);
+    assert(el.querySelector('.q').textContent.includes(name) === (phase === 'answer'), 'name only in answer: ' + phase);
+  });
+});
+test('scene names: progress line names the scene for rot and trk', () => {
+  assert(DRILLS.rot.name === 'Blocks' && DRILLS.trk.name === 'Dot', 'names');
+});
+// Draws the glyph on a canvas in the board's own font and returns the height of the visible ink in px.
+function glyphInkHeight(glyph, font) {
+  const px = parseFloat(font.fontSize), c = document.createElement('canvas'), x = c.getContext('2d');
+  c.width = c.height = Math.ceil(px * 2);
+  x.font = px + 'px ' + font.fontFamily; x.textAlign = 'center'; x.textBaseline = 'middle';
+  x.fillText(glyph + '\uFE0E', px, px);
+  const d = x.getImageData(0, 0, c.width, c.height).data;
+  let top = c.height, bottom = -1;
+  for (let i = 3; i < d.length; i += 4) {
+    if (d[i] > 100) { const y = Math.floor(i / 4 / c.width); top = Math.min(top, y); bottom = Math.max(bottom, y); }
+  }
+  return bottom - top + 1;
+}
+test('chess: tap targets on 8x8 are at least 22 px at 320 px, every glyph ink is at least 70% of a 35 px cell', () => {
+  assert(chessCell(320, 8) >= 22 && chessCell(375, 8) >= 22 && chessCell(480, 8) >= 22, 'cell ' + chessCell(320, 8));
+  const box = document.createElement('div'), cell = 35;
+  box.className = 'chsD'; box.innerHTML = '<div style="--cell:' + cell + 'px"><div class="sq"></div></div>';
+  document.body.appendChild(box);
+  const cs = getComputedStyle(box.querySelector('.sq')), font = { fontSize: cs.fontSize, fontFamily: cs.fontFamily };
+  const inks = Object.entries(CHESS_GLYPH).map(([t, g]) => [t, glyphInkHeight(g, font)]);
+  box.remove();
+  inks.forEach(([t, h]) => assert(h >= 0.7 * cell && parseFloat(font.fontSize) <= 1.15 * cell, t + ' ink ' + h + ' of ' + cell + ' font ' + font.fontSize));
+});
+test('chess: makeChess throws when no legal item exists (50 tries)', () => {
+  let threw = false;
+  try { makeChess('chsL', { size: 1, types: ['king'], count: 3 }, makeRng(67)); } catch (e) { threw = /no chess item/.test(e.message); }
+  assert(threw, 'throws');
+});
+test('chess: timeline is start then one timed step per move, through setTimer', () => {
+  const item = DRILLS.chs.deep(14, makeRng(63)), tl = DRILLS.chs.timeline(item, 'D', 14);
+  assert(tl.length === item.moves.length + 1 && tl[0].phase === 'start' && tl.slice(1).every((s, i) => s.phase === 'moves' && s.index === i && s.ms > 0), 'timeline');
+});
+test('chess: backgrounding mid-flash records nothing', () => {
+  app.state = defaultState(); startLight();
+  app.item = makeLightChess(3, makeRng(64)); playItem(app.item, document.getElementById('lightItem'));
+  assert(app.locked && app.timers.length > 0, 'flashing on timers');
+  answer(squareName(app.item.end));
+  assert(app.state.history.length === 0, 'tap during flash ignored');
+  dropToStart();
+  assert(app.timers.length === 0 && app.item === null, 'timers cleared');
+  assert(app.state.history.length === 0, 'nothing recorded');
+});
+test('chess: a miss outlines the answer and replays the asked piece path', () => {
+  const item = DRILLS.chs.deep(12, makeRng(65)), el = document.createElement('div');
+  document.body.appendChild(el);
+  DRILLS.chs.render(item, el, 'answer'); DRILLS.chs.markMiss(el, item);
+  el.remove();
+  assert(el.querySelector('.sq.right').dataset.answer === squareName(item.end) && el.querySelector('svg polyline'), 'marked');
+});
+test('chess: fuzz 300', () => { fuzzDrill('chs', 300); });
+test('chess: explain lines fit', () => {
+  const rng = makeRng(66);
+  for (let i = 0; i < 30; i++) {
+    const L = DRILLS.chs.light(1 + i % 10, rng), D = DRILLS.chs.deep(6 + i % 10, rng);
+    assert(DRILLS.chs.explain(L).length <= 60 && DRILLS.chs.explain(D).length <= 36, 'lengths');
+  }
+  assert(DRILLS.chs.explain({ types: ['rook'], ask: 0, end: [3, 3] }) === 'Rook ended on d4.', 'text');
+});
+
+// ===== CUBE TESTS =====
+// Hand-coded cycles (clockwise seen from outside the face): U carries the top rows F→L→B→R, R carries the right columns F→U→B→D.
+const CUB_HAND = {
+  U: [['F0', 'L0', 'B0', 'R0'], ['F1', 'L1', 'B1', 'R1'], ['F2', 'L2', 'B2', 'R2'], ['U0', 'U2', 'U8', 'U6'], ['U1', 'U5', 'U7', 'U3']],
+  R: [['F2', 'U2', 'B6', 'D2'], ['F5', 'U5', 'B3', 'D5'], ['F8', 'U8', 'B0', 'D8'], ['R0', 'R2', 'R8', 'R6'], ['R1', 'R5', 'R7', 'R3']]
+};
+const cubIdx = id => STICKERS.findIndex(s => s.id === id);
+const cubCompose = (p, q) => p.map(j => q[j]); // p first, then q
+const cubIsId = p => p.every((j, i) => j === i);
+
+test('cube: 54 stickers; U and R quarter turns match the hand-coded cycles', () => {
+  assert(STICKERS.length === 54 && new Set(STICKERS.map(s => s.id)).size === 54, 'stickers');
+  for (const face of ['U', 'R']) {
+    const perm = turnPerm(face, 1), moved = new Set();
+    CUB_HAND[face].forEach(cyc => cyc.forEach((id, k) => {
+      assert(STICKERS[perm[cubIdx(id)]].id === cyc[(k + 1) % 4], face + ': ' + id + ' -> ' + STICKERS[perm[cubIdx(id)]].id);
+      moved.add(id);
+    }));
+    assert(perm.every((j, i) => moved.has(STICKERS[i].id) || j === i), face + ': the rest stays');
+  }
+});
+test('cube: four quarter turns are the identity, a turn then its inverse too, half = two quarters', () => {
+  for (const face of ['U', 'D', 'F', 'B', 'L', 'R']) {
+    const cw = turnPerm(face, 1), ccw = turnPerm(face, -1), half = turnPerm(face, 2);
+    assert(new Set(cw).size === 54 && cw.some((j, i) => j !== i), face + ' bijection that moves');
+    assert(cubIsId([cw, cw, cw].reduce(cubCompose, cw)) && cubIsId([ccw, ccw, ccw].reduce(cubCompose, ccw)), face + ' 4x');
+    assert(cubIsId(cubCompose(cw, ccw)) && cubIsId(cubCompose(half, half)), face + ' inverse');
+    assert(cubCompose(cw, cw).join() === half.join() && cubCompose(ccw, ccw).join() === half.join(), face + ' half');
+  }
+});
+// Independent oracle: rotate the sticker's centre point with float trigonometry (Rodrigues), no permutation tables.
+function cubOracle(item) {
+  let s = STICKERS[item.marked], p = s.cubie.map((x, i) => x + s.n[i] / 2);
+  for (const t of item.turns) {
+    const a = CUBE_FACES.find(f => f.id === t.face).n;
+    if (p.reduce((acc, x, i) => acc + x * a[i], 0) < 0.9) continue;
+    const th = -Math.PI / 2 * t.q, c = Math.cos(th), sn = Math.sin(th), d = p[0] * a[0] + p[1] * a[1] + p[2] * a[2];
+    const cr = [a[1] * p[2] - a[2] * p[1], a[2] * p[0] - a[0] * p[2], a[0] * p[1] - a[1] * p[0]];
+    p = p.map((x, i) => Math.round((x * c + cr[i] * sn + a[i] * d * (1 - c)) * 2) / 2);
+  }
+  return STICKERS.find(st => st.cubie.every((x, i) => x + st.n[i] / 2 === p[i])).id;
+}
+test('cube: answer equals the oracle; turn counts, start sticker and first turn as briefed (300 items)', () => {
+  const rng = makeRng(71), seen = new Set();
+  for (let i = 0; i < 300; i++) {
+    const deep = i % 2 === 1, lvl = deep ? 6 + (i >> 1) % 10 : 1 + (i >> 1) % 10;
+    const item = DRILLS.cub[deep ? 'deep' : 'light'](lvl, rng), n = item.turns.length, start = STICKERS[item.marked];
+    assert(DRILLS.cub.answer(item) === cubOracle(item), 'oracle ' + i);
+    assert(deep ? n >= 3 && n <= 6 : n >= 1 && n <= 2, 'turn count ' + n);
+    assert(visibleFaces(IDENTITY).includes(start.face) && start.id[1] !== '4', 'starts visible, not a centre');
+    assert(turnPerm(item.turns[0].face, item.turns[0].q)[item.marked] !== item.marked && item.end !== item.marked, 'first turn moves it, ends elsewhere');
+    assert(item.turns.every((t, k) => !k || t.face !== item.turns[k - 1].face), 'no face twice in a row');
+    if (!deep && lvl < CONFIG.cub.lightHalfFrom) assert(item.turns.every(t => t.q !== 2), 'no half turns at low Light');
+    item.turns.forEach(t => seen.add(t.face + t.q));
+  }
+  assert(seen.size === 18, 'every turn drawn: ' + seen.size);
+});
+// The rotation sign of layerMatrix (and so of every arrow below) is anchored by the hand-coded U and R cycles above;
+// these tests then check that each picture agrees with the permutation it stands for.
+test('cube: every turn arrow runs on two visible faces and agrees with its permutation', () => {
+  const vis = visibleFaces(IDENTITY);
+  for (const face of ['U', 'D', 'F', 'B', 'L', 'R']) for (const q of [1, -1, 2]) {
+    const arr = turnArrow(face, q), dir = arr.heads === 2 ? arr.q : q, perm = turnPerm(face, dir);
+    const at = p => STICKERS.findIndex(s => vis.includes(s.face) && s.cubie.every((x, i) => x + s.n[i] / 2 === p[i]));
+    const ref = q === 2 ? turnArrow(face, arr.q) : arr, tail = at(ref.tail), head = at(ref.head); // half: its first quarter, same path
+    assert(tail >= 0 && head >= 0 && STICKERS[tail].face !== STICKERS[head].face, face + q + ' on visible faces');
+    assert(perm[tail] === head, face + q + ': ' + STICKERS[tail].id + ' should go to ' + STICKERS[head].id);
+    assert(arr.heads === (q === 2 ? 2 : 1) && (q !== 2 || cubCompose(perm, perm).join() === turnPerm(face, 2).join()), face + q + ' heads');
+  }
+});
+test('cube: a half-turn arrow runs past the far edge of the face it crosses; a quarter one stops mid-strip', () => {
+  for (const face of ['U', 'D', 'F', 'B', 'L', 'R']) {
+    const half = turnArrow(face, 2), quarter = turnArrow(face, half.q);
+    assert(dot3(half.head, half.from) <= -1.5 && dot3(half.head, half.to) === 1.5, face + ' half head beyond the far edge');
+    assert(dot3(quarter.head, quarter.from) === 0, face + ' quarter head mid-strip');
+    const tail = STICKERS.findIndex(s => s.n.join() === half.from.join() && s.cubie.every((x, i) => x + s.n[i] / 2 === half.tail[i]));
+    assert(STICKERS[turnPerm(face, 2)[tail]].n.join() === half.from.map(x => -x).join(), face + ' half lands opposite from');
+  }
+});
+test('cube: the curved arrow on a visible turning face agrees with its permutation', () => {
+  const vis = visibleFaces(IDENTITY), near = (p, r) => p.every((x, i) => Math.abs(x - r[i]) < 1e-9);
+  for (const face of ['U', 'D', 'F', 'B', 'L', 'R']) for (const q of [1, -1, 2]) {
+    const sp = turnSpin(face, q);
+    if (!vis.includes(face)) { assert(sp === null, face + ' hidden: no spin arrow'); continue; }
+    const at = p => STICKERS.findIndex(s => s.face === face && s.cubie.every((x, i) => x + s.n[i] / 2 === p[i]));
+    assert(near(sp.pts[0], sp.start) && near(sp.pts[12], sp.end) && sp.heads === (q === 2 ? 2 : 1), face + q + ' arc ends');
+    assert(turnPerm(face, q)[at(sp.start)] === at(sp.end) && at(sp.start) !== at(sp.end), face + q + ' arc follows the sticker');
+    assert(near(sp.pts[6], applyMat(layerMatrix(faceNormal(face), q === 2 ? 1 : q), sp.start)) || q !== 2, face + ' half arc passes the quarter point');
+  }
+});
+test('cube: answer net has 54 stickers, at least 22 px at 320 px, and a dot only after a miss', () => {
+  assert(netCell(320) >= 22 && netCell(375) >= 22 && netCell(480) >= 22, 'cell ' + netCell(320));
+  const item = DRILLS.cub.deep(10, makeRng(72)), el = document.createElement('div');
+  document.body.appendChild(el);
+  DRILLS.cub.render(item, el, 'answer');
+  const b = el.querySelectorAll('[data-answer]');
+  assert(b.length === 54 && b[0].offsetWidth === netCell(screenWidth()) && b[0].offsetHeight === b[0].offsetWidth, 'net size ' + b[0].offsetWidth);
+  assert(!el.querySelector('.cubDot') && el.querySelector('.q').textContent === 'Where is the dot now?', 'no dot before');
+  DRILLS.cub.markMiss(el, item);
+  el.remove();
+  assert(el.querySelector('.right').dataset.answer === DRILLS.cub.answer(item) && el.querySelector('.right .cubDot'), 'dot on the answer');
+  assert(el.querySelector('.was').dataset.answer === STICKERS[item.marked].id, 'start ringed');
+});
+test('cube: render draws the cube at start and per turn, legend without letters', () => {
+  const item = DRILLS.cub.light(6, makeRng(73)), el = document.createElement('div');
+  DRILLS.cub.render(item, el, 'start');
+  assert(el.querySelector('canvas') && !el.querySelector('[data-answer]'), 'start cube');
+  DRILLS.cub.render(item, el, 'moves', 0);
+  assert(el.querySelector('canvas') && !/[UDFBLR]'|\b[UDFBLR]2?\b/.test(el.textContent), 'turn picture, no notation: ' + el.textContent);
+});
+test('cube: timeline is start then one timed step per turn; backgrounding records nothing', () => {
+  const item = DRILLS.cub.deep(15, makeRng(74)), tl = DRILLS.cub.timeline(item, 'D', 15);
+  assert(tl.length === item.turns.length + 1 && tl[0].phase === 'start' && tl.slice(1).every((s, i) => s.phase === 'moves' && s.index === i && s.ms > 0), 'timeline');
+  app.state = defaultState(); startLight();
+  app.item = DRILLS.cub.light(3, makeRng(75)); playItem(app.item, document.getElementById('lightItem'));
+  assert(app.locked && app.timers.length > 0, 'flashing on timers');
+  answer(DRILLS.cub.answer(app.item));
+  assert(app.state.history.length === 0, 'tap during flash ignored');
+  dropToStart();
+  assert(app.timers.length === 0 && app.item === null && app.state.history.length === 0, 'cleared, nothing recorded');
+});
+test('cube: fuzz 300', () => { fuzzDrill('cub', 300); });
+test('cube: explain lines fit and name colours', () => {
+  const rng = makeRng(76);
+  for (let i = 0; i < 40; i++) {
+    const L = DRILLS.cub.light(1 + i % 10, rng), D = DRILLS.cub.deep(6 + i % 10, rng);
+    assert(DRILLS.cub.explain(L).length <= 60 && DRILLS.cub.explain(D).length <= 36, 'lengths');
+  }
+  assert(DRILLS.cub.explain({ kind: 'cubD', marked: cubIdx('F0'), end: cubIdx('R2') }) === 'It ended on the red face.', 'deep text');
+  assert(DRILLS.cub.explain({ kind: 'cubL', marked: cubIdx('F0'), end: cubIdx('L0') }) === 'It moved from the green face to the orange face.', 'light text');
+});
+
+// ===== LINEAR MAP TESTS =====
+// Oracles: shape points mapped by explicit sums, determinants by cofactor formulas, singular values by sampling directions.
+function oracleDet(M) {
+  return M.length === 2 ? M[0][0] * M[1][1] - M[0][1] * M[1][0] : det3(M);
+}
+function oracleMap(M, p) {
+  const out = [];
+  for (let i = 0; i < M.length; i++) { let s = 0; for (let k = 0; k < p.length; k++) s += M[i][k] * p[k]; out.push(s); }
+  return out;
+}
+function oraclePoints(n) {
+  if (n === 2) return [[0, 0], [1, 0], [1, 0.4], [0.4, 0.4], [0.4, 1.6], [0, 1.6]];
+  const pts = [];
+  L_SHAPE_3D.forEach(v => [0, 1].forEach(a => [0, 1].forEach(b => [0, 1].forEach(c => pts.push([(v[0] + a) / 2, (v[1] + b) / 2, (v[2] + c) / 2])))));
+  return pts;
+}
+function oraclePicture(M) {
+  return [...new Set(oraclePoints(M.length).map(p => oracleMap(M, p).map(x => x.toFixed(3)).join()))].sort().join(';');
+}
+// Smallest |Mv| over many unit directions (a circle for 2×2, a Fibonacci sphere for 3×3).
+function oracleStretches(M) {
+  const dirs = M.length === 2 ? Array.from({ length: 720 }, (_, i) => [Math.cos(i * Math.PI / 720), Math.sin(i * Math.PI / 720)])
+    : Array.from({ length: 4000 }, (_, i) => { const z = 1 - (i + 0.5) / 2000, r = Math.sqrt(Math.max(0, 1 - z * z)), t = i * 2.39996; return [r * Math.cos(t), r * Math.sin(t), z]; });
+  return dirs.map(d => Math.hypot(...oracleMap(M, d)));
+}
+const oracleMinStretch = M => Math.min(...oracleStretches(M));
+// Every one-mistake edit of M: transpose, two columns swapped, one sign flipped, one entry ±1.
+function oracleEdits(M) {
+  const n = M.length, out = [M[0].map((_, j) => M.map(r => r[j]))];
+  for (let a = 0; a < n; a++) for (let b = a + 1; b < n; b++) out.push(M.map(r => r.map((x, j) => r[j === a ? b : j === b ? a : j])));
+  for (let i = 0; i < n; i++) for (let j = 0; j < n; j++) [-2 * M[i][j], 1, -1].forEach(d => out.push(M.map((r, a) => r.map((x, b) => (a === i && b === j ? x + d : x)))));
+  return out.map(matKey);
+}
+const isEye = M => M.every((r, i) => r.every((x, j) => x === (i === j ? 1 : 0)));
+
+test('matrices: matMul, det, applyMat and matKey known values', () => {
+  assert(matKey(matMul([[1, 2], [3, 4]], [[0, 1], [1, 0]])) === '2,1;4,3', 'mul 2');
+  assert(matKey(matMul([[0, -1], [1, 0]], [[2, 0], [0, 1]])) === '0,-1;2,0', 'turn after stretch');
+  assert(matKey(matMul([[1, 2, 0], [0, 1, 0], [0, 0, 3]], [[1, 0, 0], [1, 1, 0], [0, 2, 1]])) === '3,2,0;1,1,0;0,6,3', 'mul 3');
+  assert(det([[1, 2], [3, 4]]) === -2 && det([[2, 0], [0, 3]]) === 6, 'det 2');
+  assert(det([[2, 0, 1], [1, 3, 2], [1, 1, 2]]) === 6 && det([[1, 2, 3], [4, 5, 6], [7, 8, 9]]) === 0, 'det 3');
+  assert(applyMat([[1, 1], [0, 2]], [2, 1]).join() === '3,2' && applyMat([[0, 0, 1], [1, 0, 0], [0, 1, 0]], [1, 2, 3]).join() === '3,1,2', 'apply');
+  assert(matKey([[1, -2], [0, 3]]) === '1,-2;0,3', 'key');
+});
+test('matrices: randomMatrix is in range, readable, never the identity (300)', () => {
+  const rng = makeRng(81);
+  for (let i = 0; i < 300; i++) {
+    const n = 2 + i % 2, hi = 1 + (i >> 1) % 2, M = randomMatrix(n, -hi, hi, rng);
+    assert(M.length === n && M.every(r => r.length === n && r.every(x => Number.isInteger(x) && Math.abs(x) <= hi)), 'shape/range');
+    assert(oracleDet(M) !== 0 && oracleMinStretch(M) >= MAT_MIN_SV - 0.01 && !isEye(M), 'readable ' + matKey(M));
+  }
+  assert(!readable([[1, 0, 0], [0, 1, 0], [0, 0, 0]]) && !readable([[2, 2], [2, 2]]), 'singular rejected');
+  assert(!readable([[2, 2, 0], [2, 1, 0], [0, 0, 1]]) || oracleMinStretch([[2, 2, 0], [2, 1, 0], [0, 0, 1]]) >= 0.34, 'flat rejected');
+});
+test('matrices: decoys are one-mistake edits, readable, distinct pictures, never the identity (300 each)', () => {
+  const rng = makeRng(82);
+  [[2, 1], [2, 2], [3, 1], [3, 2]].forEach(([n, hi]) => {
+    for (let i = 0; i < 300; i++) {
+      const M = randomMatrix(n, -hi, hi, rng), ds = matrixDecoys(M, 3, rng), one = matrixDecoys(M, 1, rng), cap = Math.max(...M.flat().map(Math.abs));
+      const pics = [M, ...ds].map(oraclePicture), edits = oracleEdits(M);
+      assert(ds.length === 3 && one.length === 1 && new Set(pics).size === 4, 'distinct pictures ' + matKey(M));
+      assert([...ds, ...one].every(D => oracleDet(D) !== 0 && readable(D) && !isEye(D) && D.flat().every(x => Math.abs(x) <= Math.max(1, cap))), 'readable in range');
+      assert(edits.includes(matKey(ds[0])) && edits.includes(matKey(ds[1])) && edits.includes(matKey(one[0])), 'one edit');
+      assert(oracleEdits(ds[0]).includes(matKey(ds[2])) && oracleEdits(ds[1]).includes(matKey(ds[2])), 'third is both edits');
+    }
+  });
+  for (let i = 0; i < 200; i++) {
+    const M = randomMatrix(2 + i % 2, -3, 3, rng), ds = matrixDecoys(M, 3, rng), cap = Math.max(1, ...M.flat().map(Math.abs));
+    assert(new Set([M, ...ds].map(oraclePicture)).size === 4 && ds.every(D => D.flat().every(x => Math.abs(x) <= cap)), '±3 decoys ' + matKey(M));
+  }
+});
+test('mfw: 3D options share one camera that holds every option picture; options differ by at least 8% of the box (300)', () => {
+  const rng = makeRng(88), view = (M, p) => applyPose(oracleMap(M, p), MAT_VIEW);
+  for (let i = 0; i < 300; i++) {
+    const item = DRILLS.mfw.deep(10 + i % 6, rng), f = item.fit;
+    const pics = item.mats.map(M => [[0, 0, 0], [1, 0, 0], [0, 1, 0], [0, 0, 1], ...oraclePoints(3)].map(p => view(M, p)));
+    const xs = pics.flat().map(p => p[0]), ys = pics.flat().map(p => p[1]);
+    assert(Math.abs(f.span - Math.max(Math.max(...xs) - Math.min(...xs), Math.max(...ys) - Math.min(...ys))) < 1e-9, 'span');
+    assert(pics.flat().every(p => Math.abs(p[0] - f.cx) <= f.span / 2 + 1e-9 && Math.abs(p[1] - f.cy) <= f.span / 2 + 1e-9), 'holds all');
+    for (let a = 0; a < 4; a++) for (let b = a + 1; b < 4; b++) {
+      assert(Math.max(...pics[a].map((p, k) => Math.hypot(p[0] - pics[b][k][0], p[1] - pics[b][k][1]))) / f.span >= 0.08, 'too alike ' + i);
+    }
+  }
+  const ink = fit => {
+    const c = Object.assign(document.createElement('canvas'), { width: 120, height: 120 });
+    drawShape3D(c, null, { dark: false, fit });
+    const d = c.getContext('2d').getImageData(0, 0, 120, 120).data;
+    let n = 0; for (let k = 3; k < d.length; k += 4) n += d[k] > 0;
+    return n;
+  };
+  assert(ink(shared3DFit([[[2, 0, 0], [0, 2, 0], [0, 0, 2]]])) < 0.5 * ink(undefined), 'shared fit draws the start smaller');
+});
+test('mfw: exactly one option is the mapped shape; counts, ranges, 3D from Deep 10 (300)', () => {
+  const rng = makeRng(83);
+  for (let i = 0; i < 300; i++) {
+    const deep = i % 2 === 1, lvl = deep ? 6 + i % 10 : 1 + i % 10, item = DRILLS.mfw[deep ? 'deep' : 'light'](lvl, rng);
+    const want = oraclePicture(item.M), pics = item.mats.map(oraclePicture), n = deep && lvl >= 10 ? 3 : 2;
+    assert(item.options.length === (deep ? 4 : 2) && item.mats.length === item.options.length, 'count');
+    assert(pics.filter(p => p === want).length === 1 && pics[+item.answer] === want && new Set(pics).size === pics.length, 'exactly one ' + i);
+    assert(item.M.length === n && !isEye(item.M) && oracleDet(item.M) !== 0, 'dimension ' + i);
+    const hi = !deep ? 1 : n === 2 || lvl >= 13 ? 2 : 1;
+    item.mats.forEach(m => assert(m.flat().every(x => Math.abs(x) <= hi), 'entries ' + matKey(m)));
+    if (n === 2) item.mats.forEach(m => [...oraclePoints(2), [1, 0], [0, 1]].forEach(p => assert(oracleMap(m, p).every(x => Math.abs(x) <= item.range - 0.25), 'fits grid')));
+    if (!deep) assert(item.range === 4, 'Light grid -4..4');
+  }
+});
+// Option-only shortcuts: the option nearest the others (entries or picture), the per-entry majority,
+// the largest Σ|entries| and the |det| nearest 1 (the two largest measured leaks).
+function mfwShortcutRates(items) {
+  const l1 = (a, b) => a.flat().reduce((s, x, k) => s + Math.abs(x - b.flat()[k]), 0);
+  const pic = M => oraclePoints(M.length).map(p => oracleMap(M, p)).flat();
+  const l2 = (a, b) => { const pa = pic(a), pb = pic(b); return Math.hypot(...pa.map((x, k) => x - pb[k])); };
+  const vote = ms => ms.map(m => m.flat().reduce((s, x, k) => s + ms.filter(o => o.flat()[k] === x).length, 0));
+  const near = d => ms => ms.map(a => -ms.reduce((s, b) => s + d(a, b), 0));
+  const sumAbs = ms => ms.map(m => m.flat().reduce((s, x) => s + Math.abs(x), 0)), detNearOne = ms => ms.map(m => -Math.abs(Math.abs(oracleDet(m)) - 1));
+  return [near(l1), near(l2), vote, sumAbs, detNearOne].map(score => items.reduce((hit, it) => {
+    const s = score(it.mats), top = Math.max(...s.map(x => +x.toFixed(6))), best = s.map((x, j) => (+x.toFixed(6) === top ? j : -1)).filter(j => j >= 0);
+    return hit + (best.includes(+it.answer) ? 1 / best.length : 0);
+  }, 0) / items.length);
+}
+test('mfw: Deep option-only shortcuts stay near chance (600 items)', () => {
+  const rng = makeRng(84), items = Array.from({ length: 600 }, (_, i) => DRILLS.mfw.deep(6 + i % 10, rng));
+  const rates = mfwShortcutRates(items);
+  assert(rates.every(r => r < 0.31), 'rates ' + rates.map(r => r.toFixed(3)).join());
+});
+test('mfw: grid picture draws start, image, two coloured arrows each and the dot', () => {
+  const svg = drawGrid2D(120, [[1, 1], [0, 2]], { range: 5, dark: false, dot: [2, 1] });
+  assert(svg.getAttribute('viewBox') === '-5 -5 10 10' && svg.getAttribute('width') === '120', 'viewBox');
+  const start = svg.querySelector('.mStart'), img = svg.querySelector('.mImage');
+  const pts = el => el.getAttribute('points').trim().split(/\s+/).map(s => s.split(',').map(Number)).map(([x, y]) => x.toFixed(3) + ',' + (-y).toFixed(3)).sort().join(';');
+  assert(pts(start) === oraclePicture([[1, 0], [0, 1]]) && pts(img) === oraclePicture([[1, 1], [0, 2]]), 'polygons');
+  const arrows = [...svg.querySelectorAll('.mArrow')];
+  assert(arrows.length === 4 && svg.querySelector('circle.mDot'), 'arrows and dot');
+  const cols = arrows.map(a => a.getAttribute('stroke'));
+  const hue = c => { const [r, g, b] = [1, 3, 5].map(k => parseInt(c.slice(k, k + 2), 16)), mx = Math.max(r, g, b), mn = Math.min(r, g, b);
+    return mx === r ? (60 * (g - b) / (mx - mn) + 360) % 360 : mx === g ? 60 * (b - r) / (mx - mn) + 120 : 60 * (r - g) / (mx - mn) + 240; };
+  assert(cols[0] === cols[2] && cols[1] === cols[3] && cols[0] !== cols[1] && cols.every(c => hue(c) > 25 && hue(c) < 335), 'x/y colours, not red ' + cols);
+  assert(!drawGrid2D(80, null, { range: 4 }).querySelector('.mImage'), 'start only');
+});
+test('mfw: 3D faces shown are exactly those facing the viewer after the map', () => {
+  const rng = makeRng(85), cross = (a, b) => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];
+  for (let i = 0; i < 200; i++) {
+    const M = i ? randomMatrix(3, -2, 2, rng) : [[1, 0, 0], [0, 1, 0], [0, 0, 1]], want = [];
+    for (const { v, d } of exteriorFaces(L_SHAPE_3D)) {
+      const c = faceCorners(v, d, [-0.5, -0.5, -0.5]).map(p => applyPose(oracleMap(M, p.map(x => x / 2)), MAT_VIEW));
+      let nrm = cross(c[1].map((x, k) => x - c[0][k]), c[3].map((x, k) => x - c[0][k]));
+      if (nrm.reduce((s, x, k) => s + x * applyPose(oracleMap(M, d), MAT_VIEW)[k], 0) < 0) nrm = nrm.map(x => -x);
+      if (nrm[2] > 1e-9) want.push(v.join() + '|' + d.join());
+    }
+    const got = matFacePolygons(M).map(p => p.v.join() + '|' + p.d.join());
+    assert(got.sort().join(';') === want.sort().join(';'), 'visible faces ' + matKey(M));
+  }
+});
+test('mfw: render shows the bracketed matrix, start picture and one picture per option', () => {
+  const rng = makeRng(86);
+  [['light', 3, 2, 'svg'], ['deep', 7, 2, 'svg'], ['deep', 12, 3, 'canvas']].forEach(([mode, lvl, n, tag]) => {
+    const item = DRILLS.mfw[mode](lvl, rng), el = document.createElement('div');
+    DRILLS.mfw.render(item, el, 'answer');
+    const cells = [...el.querySelectorAll('.mtx span')].map(s => s.textContent);
+    assert(cells.join() === item.M.flat().map(x => (x < 0 ? '−' + -x : String(x))).join(), 'matrix cells ' + cells);
+    assert(el.querySelector('.mfwStart ' + tag) && el.querySelector('.q').textContent === 'Where does the shape go?', 'start');
+    const btns = [...el.querySelectorAll('[data-answer]')];
+    assert(btns.length === item.options.length && btns.every(b => b.querySelector(tag)), 'buttons ' + mode);
+    if (tag === 'svg') btns.forEach(b => {
+      const p = b.querySelector('.mImage').getAttribute('points').trim().split(/\s+/).map(s => s.split(',').map(Number)).map(([x, y]) => x.toFixed(3) + ',' + (-y).toFixed(3)).sort().join(';');
+      assert(p === oraclePicture(item.mats[+b.dataset.answer]) && (p === oraclePicture(item.M)) === (b.dataset.answer === item.answer), 'drawn picture');
+    });
+  });
+});
+test('mfw: 3D picture draws ink for the start and the image', () => {
+  [null, [[0, -1, 0], [1, 0, 0], [0, 1, 2]]].forEach(M => {
+    const c = Object.assign(document.createElement('canvas'), { width: 120, height: 120 });
+    drawShape3D(c, M, { dark: true });
+    const d = c.getContext('2d').getImageData(0, 0, 120, 120).data;
+    let ink = 0; for (let k = 3; k < d.length; k += 4) ink += d[k] > 0;
+    assert(ink > 1500, 'ink ' + ink);
+  });
+});
+test('mfw: fuzz 300', () => { fuzzDrill('mfw', 300); });
+test('mfw/mbw: 300 Deep 3D items each have only wellShaped options', () => {
+  ['mfw', 'mbw'].forEach((id, k) => {
+    const rng = makeRng(710 + k);
+    for (let i = 0; i < 300; i++) {
+      const item = DRILLS[id].deep(10 + i % 6, rng);
+      assert(item.M.length === 3 && item.mats.every(wellShaped), id + ' wellShaped ' + i);
+    }
+  });
+});
+test('mfw: explain lines fit and name the columns', () => {
+  const rng = makeRng(87);
+  for (let i = 0; i < 60; i++) {
+    const L = DRILLS.mfw.light(1 + i % 10, rng), D = DRILLS.mfw.deep(6 + i % 10, rng);
+    assert(DRILLS.mfw.explain(L).length <= 60 && DRILLS.mfw.explain(D).length <= 36, 'lengths ' + DRILLS.mfw.explain(D));
+  }
+  const text = item => DRILLS.mfw.explain(item).replace(/\u00a0/g, ' ');
+  assert(text({ kind: 'mfwL', M: [[1, -1], [0, 2]] }) === 'Columns = where x and y go: x → (1, 0), y → (−1, 2).', 'light text');
+  assert(/\(0,\u00a0−1\)/.test(DRILLS.mfw.explain({ kind: 'mfwL', M: [[0, -1], [-1, 1]] })), 'tuples do not break');
+  assert(text({ kind: 'mfwD', M: [[-2, -1], [2, -2]] }) === 'Columns: x → (−2, 2), y → (−1, −2).', 'deep text');
+  const M = [[1, 0, 0], [0, 1, 0], [-1, 2, 1]], item = { kind: 'mfwD', M, mats: [M, [[1, 0, 0], [0, 1, 0], [-1, 2, -1]]] };
+  assert(text(item) === 'Column 3: z → (0, 0, 1).', '3D text ' + text(item));
+  const most = { kind: 'mfwD', M, mats: [[[2, 0, 0], [0, 1, 0], [-1, 2, 1]], M, [[1, 0, 1], [0, 1, 0], [-1, 2, 1]], [[1, 0, 0], [0, 1, 0], [-1, 2, 2]]] };
+  assert(text(most) === 'Column 3: z → (0, 0, 1).', 'most-changed column ' + text(most));
+});
+
+test('mbw: exactly one option makes the shown picture; counts, ranges, 3D from Deep 10 (300)', () => {
+  const rng = makeRng(93);
+  for (let i = 0; i < 300; i++) {
+    const deep = i % 2 === 1, lvl = deep ? 6 + i % 10 : 1 + i % 10, item = DRILLS.mbw[deep ? 'deep' : 'light'](lvl, rng);
+    const shown = oraclePicture(item.M), pics = item.mats.map(oraclePicture), n = deep && lvl >= 10 ? 3 : 2;
+    assert(item.options.length === (deep ? 4 : 2) && item.mats.length === item.options.length, 'count');
+    assert(pics.filter(p => p === shown).length === 1 && pics[+item.answer] === shown && new Set(pics).size === pics.length, 'exactly one ' + i);
+    assert(item.M.length === n && !isEye(item.M) && oracleDet(item.M) !== 0, 'dimension ' + i);
+    const hi = !deep ? 1 : n === 2 || lvl >= 13 ? 2 : 1;
+    item.mats.forEach(m => assert(m.flat().every(x => Math.abs(x) <= hi) && oracleDet(m) !== 0, 'entries ' + matKey(m)));
+    if (n === 2) [...oraclePoints(2), [1, 0], [0, 1]].forEach(p => assert(oracleMap(item.M, p).every(x => Math.abs(x) <= item.range - 0.25), 'fits grid'));
+  }
+});
+test('mbw: Deep option-only shortcuts stay near chance (600 items)', () => {
+  const rng = makeRng(94), items = Array.from({ length: 600 }, (_, i) => DRILLS.mbw.deep(6 + i % 10, rng));
+  const rates = mfwShortcutRates(items);
+  assert(rates.every(r => r < 0.31), 'rates ' + rates.map(r => r.toFixed(3)).join());
+});
+test('mbw: render shows one picture of the map and a matrix button per option', () => {
+  const rng = makeRng(95);
+  [['light', 3, 2], ['deep', 7, 2], ['deep', 12, 3]].forEach(([mode, lvl, n]) => {
+    const item = DRILLS.mbw[mode](lvl, rng), el = document.createElement('div');
+    DRILLS.mbw.render(item, el, 'answer');
+    assert(el.querySelector('.q').textContent === 'Which matrix did this?', 'question');
+    const btns = [...el.querySelectorAll('[data-answer]')];
+    assert(btns.length === item.options.length && btns.every(b => b.querySelectorAll('.mtx').length === 1), 'buttons ' + mode);
+    btns.forEach(b => {
+      const cells = [...b.querySelectorAll('.mtx span')].map(x => x.textContent).join();
+      assert(cells === item.mats[+b.dataset.answer].flat().map(x => (x < 0 ? '−' + -x : String(x))).join(), 'cells');
+    });
+    if (n === 2) {
+      const p = [...el.querySelectorAll('.mImage')].map(e => e.getAttribute('points').trim().split(/\s+/).map(s => s.split(',').map(Number)).map(([x, y]) => x.toFixed(3) + ',' + (-y).toFixed(3)).sort().join(';'));
+      assert(el.querySelectorAll('svg').length === 1 && p.length === 1 && p[0] === oraclePicture(item.M) && el.querySelector('.mStart'), 'one grid');
+    } else assert(el.querySelectorAll('.mbwTop canvas').length === 1, 'one canvas');
+  });
+});
+test('mbw: fuzz 300', () => { fuzzDrill('mbw', 300); });
+test('mbw: explain gives the column intuition and fits', () => {
+  const rng = makeRng(96);
+  for (let i = 0; i < 60; i++) {
+    const L = DRILLS.mbw.light(1 + i % 10, rng), D = DRILLS.mbw.deep(6 + i % 10, rng);
+    assert(DRILLS.mbw.explain(L).length <= 60 && DRILLS.mbw.explain(D).length <= 36, 'lengths ' + DRILLS.mbw.explain(L) + ' / ' + DRILLS.mbw.explain(D));
+  }
+  const text = item => DRILLS.mbw.explain(item).replace(/\u00a0/g, ' ');
+  const M = [[1, -1], [0, 2]], mats = [M, [[1, 0], [-1, 2]]];
+  assert(text({ kind: 'mbwL', M, mats }) === 'x went to (1, 0), so column 1 is (1, 0).', 'light ' + text({ kind: 'mbwL', M, mats }));
+  assert(text({ kind: 'mbwD', M: [[-2, -1], [2, -2]], mats: [[[-2, -1], [2, -2]], [[-2, 2], [-1, -2]]] }) === 'x → (−2, 2): column 1.', 'deep text');
+  assert(/\(−2,\u00a02\)/.test(DRILLS.mbw.explain({ kind: 'mbwD', M: [[-2, -1], [2, -2]], mats: [[[-2, -1], [2, -2]], [[-2, 2], [-1, -2]]] })), 'deep tuples do not break');
+  assert(/\(1,\u00a0−2\)/.test(DRILLS.mbw.explain({ kind: 'mbwL', M: [[1, 0], [-2, 1]], mats: [[[1, 0], [-2, 1]], [[1, -2], [0, 1]]] })), 'tuples do not break');
+});
+
+// ----- mco -----
+const oracleThen = (A, B, p) => oracleMap(B, oracleMap(A, p));
+const oracleCompose = (A, B) => [...new Set(oraclePoints(A.length).map(p => oracleThen(A, B, p).map(x => x.toFixed(3)).join()))].sort().join(';');
+test('mco: exactly one option is the picture of "first A, then B"; order matters; counts, 3D from Deep 10 (300)', () => {
+  const rng = makeRng(111);
+  for (let i = 0; i < 300; i++) {
+    const deep = i % 2 === 1, lvl = deep ? 6 + i % 10 : 1 + i % 10, item = DRILLS.mco[deep ? 'deep' : 'light'](lvl, rng), { A, B } = item;
+    const want = oracleCompose(A, B), wrong = oracleCompose(B, A), pics = item.mats.map(oraclePicture), n = deep && lvl >= 10 ? 3 : 2;
+    assert(item.options.length === (deep ? 4 : 2) && item.mats.length === item.options.length && A.length === n && B.length === n, 'shape ' + i);
+    assert(want !== wrong && pics.includes(wrong), 'order matters ' + i);
+    assert(pics.filter(q => q === want).length === 1 && pics[+item.answer] === want && new Set(pics).size === pics.length, 'exactly one ' + i);
+    if (deep) assert(pics.includes(oraclePicture(A)) && pics.includes(oraclePicture(B)), 'A and B alone are options');
+    item.mats.forEach(m => {
+      const st = oracleStretches(m);
+      assert(!isEye(m) && Math.min(...st) >= 0.5 - 0.02 && Math.max(...st) <= 3 * Math.min(...st) + 0.05 && m.flat().every(x => Math.abs(x) <= 2), 'well shaped ' + matKey(m));
+    });
+    if (n === 3) {
+      const view = M => oraclePoints(3).map(p => applyPose(oracleMap(M, p), MAT_VIEW)), P = item.mats.map(view), f = item.fit;
+      for (let a = 0; a < 4; a++) for (let b = a + 1; b < 4; b++) assert(Math.max(...P[a].map((p, k) => Math.hypot(p[0] - P[b][k][0], p[1] - P[b][k][1]))) / f.span >= 0.08, 'too alike ' + i);
+    }
+  }
+});
+test('mco: commuting pairs, equal pictures and slivers are rejected', () => {
+  const R = [[0, -1], [1, 0]], S = [[1, 0], [0, 2]], T = [[1, 1], [0, 1]];
+  assert(mcoOptions(R, R, true) === null && mcoOptions(S, S, false) === null, 'commuting');
+  assert(mcoOptions(R, [[0, 1], [-1, 0]], false) === null, 'inverse pair commutes');
+  assert(mcoOptions(R, T, true).length === 4 && mcoOptions(R, T, false).length === 2, 'valid pair');
+  assert(mcoOptions(S, T, true) === null, 'S·T is a sliver (ratio above 3)');
+  assert(mcoOptions([[1, 1], [1, 1]], T, true) === null, 'singular A');
+});
+test('wellShaped agrees with sampled stretches on 300 matrices of both sizes', () => {
+  const rng = makeRng(115);
+  for (let i = 0; i < 300; i++) {
+    const n = 2 + i % 2, M = Array.from({ length: n }, () => Array.from({ length: n }, () => Math.floor(rng() * 5) - 2)), st = oracleStretches(M);
+    const lo = Math.min(...st), hi = Math.max(...st), ok = lo >= 0.5 && hi <= 3 * lo;
+    if (Math.abs(lo - 0.5) > 0.03 && Math.abs(hi - 3 * lo) > 0.1) assert(wellShaped(M) === ok, 'wellShaped ' + matKey(M) + ' ' + lo.toFixed(3) + ' ' + hi.toFixed(3));
+  }
+});
+// The mfw shortcuts. (A "neither the most extreme nor the least" rule is vacuous here: tied sums leave no single middle.)
+// Honest large-N figure for the largest-Σ rule: see mcoTied3.
+test('mco: Deep option-only shortcuts stay near chance (600 items)', () => {
+  const rng = makeRng(112), items = Array.from({ length: 600 }, (_, i) => DRILLS.mco.deep(6 + i % 10, rng));
+  const rates = mfwShortcutRates(items);
+  assert(rates.every(r => r < 0.31), 'rates ' + rates.map(r => r.toFixed(3)).join());
+});
+test('mco: 3D turns are right-handed (axis k+1 goes to k+2) and Light below 4 has only turns and flips', () => {
+  const turn = n => MCO_3D.find(t => t[0] === n)[1];
+  [['x', [0, 1, 0], [0, 0, 1]], ['y', [0, 0, 1], [1, 0, 0]], ['z', [1, 0, 0], [0, 1, 0]]].forEach(([ax, from, to]) => {
+    assert(oracleMap(turn('turn 90° ' + ax), from).join() === to.join(), 'turn 90° ' + ax);
+    assert(oracleMap(turn('turn −90° ' + ax), to).join() === from.join(), 'turn −90° ' + ax);
+  });
+  const rng = makeRng(116);
+  for (let i = 0; i < 100; i++) assert(!/shear|stretch/.test(DRILLS.mco.light(1 + i % 3, rng).names.join()), 'Light 1-3');
+});
+test('mco: render shows labelled A and B, the start picture and one picture per option', () => {
+  const rng = makeRng(113);
+  [['light', 3, 'svg'], ['deep', 7, 'svg'], ['deep', 12, 'canvas']].forEach(([mode, lvl, tag]) => {
+    const item = DRILLS.mco[mode](lvl, rng), el = document.createElement('div');
+    DRILLS.mco.render(item, el, 'answer');
+    const cells = [...el.querySelectorAll('.mtx span')].map(s => s.textContent), want = [...item.A.flat(), ...item.B.flat()].map(x => (x < 0 ? '−' + -x : String(x)));
+    assert(cells.join() === want.join(), 'matrix cells ' + cells);
+    assert(el.querySelector('.mcoA').textContent === 'First A' && el.querySelector('.mcoB').textContent === 'then B', 'labels');
+    assert(el.querySelector('.mfwStart ' + tag), 'start');
+    const btns = [...el.querySelectorAll('[data-answer]')];
+    assert(btns.length === item.options.length && btns.every(b => b.querySelector(tag)), 'buttons ' + mode);
+    if (tag === 'svg') btns.forEach(b => {
+      const p = b.querySelector('.mImage').getAttribute('points').trim().split(/\s+/).map(q => q.split(',').map(Number)).map(([x, y]) => x.toFixed(3) + ',' + (-y).toFixed(3)).sort().join(';');
+      assert(p === oraclePicture(item.mats[+b.dataset.answer]) && (p === oracleCompose(item.A, item.B)) === (b.dataset.answer === item.answer), 'drawn picture');
+    });
+  });
+});
+test('mco: fuzz 300', () => { fuzzDrill('mco', 300); });
+test('mco: explain names the transforms, else the columns, else the rule; and fits', () => {
+  const rng = makeRng(114), text = item => DRILLS.mco.explain(item).replace(/\u00a0/g, ' ');
+  for (let i = 0; i < 40; i++) {
+    const L = DRILLS.mco.light(1 + i % 10, rng), D = DRILLS.mco.deep(6 + i % 10, rng);
+    assert(DRILLS.mco.explain(L).length <= 60 && DRILLS.mco.explain(D).length <= 36, 'lengths ' + DRILLS.mco.explain(L));
+    assert(/B·A/.test(DRILLS.mco.explain(D)) && text(L).includes(L.names[0]) && text(L).includes(L.names[1]), 'names ' + text(L));
+  }
+  const M = [[1, -1], [0, 2]], names = ['turn 90°', 'shear x'];
+  assert(text({ kind: 'mcoL', M, names }) === 'B·A: apply A first, then B. A: turn 90°, B: shear x.', 'light text');
+  assert(text({ kind: 'mcoD', M, names }) === 'A: turn 90°, B: shear x → B·A.', 'deep text');
+  assert(text({ kind: 'mcoD', M, names: ['turn −90° x', 'shear z−y and more'] }) === 'B·A: apply A first, then B.', 'falls back to the rule');
+  assert(text({ kind: 'mcoL', M, names: ['half turn', 'stretch y'].map(n => n + ' and a very long name to force a fallback') }) === 'B·A: apply A first, then B. x → (1, 0), y → (−1, 2).', 'columns');
+});
+
+test('mpt: image inside the grid, differs from the point, off-axis from Deep 8; answer = M·p (300)', () => {
+  const rng = makeRng(101);
+  for (let i = 0; i < 300; i++) {
+    const deep = i % 2 === 1, lvl = deep ? 6 + i % 10 : 1 + i % 10, item = DRILLS.mpt[deep ? 'deep' : 'light'](lvl, rng), [x, y] = item.p;
+    const [a, b] = [item.M[0][0] * x + item.M[0][1] * y, item.M[1][0] * x + item.M[1][1] * y];
+    assert(item.answer === a + ',' + b && item.to.join() === a + ',' + b, 'answer = M·p');
+    assert(Math.abs(a) <= item.range && Math.abs(b) <= item.range && item.range === (deep ? 6 : 3), 'image in grid');
+    assert((a !== x || b !== y) && (x || y) && det(item.M) !== 0, 'image differs from the point');
+    assert(Math.abs(x) <= (deep ? 3 : 2) && Math.abs(y) <= (deep ? 3 : 2), 'point range');
+    assert(!(deep && lvl >= 8 && (x === 0 || y === 0)), 'off-axis at Deep ≥ 8');
+    assert(item.options.length === (2 * item.range + 1) ** 2 && item.options.includes(item.answer), 'one option per lattice point');
+  }
+});
+test('mpt: one target per grid point, each at least 22 px, inside the board; the dot, labels and faint arrows', () => {
+  const rng = makeRng(102);
+  [DRILLS.mpt.light(3, rng), DRILLS.mpt.deep(11, rng)].forEach(item => {
+    const el = document.createElement('div');
+    DRILLS.mpt.render(item, el, 'answer');
+    const hits = [...el.querySelectorAll('[data-answer]')], board = el.querySelector('.mptBoard'), W = parseFloat(board.style.width);
+    assert(hits.length === (2 * item.range + 1) ** 2 && new Set(hits.map(b => b.dataset.answer)).size === hits.length, 'one per point');
+    assert(hits.every(b => parseFloat(b.style.width) >= 22 && parseFloat(b.style.left) >= 0 && parseFloat(b.style.left) + parseFloat(b.style.width) <= W + 0.01), 'size and inside');
+    const at = el.querySelector('[data-answer="' + item.p.join(',') + '"]'), cell = parseFloat(at.style.width);
+    assert(parseFloat(at.style.left) === (item.p[0] + item.range) * cell && parseFloat(at.style.top) === (item.range - item.p[1]) * cell, 'target position');
+    assert(el.querySelector('circle.mDot') && el.querySelectorAll('.mArrow').length === 2 && el.querySelector('.mtx') && !el.querySelector('.mImage'), 'dot, two faint arrows, matrix, no image');
+    assert(el.querySelector('.mptLab').textContent === pointText(item.p) && /^Where does \(/.test(el.querySelector('.q').textContent), 'labels');
+  });
+  assert((2 * 6 + 1) * 22 <= 320 - 16, '13×13 at 22 px fits 320 px');
+});
+test('mpt: miss rings the answer and shows the two steps; fuzz 300', () => {
+  const rng = makeRng(103), item = DRILLS.mpt.deep(9, rng), el = document.createElement('div');
+  DRILLS.mpt.render(item, el, 'answer');
+  DRILLS.mpt.markMiss(el, item);
+  assert(el.querySelector('[data-answer="' + item.answer + '"]').classList.contains('right'), 'ring');
+  assert(el.querySelectorAll('.mStep').length === 2 && !el.querySelector('svg > .mArrow'), 'two step arrows, basis arrows hidden');
+  assert([...el.querySelectorAll('.mptLab')].slice(1).map(l => l.textContent).join() === minusSign(item.p[0]) + '·x,' + (item.p[1] < 0 ? '−' : '+') + Math.abs(item.p[1]) + '·y', 'step labels');
+  fuzzDrill('mpt', 300);
+});
+test('mpt: explain shows the sums, fits 60 / 36, no-break spaces in tuples', () => {
+  const rng = makeRng(104), text = item => DRILLS.mpt.explain(item).replace(/ /g, ' ');
+  for (let i = 0; i < 120; i++) {
+    const L = DRILLS.mpt.light(1 + i % 10, rng), D = DRILLS.mpt.deep(6 + i % 10, rng);
+    assert(DRILLS.mpt.explain(L).length <= 60 && DRILLS.mpt.explain(D).length <= 36, 'lengths ' + DRILLS.mpt.explain(L) + ' / ' + DRILLS.mpt.explain(D));
+  }
+  const item = { kind: 'mptL', M: [[1, -1], [2, 0]], p: [2, 1], to: [1, 4] };
+  assert(text(item) === '(2, 1) → (1·2 − 1·1, 2·2 + 0·1) = (1, 4)', text(item));
+  assert(text({ ...item, kind: 'mptD' }) === '→ (1·2−1·1, 2·2+0·1) = (1, 4)', text({ ...item, kind: 'mptD' }));
+  assert(/\(1, 4\)/.test(DRILLS.mpt.explain(item)), 'no-break tuple');
+  let full = 0;
+  for (let i = 0; i < 300; i++) full += /·/.test(DRILLS.mpt.explain(DRILLS.mpt.deep(6 + i % 10, rng)));
+  assert(full / 300 > 0.9, 'most Deep explains keep the computation ' + full / 300);
 });
 
 // ===== BOOT =====
