@@ -2790,16 +2790,21 @@ function markCubeMiss(el, item) {
 //   randomMatrix(n, lo, hi, rng) -> readable, not the identity
 //   matrixDecoys(M, count, rng) -> count (1-3) one-mistake decoys, distinct pictures, entries within max(1, max|M|)
 //   pictureKey(M) -> exact key of the mapped shape (same key = same picture)
-//   L_SHAPE_2D, L_SHAPE_3D (half-unit voxels), shapePoints(n)
+//   L_SHAPE_2D, L_SHAPE_3D (unit voxels), shapePoints(n)
 //   gridRangeFor(mats, least) -> shared 2D grid half-width;  drawGrid2D(svgSize, M, { range, dark, start, dot }) -> svg
 //   shared3DFit(mats) -> fit (one camera for the start and every image);  minPairMove(mats, fit) -> share of the box
 //   drawShape3D(canvas, M, { dark, fit, ghost }) (M null: the blue start);  renderMatrix(M) -> bracketed element
 //   wellShaped(M) -> |entries| <= 2, singular values in [0.5, 3 × smallest]: never a sliver;  pictureArea(M, fit) -> 3D hull area / box area
 //   explain helpers: minusSign(x), columnText(M, j)
-const L_SHAPE_2D = [[0, 0], [1, 0], [1, 0.4], [0.4, 0.4], [0.4, 1.6], [0, 1.6]];
-// Half-unit voxels: an x arm to 1, a y arm to 1.5 and a tab up z at the x end, so no axis swap maps it onto itself.
+// The L-tetromino: four whole unit squares (0,0) (0,1) (0,2) (1,0).
+const L_SHAPE_2D = [[0, 0], [2, 0], [2, 1], [1, 1], [1, 3], [0, 3]];
+// Edges between the four unit squares, drawn faintly so the shape reads as whole units.
+const L_UNIT_EDGES = [[[0, 1], [1, 1]], [[0, 2], [1, 2]], [[1, 0], [1, 1]]];
+// Largest shared grid half-width a 2D item may need (Light, Deep): beyond it the grid squares get too small.
+const MAT_RANGE_CAP = { light: 5, deep: 6 };
+// Unit voxels: an x arm of 2, a y arm of 3 and a tab up z at the x end, so no axis swap maps it onto itself.
 const L_SHAPE_3D = [[0, 0, 0], [1, 0, 0], [1, 0, 1], [0, 1, 0], [0, 2, 0]];
-const MAT_VOXEL = 0.5, MAT_MIN_SV = 0.35;
+const MAT_VOXEL = 1, MAT_MIN_SV = 0.35;
 const MAT_VIEW = { yaw: -35 * DEG, pitch: 24 * DEG, roll: 0 };
 // Arrow colours for x, y, z (no red; CSS .mtx .c0-.c2 repeats them); the start shape is blue, the image amber.
 const MAT_ARROW = { light: ['#15803d', '#a21caf', '#0e7490'], dark: ['#4ade80', '#e879f9', '#22d3ee'] };
@@ -2925,6 +2930,7 @@ function drawGrid2D(svgSize, M, opts) {
   svgGridLines(svg, R, k, opts.dark);
   const layer = (m, cls, fill, faint) => {
     svg.appendChild(svgEl('polygon', { class: cls, points: svgPts(L_SHAPE_2D.map(p => applyMat(m, p))), fill, 'fill-opacity': faint ? 0.3 : 0.6, stroke: fill, 'stroke-width': 1.5 * k, 'stroke-linejoin': 'round' }));
+    L_UNIT_EDGES.forEach(e => svg.appendChild(svgEl('polyline', { class: 'mUnit', points: svgPts(e.map(p => applyMat(m, p))), fill: 'none', stroke: fill, 'stroke-opacity': 0.55, 'stroke-width': k })));
     [0, 1].forEach(j => svg.appendChild(svgArrow([m[0][j], m[1][j]], cols[j], k, faint)));
   };
   if (opts.start !== false) layer([[1, 0], [0, 1]], 'mStart', '#5b7cff', !!M);
@@ -3070,11 +3076,17 @@ function gridRangeFor(mats, least) {
   const far = Math.max(...mats.flatMap(m => [...L_SHAPE_2D, [1, 0], [0, 1]].flatMap(p => applyMat(m, p).map(Math.abs))));
   return Math.max(least, Math.ceil(far + 0.25));
 }
+// null when the grid would need more than the cap for this mode.
+function cappedRange(mats, kind, least) {
+  const range = gridRangeFor(mats, least);
+  return range > MAT_RANGE_CAP[kind.endsWith('D') ? 'deep' : 'light'] ? null : range;
+}
 
 // Light below level 7 keeps every option as sparse as the truth (no "simpler one" shortcut).
 // 3D: one camera for the options; two options closer than MFW_MIN_MOVE of the box are too alike to tell apart.
 // The start keeps its own fit: under the options' camera it shrank to ~25 px at 320×568.
 const MFW_MIN_MOVE = 0.08;
+function withRange(item, range) { return range ? { ...item, range } : null; }
 function tryMfw(kind, level, rng) {
   const deep = kind === 'mfwD', M = mfwMatrix(deep, level, rng), limit = deep ? 9 : CONFIG.mfw.lightNonzero(level);
   if (nonzeros(M) > limit) return null;
@@ -3082,7 +3094,7 @@ function tryMfw(kind, level, rng) {
   if (all.some(m => nonzeros(m) > limit)) return null;
   if (M.length === 3 && deep && all.some(m => !wellShaped(m))) return null;
   const order = shuffle(all.map((_, i) => i), rng), mats = order.map(i => all[i]), item = { kind, M, mats, answer: String(order.indexOf(0)), options: mats.map((_, i) => String(i)) };
-  if (M.length === 2) return { ...item, range: gridRangeFor(mats, deep ? 3 : 4) };
+  if (M.length === 2) return withRange(item, cappedRange(mats, kind, deep ? 3 : 4));
   const fit = shared3DFit(mats);
   return minPairMove(mats, fit) < MFW_MIN_MOVE ? null : { ...item, fit };
 }
@@ -3167,7 +3179,7 @@ function tryMbw(kind, level, rng) {
   if (M.length === 3 && deep && all.some(m => !wellShaped(m))) return null;
   const order = shuffle(all.map((_, i) => i), rng), mats = order.map(i => all[i]);
   const item = { kind, M, mats, answer: String(order.indexOf(0)), options: mats.map((_, i) => String(i)) };
-  if (M.length === 2) return { ...item, range: gridRangeFor([M], deep ? 3 : 4) };
+  if (M.length === 2) return withRange(item, cappedRange([M], kind, deep ? 3 : 4));
   const fit = shared3DFit([IDENTITY, M]);
   // The picture is drawn with `fit` (start axes and image), so measure the option gaps against that box.
   return minPairMove(mats, fit) < MFW_MIN_MOVE ? null : { ...item, fit };
@@ -3420,7 +3432,7 @@ function tryMco(kind, level, rng) {
   if (!all || (deep && mcoTied3(all) && rng() < 0.5)) return null;
   const order = shuffle(all.map((_, i) => i), rng), mats = order.map(i => all[i]);
   const item = { kind, A, B, names: [nameA, nameB], M: all[0], mats, answer: String(order.indexOf(0)), options: mats.map((_, i) => String(i)) };
-  if (A.length === 2) return { ...item, range: gridRangeFor(mats, 3) };
+  if (A.length === 2) return withRange(item, cappedRange(mats, kind, 3));
   const fit = shared3DFit(mats);
   return minPairMove(mats, fit) < MFW_MIN_MOVE || mats.some(m => pictureArea(m, fit) < MCO_MIN_AREA) ? null : { ...item, fit };
 }
@@ -5716,9 +5728,9 @@ function oracleMap(M, p) {
   return out;
 }
 function oraclePoints(n) {
-  if (n === 2) return [[0, 0], [1, 0], [1, 0.4], [0.4, 0.4], [0.4, 1.6], [0, 1.6]];
+  if (n === 2) return [[0, 0], [2, 0], [2, 1], [1, 1], [1, 3], [0, 3]];
   const pts = [];
-  L_SHAPE_3D.forEach(v => [0, 1].forEach(a => [0, 1].forEach(b => [0, 1].forEach(c => pts.push([(v[0] + a) / 2, (v[1] + b) / 2, (v[2] + c) / 2])))));
+  L_SHAPE_3D.forEach(v => [0, 1].forEach(a => [0, 1].forEach(b => [0, 1].forEach(c => pts.push([v[0] + a, v[1] + b, v[2] + c])))));
   return pts;
 }
 function oraclePicture(M) {
@@ -5808,7 +5820,7 @@ test('mfw: exactly one option is the mapped shape; counts, ranges, 3D from Deep 
     const hi = !deep ? 1 : n === 2 || lvl >= 13 ? 2 : 1;
     item.mats.forEach(m => assert(m.flat().every(x => Math.abs(x) <= hi), 'entries ' + matKey(m)));
     if (n === 2) item.mats.forEach(m => [...oraclePoints(2), [1, 0], [0, 1]].forEach(p => assert(oracleMap(m, p).every(x => Math.abs(x) <= item.range - 0.25), 'fits grid')));
-    if (!deep) assert(item.range === 4, 'Light grid -4..4');
+    if (!deep) assert(item.range >= 4 && item.range <= 5, 'Light grid -4..5');
   }
 });
 // Option-only shortcuts: the option nearest the others (entries or picture), the per-entry majority,
@@ -5844,12 +5856,31 @@ test('mfw: grid picture draws start, image, two coloured arrows each and the dot
   assert(cols[0] === cols[2] && cols[1] === cols[3] && cols[0] !== cols[1] && cols.every(c => hue(c) > 25 && hue(c) < 335), 'x/y colours, not red ' + cols);
   assert(!drawGrid2D(80, null, { range: 4 }).querySelector('.mImage'), 'start only');
 });
+test('units: the L is four whole unit squares; drawn shapes sit on lattice points with the unit edges inside', () => {
+  const area = P => Math.abs(P.reduce((s, p, i) => s + p[0] * P[(i + 1) % P.length][1] - P[(i + 1) % P.length][0] * p[1], 0)) / 2;
+  assert(L_SHAPE_2D.flat().every(Number.isInteger) && area(L_SHAPE_2D) === 4, 'integer vertices, area 4');
+  assert(MAT_VOXEL === 1 && L_SHAPE_3D.length === 5, 'unit voxels');
+  const pts = el => el.getAttribute('points').trim().split(/\s+/).map(s => s.split(',').map(Number));
+  const svg = drawGrid2D(120, [[1, 1], [0, 2]], { range: 6, dark: false });
+  [svg.querySelector('.mStart'), svg.querySelector('.mImage')].forEach(el => assert(pts(el).flat().every(x => Math.abs(x - Math.round(x)) < 1e-9), 'lattice vertices'));
+  assert(svg.querySelectorAll('.mUnit').length === 6, 'three unit edges for the start and for the image');
+  assert(pts(svg.querySelector('.mUnit')).flat().every(Number.isInteger), 'unit edge on lattice');
+});
+test('units: 2D items fit a grid of 6 (Deep) or 5 (Light) for mfw, mbw and mco (300 each)', () => {
+  for (const id of ['mfw', 'mbw', 'mco']) {
+    const rng = makeRng(131);
+    for (let i = 0; i < 300; i++) {
+      const deep = i % 2 === 1, lvl = deep ? 6 + i % 4 : 1 + i % 10, item = DRILLS[id][deep ? 'deep' : 'light'](lvl, rng);
+      assert(item.range <= (deep ? 6 : 5), id + ' range ' + item.range);
+    }
+  }
+});
 test('mfw: 3D faces shown are exactly those facing the viewer after the map', () => {
   const rng = makeRng(85), cross = (a, b) => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];
   for (let i = 0; i < 200; i++) {
     const M = i ? randomMatrix(3, -2, 2, rng) : [[1, 0, 0], [0, 1, 0], [0, 0, 1]], want = [];
     for (const { v, d } of exteriorFaces(L_SHAPE_3D)) {
-      const c = faceCorners(v, d, [-0.5, -0.5, -0.5]).map(p => applyPose(oracleMap(M, p.map(x => x / 2)), MAT_VIEW));
+      const c = faceCorners(v, d, [-0.5, -0.5, -0.5]).map(p => applyPose(oracleMap(M, p), MAT_VIEW));
       let nrm = cross(c[1].map((x, k) => x - c[0][k]), c[3].map((x, k) => x - c[0][k]));
       if (nrm.reduce((s, x, k) => s + x * applyPose(oracleMap(M, d), MAT_VIEW)[k], 0) < 0) nrm = nrm.map(x => -x);
       if (nrm[2] > 1e-9) want.push(v.join() + '|' + d.join());
