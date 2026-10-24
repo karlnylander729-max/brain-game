@@ -2,10 +2,10 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
+<meta name="viewport" content="width=device-width, initial-scale=1, interactive-widget=resizes-content">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Brain">
 <meta name="theme-color" content="#14161a">
 <title>Brain</title>
@@ -2973,6 +2973,12 @@ test('state: v1 save keeps history and skill, gains new drills and recent', () =
   assert(s.skill.nim === 1, 'new default');
   answerRot(s, true);
   assert(s.recent.rot.join() === '1' && s.skill.rot === 4, 'staircase runs on a migrated save');
+});
+test('iOS: page is not drawn under the status bar (no inset can be counted twice)', () => {
+  const vp = document.querySelector('meta[name=viewport]').content;
+  const sb = document.querySelector('meta[name="apple-mobile-web-app-status-bar-style"]').content;
+  assert(!vp.includes('viewport-fit=cover'), 'viewport-fit=cover removed');
+  assert(sb === 'default', 'status bar style default, got ' + sb);
 });
 test('start halves say only LIGHT and DEEP', () => {
   assert(document.getElementById('goLight').textContent.trim() === 'LIGHT', 'light');
