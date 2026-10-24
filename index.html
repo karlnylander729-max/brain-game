@@ -29,7 +29,10 @@ section.active { display: flex; flex-direction: column; }
 #lightItem { flex: 1; min-height: 0; }
 #lightFlash { position: absolute; inset: 0; pointer-events: none; }
 #lightFlash.ok { background: rgba(46,160,67,.3); }
-#lightFlash.miss { background: rgba(220,50,50,.3); }
+#lightFlash.miss { background: rgba(90,105,130,.12); } /* neutral slate: a miss should teach, not sting */
+#lightItem .why { flex: none; box-sizing: border-box; max-width: calc(100% - 24px); margin: 6px 12px; padding: 8px 14px; border-radius: 10px; font-size: 15px; font-weight: 600; text-align: center; background: #e3e9f2; color: #33415c; }
+#deepItem .q.why { font-size: 15px; font-weight: 600; color: #c9d4f0; }
+#deepItem .q + .q.why { padding-top: 0; } /* Deep: the reason takes the question's slot, so the 320x568 fit holds */
 .btns button.right { outline: 4px solid #2ea043; outline-offset: -4px; }
 .trkL, .trkD { height: 100%; box-sizing: border-box; padding-bottom: env(safe-area-inset-bottom); display: flex; flex-direction: column; align-items: center; --lo: #1a5fb4; --st: #fff; --en: #1a5fb4; --ic: #d6e8ff; }
 .trkL { background: #f5f9ff; color: #1a3050; }
@@ -71,7 +74,7 @@ section.active { display: flex; flex-direction: column; }
 .trkD .icon { grid-template-columns: repeat(3, 12px); gap: 2px; padding: 5px; border-radius: 8px; }
 .trkD .icon i { width: 12px; height: 12px; border-radius: 3px; }
 .trkD .icons { height: auto; flex-wrap: wrap; justify-content: center; margin: 8px 8px 0; }
-.path polyline { stroke-dasharray: 1; animation: draw 1s linear; } /* Light miss feedback lasts 1200 ms, so the path is fully drawn */
+.path polyline { stroke-dasharray: 1; animation: draw 1s linear; } /* draws in 1 s; a Light miss waits up to 3 s for a tap */
 @keyframes draw { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
 .tile span { position: absolute; top: 6px; left: 10px; font-size: 13px; opacity: .6; }
 .matL, .matD, .serL, .serD, .oddL, .oddD, .evL, .evD, .nimL, .nimD, .rchL, .rchD { height: 100%; box-sizing: border-box; display: flex; flex-direction: column; align-items: center; padding-bottom: env(safe-area-inset-bottom); }
@@ -81,6 +84,8 @@ section.active { display: flex; flex-direction: column; }
 .matCell { background: var(--tile); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 32px; font-weight: 700; box-sizing: border-box; }
 .matCell.hole { border: 2px dashed currentColor; }
 .matOpts { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; width: 100%; box-sizing: border-box; padding: 8px 12px; margin-top: auto; }
+.matD .matOpts { grid-template-columns: repeat(3, 1fr); } /* Deep: 6 options in 3 columns, 2 rows */
+.matD .matOpt { min-height: 72px; }
 .matOpt { min-height: 84px; border: 0; border-radius: 12px; background: var(--tile); display: flex; align-items: center; justify-content: center; padding: 0; }
 .serRow { display: flex; gap: 6px; justify-content: center; margin-top: 6px; }
 .serRow .matCell { flex: none; }
@@ -169,7 +174,7 @@ const CONFIG = {
   },
   seq: { lightLen: 4, deepLen: lvl => Math.min(6 + Math.floor(Math.max(0, lvl - 6) / 3), 9), lightFlashMs: lvl => Math.max(400, 800 - 30 * lvl), deepFlashMs: 1000 },
   crd: { lightCount: 8, deepCount: lvl => Math.min(16 + Math.max(0, lvl - 6), 24), lightFlashMs: lvl => Math.max(350, 700 - 25 * lvl), deepFlashMs: 900 },
-  mat: { deepVarying: lvl => lvl < 11 ? 2 : 3 },
+  mat: { deepVarying: lvl => lvl < 11 ? 3 : 4 },
   ser: { deepVarying: lvl => lvl < 11 ? 2 : 3, deepTerms: 5, lightTerms: 4 }
 };
 
@@ -194,7 +199,8 @@ function makeRng(seed) {
 //   render(item, el, phase, index),          // phase is a timeline phase or 'answer'
 //   answer(item) -> string,                  // the correct data-answer value
 //   options(item) -> string[] | null,        // all answer values offered (null = multi-tap answer built by render)
-//   markMiss(el, item)                       // optional: show the right answer after a miss
+//   markMiss(el, item),                      // optional: show the right answer after a miss
+//   explain(item) -> string                  // optional: one plain line (<= 60 chars) saying why, shown after a miss
 // }
 // Item kind is '<id>L' or '<id>D'. Drill sections call registerDrill; they must come after this section.
 const DRILLS = {};
@@ -436,13 +442,19 @@ function makeDeepRotation(level, rng) {
   throw new Error('no visible deep rotation item');
 }
 
+function explainRotation(item) {
+  if (item.kind === 'rotD') return 'ABCD'[item.answer] + ' is the target, turned.';
+  return item.answer === 'mirror' ? 'It was the mirror image.' : 'Same object, turned.';
+}
+
 registerDrill('rot', {
   op: 'transform', name: 'Rotation',
   light: makeLightRotation, deep: makeDeepRotation,
   timeline: () => [],
   render: (item, el) => (item.kind === 'rotL' ? renderLightRotation : renderDeepRotation)(item, el),
   answer: item => String(item.answer),
-  options: item => (item.kind === 'rotL' ? ['same', 'mirror'] : ['0', '1', '2', '3'])
+  options: item => (item.kind === 'rotL' ? ['same', 'mirror'] : ['0', '1', '2', '3']),
+  explain: explainRotation
 });
 
 // ===== RENDER =====
@@ -622,6 +634,9 @@ function boardSquares(n) {
   return Array.from({ length: n * n }, (_, i) => squareName([i % n, Math.floor(i / n)]));
 }
 
+// The path is already drawn by markTrackingMiss; the line names the end square.
+function explainTracking(item) { return 'It ended on ' + squareName(item.end) + '.'; }
+
 registerDrill('trk', {
   op: 'transform', name: 'Tracking',
   light: makeLightTracking, deep: makeDeepTracking,
@@ -629,18 +644,24 @@ registerDrill('trk', {
   render: renderTracking,
   answer: item => squareName(item.end),
   options: item => boardSquares(item.size),
-  markMiss: markTrackingMiss
+  markMiss: markTrackingMiss,
+  explain: explainTracking
 });
 
 // ===== FIGURES =====
-// A cell is { shape: 0 circle | 1 square | 2 triangle, count: 1..3, fill: 0 outline | 1 hatched | 2 solid }.
+// A cell is { shape: 0 circle | 1 square | 2 triangle, count: 1..3, fill: 0 outline | 1 hatched | 2 solid, size: 0 small | 1 medium | 2 large }.
 const CELL_SLOTS = [
   [[50, 50, 30]],
   [[27, 50, 17], [73, 50, 17]],
   [[50, 27, 17], [27, 72, 17], [73, 72, 17]]
 ];
 
-function cellKey(c) { return c.shape + '' + c.count + c.fill; }
+// Scale of each drawn copy per size; large is the full slot, so three large copies still fit.
+const CELL_SCALES = [0.55, 0.72, 1];
+// Hatch lines never get thinner than this (viewBox units), so small hatched shapes stay hatched in 64 px tiles.
+const MIN_HATCH_STROKE = 3.5;
+
+function cellKey(c) { return c.shape + '' + c.count + c.fill + c.size; }
 
 // SVG markup of one shape centred on (x, y) with half-size s.
 function shapeParts(shape, x, y, s) {
@@ -660,14 +681,14 @@ function hatchLines(x, y, s) {
 
 let clipCount = 0;
 
-// Fill 1 is the outline plus hatch lines clipped to the shape.
+// Fill 1 is the outline plus hatch lines clipped to the shape. slot is [x, y, s, w]; stroke widths scale by w (default 1).
 function shapeMarkup(shape, fill, slot, ink) {
-  const full = shapeParts(shape, ...slot);
-  const line = `fill="none" stroke="${ink}" stroke-width="5" stroke-linejoin="round"`;
-  if (fill === 2) return `<g fill="${ink}" stroke="${ink}" stroke-width="5" stroke-linejoin="round">${full}</g>`;
+  const w = slot[3] || 1, full = shapeParts(shape, ...slot), sw = 5 * w;
+  const line = `fill="none" stroke="${ink}" stroke-width="${sw}" stroke-linejoin="round"`;
+  if (fill === 2) return `<g fill="${ink}" stroke="${ink}" stroke-width="${sw}" stroke-linejoin="round">${full}</g>`;
   if (fill === 0) return `<g ${line}>${full}</g>`;
   const id = 'hc' + clipCount++;
-  return `<clipPath id="${id}">${full}</clipPath><g clip-path="url(#${id})" stroke="${ink}" stroke-width="4">${hatchLines(...slot)}</g><g ${line}>${full}</g>`;
+  return `<clipPath id="${id}">${full}</clipPath><g clip-path="url(#${id})" stroke="${ink}" stroke-width="${Math.max(MIN_HATCH_STROKE, 4 * w)}">${hatchLines(...slot)}</g><g ${line}>${full}</g>`;
 }
 
 function drawCell(cell, size, dark) {
@@ -675,12 +696,13 @@ function drawCell(cell, size, dark) {
   const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
   svg.setAttribute('viewBox', '0 0 100 100');
   svg.setAttribute('width', size); svg.setAttribute('height', size);
-  svg.innerHTML = CELL_SLOTS[cell.count - 1].map(slot => shapeMarkup(cell.shape, cell.fill, slot, ink)).join('');
+  const k = CELL_SCALES[cell.size], w = 0.6 + 0.4 * k;
+  svg.innerHTML = CELL_SLOTS[cell.count - 1].map(([x, y, r]) => shapeMarkup(cell.shape, cell.fill, [x, y, r * k, w], ink)).join('');
   return svg;
 }
 
 // ===== MATRICES =====
-const ATTR_VALUE = [c => c.shape, c => c.count - 1, c => c.fill];
+const ATTR_VALUE = [c => c.shape, c => c.count - 1, c => c.fill, c => c.size];
 const RULE_KINDS = ['const', 'prog', 'dist'];
 const RULE_CHECKS = {
   fixed: rows => rows.flat().every(v => v === rows[0][0]),
@@ -690,8 +712,12 @@ const RULE_CHECKS = {
     return step !== 0 && new Set(rows.map(r => r[0])).size === 3 && rows.every(r => r[1] === (r[0] + step) % 3 && r[2] === (r[1] + step) % 3);
   },
   dist: rows => rows.every(r => new Set(r).size === 3) && new Set(rows.map(r => r.join())).size === 3
-    && rows.every(r => [0, 1, 2].some(k => r.every((v, c) => v === rows[0][(c + k) % 3])))
+    && rows.every(r => [0, 1, 2].some(k => r.every((v, c) => v === rows[0][(c + k) % 3]))),
+  // Count only: values are count - 1, so count3 = count1 + count2 reads v3 = v1 + v2 + 1. Rows distinct.
+  add: rows => rows.every(r => r[2] === r[0] + r[1] + 1) && new Set(rows.map(r => r.join())).size === 3
 };
+// 'add' rows as count - 1: counts (1,1,2), (1,2,3), (2,1,3).
+const ADD_ROWS = [[0, 0, 1], [0, 1, 2], [1, 0, 2]];
 
 // Correctness oracle: reads only the rules and the cells, never how the generator built them.
 function satisfiesRules(grid, cell, rules) {
@@ -705,45 +731,67 @@ function satisfiesRules(grid, cell, rules) {
 // Value table [row][col] for one attribute under one rule.
 function attrTable(rule, rng) {
   const perm = shuffle([0, 1, 2], rng), shift = shuffle([0, 1, 2], rng), step = 1 + Math.floor(rng() * 2);
-  const fixed = Math.floor(rng() * 3);
-  const at = { fixed: () => fixed, const: r => perm[r], prog: (r, c) => (perm[r] + step * c) % 3, dist: (r, c) => perm[(c + shift[r]) % 3] };
+  const fixed = Math.floor(rng() * 3), addRows = shuffle(ADD_ROWS.slice(), rng);
+  const at = { add: (r, c) => addRows[r][c], fixed: () => fixed, const: r => perm[r], prog: (r, c) => (perm[r] + step * c) % 3, dist: (r, c) => perm[(c + shift[r]) % 3] };
   return [0, 1, 2].map(r => [0, 1, 2].map(c => at[rule](r, c)));
 }
 
-function pickRules(varying, rng) {
-  const moving = shuffle([0, 1, 2], rng).slice(0, varying);
-  return [0, 1, 2].map(a => (moving.includes(a) ? pick(RULE_KINDS, rng) : 'fixed'));
+// Light varies only shape, count and fill (size stays fixed). Deep: a varying count uses 'add' half the time.
+function pickRules(varying, deep, rng) {
+  const moving = shuffle([0, 1, 2, 3].slice(0, deep ? 4 : 3), rng).slice(0, varying);
+  const rules = [0, 1, 2, 3].map(a => (moving.includes(a) ? pick(RULE_KINDS, rng) : 'fixed'));
+  if (deep && rules[1] !== 'fixed' && rng() < 0.5) rules[1] = 'add';
+  return rules;
 }
+
+function cellOf(v) { return { shape: v[0], count: v[1] + 1, fill: v[2], size: v[3] }; }
 
 function withAttr(cell, a, v) {
-  return { shape: cell.shape, count: cell.count, fill: cell.fill, ...[{ shape: v }, { count: v + 1 }, { fill: v }][a] };
+  const vals = ATTR_VALUE.map(f => f(cell));
+  vals[a] = v;
+  return cellOf(vals);
 }
 
-// One-attribute changes of the answer, varying attributes first.
+// Light: one-attribute changes of the answer, varying attributes first.
 function makeDecoys(cell, rules, count, rng) {
-  const all = [0, 1, 2].flatMap(a => [0, 1, 2].filter(v => v !== ATTR_VALUE[a](cell)).map(v => ({ a, key: cellKey(withAttr(cell, a, v)) })));
+  const all = [0, 1, 2, 3].flatMap(a => [0, 1, 2].filter(v => v !== ATTR_VALUE[a](cell)).map(v => ({ a, key: cellKey(withAttr(cell, a, v)) })));
   const moving = shuffle(all.filter(d => rules[d.a] !== 'fixed'), rng), still = shuffle(all.filter(d => rules[d.a] === 'fixed'), rng);
   return moving.concat(still).slice(0, count).map(d => d.key);
 }
 
+// Deep (Ruling Y): per varying attribute the 5 decoys take [a, x, x, y, y] shuffled, so each value appears
+// twice among the 6 options; fixed attributes are copied unchanged.
+function balancedDecoys(cell, rules, rng) {
+  for (let tries = 0; tries < 200; tries++) {
+    const cols = ATTR_VALUE.map((f, i) => {
+      const a = f(cell), [x, y] = [0, 1, 2].filter(v => v !== a);
+      return rules[i] === 'fixed' ? [a, a, a, a, a] : shuffle([a, x, x, y, y], rng);
+    });
+    const keys = [0, 1, 2, 3, 4].map(i => cellKey(cellOf(cols.map(col => col[i]))));
+    if (new Set([cellKey(cell), ...keys]).size === 6) return keys;
+  }
+  throw new Error('matrices: no distinct balanced decoys');
+}
+
+const MEDIUM_TABLE = [[1, 1, 1], [1, 1, 1], [1, 1, 1]];
+
+// Light keeps size fixed at medium.
 function makeMatrix(varying, nOptions, rng) {
-  const rules = pickRules(varying, rng), tables = rules.map(r => attrTable(r, rng));
-  const grid = Array.from({ length: 9 }, (_, i) => {
-    const r = Math.floor(i / 3), c = i % 3;
-    return { shape: tables[0][r][c], count: tables[1][r][c] + 1, fill: tables[2][r][c] };
-  });
+  const deep = nOptions > 2, rules = pickRules(varying, deep, rng);
+  const tables = rules.map((r, a) => (a === 3 && !deep ? MEDIUM_TABLE : attrTable(r, rng)));
+  const grid = Array.from({ length: 9 }, (_, i) => cellOf(tables.map(t => t[Math.floor(i / 3)][i % 3])));
   const answer = cellKey(grid[8]);
-  const options = shuffle([answer, ...makeDecoys(grid[8], rules, nOptions - 1, rng)], rng);
-  return { grid, answer, options, rules };
+  const decoys = deep ? balancedDecoys(grid[8], rules, rng) : makeDecoys(grid[8], rules, nOptions - 1, rng);
+  return { grid, answer, options: shuffle([answer, ...decoys], rng), rules };
 }
 
 function matrixItem(mode, varying, nOptions, rng) {
   return { kind: 'mat' + mode, ...makeMatrix(varying, nOptions, rng) };
 }
 
-// Height cap: bar 44, question 41, grid gaps and margin 20, options (Deep 2 rows + Next 62, Light 1 row).
+// Height cap: bar 44, question 41, grid gaps and margin 20, options (Deep 2 rows of 72 + Next 62, Light 1 row).
 function matCellSize(deep) {
-  const room = (window.innerHeight || 667) - 44 - 41 - 20 - (deep ? 192 + 62 : 100) - safeInsetsPx();
+  const room = (window.innerHeight || 667) - 44 - 41 - 20 - (deep ? 168 + 62 : 100) - safeInsetsPx();
   return Math.min(96, Math.floor((screenWidth() - 48) / 3), Math.floor(room / 3));
 }
 
@@ -756,8 +804,7 @@ function makeMatCell(cell, size, dark) {
 
 function makeMatOption(key, size, dark) {
   const b = makeAnswerButton('', key, 'matOpt');
-  const cell = { shape: +key[0], count: +key[1], fill: +key[2] };
-  b.appendChild(drawCell(cell, size, dark));
+  b.appendChild(drawCell(cellOf([+key[0], key[1] - 1, +key[2], +key[3]]), size, dark));
   return b;
 }
 
@@ -768,18 +815,33 @@ function renderMatrix(item, el) {
   const grid = document.createElement('div'); grid.className = 'matGrid';
   item.grid.forEach((c, i) => grid.appendChild(makeMatCell(i < 8 ? c : null, size, dark)));
   const opts = makeDiv('matOpts', '');
-  item.options.forEach(k => opts.appendChild(makeMatOption(k, deep ? 68 : 72, dark)));
+  item.options.forEach(k => opts.appendChild(makeMatOption(k, deep ? 64 : 72, dark)));
   el.append(q, grid, opts);
+}
+
+const ATTR_NAMES = ['Shape', 'Count', 'Fill', 'Size'];
+
+// Most telling rule first; ties go to the first attribute.
+const RULE_PRIORITY = ['add', 'dist', 'prog', 'const'];
+
+// Names one varying attribute's rule; lines stay short enough for one line in Deep at 320 px.
+function explainMatrix(item) {
+  const kind = RULE_PRIORITY.find(k => item.rules.includes(k)), a = item.rules.indexOf(kind), name = ATTR_NAMES[a];
+  if (item.rules[a] === 'add') return 'Count: 3rd = 1st + 2nd in each row.';
+  if (item.rules[a] === 'const') return name + ' stays the same in each row.';
+  if (item.rules[a] === 'prog') return name + ' steps along each row.';
+  return name + ': each row has ' + (a === 1 ? '1, 2 and 3' : 'all three') + '.';
 }
 
 registerDrill('mat', {
   op: 'rules', name: 'Matrices',
   light: (level, rng) => matrixItem('L', 1, 2, rng),
-  deep: (level, rng) => matrixItem('D', CONFIG.mat.deepVarying(level), 4, rng),
+  deep: (level, rng) => matrixItem('D', CONFIG.mat.deepVarying(level), 6, rng),
   timeline: () => [],
   render: renderMatrix,
   answer: item => item.answer,
-  options: item => item.options
+  options: item => item.options,
+  explain: explainMatrix
 });
 
 // ===== SERIES =====
@@ -807,6 +869,26 @@ function dialDecoys(next, moving, count, rng) {
   return shuffle(all, rng).slice(0, count).map(dialKey);
 }
 
+// Deep: the 3 decoy values of one varying attribute. Pattern [a, a, b, b] or (arrow/dot only) [a, b, c, d] with b, c, d
+// within 2 positions of a, so the answer's value is never the most common one.
+// No decoy value equals the last shown term's value, so "differs from the last term" does not single out the answer.
+function decoyColumn(a, attr, last, rng) {
+  const m = DIAL_MODS[attr], near = [-2, -1, 1, 2].map(d => (a + d + m) % m).filter(v => v !== last);
+  if (attr !== 'centre' && rng() < 0.5) return shuffle(near, rng).slice(0, 3);
+  const b = pick(attr === 'centre' ? [0, 1, 2].filter(v => v !== a && v !== last) : near, rng);
+  return shuffle([a, b, b], rng);
+}
+
+// Ruling Y: attributes fixed across the series are copied unchanged into every option.
+function balancedDialDecoys(next, last, moving, rng) {
+  for (let tries = 0; tries < 200; tries++) {
+    const cols = DIAL_ATTRS.map(a => (moving.includes(a) ? decoyColumn(next[a], a, last[a], rng) : [next[a], next[a], next[a]]));
+    const keys = [0, 1, 2].map(i => dialKey({ arrow: cols[0][i], dot: cols[1][i], centre: cols[2][i] }));
+    if (new Set([dialKey(next), ...keys]).size === 4) return keys;
+  }
+  throw new Error('series: no distinct balanced decoys');
+}
+
 function drawSeries(moving, terms, rng) {
   const base = {}, steps = {};
   DIAL_ATTRS.forEach(a => {
@@ -829,7 +911,8 @@ function makeSeries(varying, terms, nOptions, rng) {
 
 function finishSeries(d, moving, nOptions, rng) {
   const answer = dialKey(d.next);
-  const options = shuffle([answer, ...dialDecoys(d.next, moving, nOptions - 1, rng)], rng);
+  const decoys = nOptions > 2 ? balancedDialDecoys(d.next, d.shown[d.shown.length - 1], moving, rng) : dialDecoys(d.next, moving, nOptions - 1, rng);
+  const options = shuffle([answer, ...decoys], rng);
   return { terms: d.shown, answer, options };
 }
 
@@ -895,6 +978,16 @@ function renderSeries(item, el) {
   el.append(q, serRow(cells.slice(0, 3), size, dark), serRow(cells.slice(3), size, dark), opts);
 }
 
+// Names the attribute with the largest step (1 step = 1/8 turn; centre fill has 3 values).
+function explainSeries(item) {
+  const [t0, t1] = item.terms;
+  const signed = a => { const s = (t1[a] - t0[a] + DIAL_MODS[a]) % DIAL_MODS[a]; return a !== 'centre' && s > 4 ? s - 8 : s; };
+  const a = DIAL_ATTRS.reduce((best, x) => (Math.abs(signed(x)) > Math.abs(signed(best)) ? x : best));
+  if (a === 'centre') return 'The centre fill steps each time.';
+  const n = Math.abs(signed(a)), back = signed(a) < 0 ? 'back ' : '';
+  return (a === 'arrow' ? 'Arrow turns ' : 'Dot moves ') + n + (n > 1 ? ' steps ' : ' step ') + back + 'each time.';
+}
+
 registerDrill('ser', {
   op: 'rules', name: 'Series',
   light: (level, rng) => seriesItem('L', 1, rng),
@@ -902,7 +995,8 @@ registerDrill('ser', {
   timeline: () => [],
   render: renderSeries,
   answer: item => item.answer,
-  options: item => item.options
+  options: item => item.options,
+  explain: explainSeries
 });
 
 // ===== EVENTS =====
@@ -1037,6 +1131,20 @@ function renderOdds(item, el) {
   el.append(q, opts);
 }
 
+// Two chances as fractions over one denominator when it stays small, else as percentages.
+function chanceVs(p, q) {
+  const den = p[1] * q[1] / gcd(p[1], q[1]);
+  if (den <= 100) return (p[0] * den / p[1]) + '/' + den + ' beats ' + (q[0] * den / q[1]) + '/' + den + '.';
+  const pct = x => (100 * x[0] / x[1]).toFixed(1) + '%';
+  return pct(p) + ' beats ' + pct(q) + '.';
+}
+
+// Light: the two chances. Deep: best against second best.
+function explainOdds(item) {
+  const [best, second] = sortedByP(item.events);
+  return chanceVs(best.p, second.p);
+}
+
 registerDrill('odd', {
   op: 'odds', name: 'Odds',
   light: makeOddsLight,
@@ -1044,7 +1152,8 @@ registerDrill('odd', {
   timeline: () => [],
   render: renderOdds,
   answer: item => item.answer,
-  options: item => item.options
+  options: item => item.options,
+  explain: explainOdds
 });
 
 // ===== VALUE =====
@@ -1104,6 +1213,14 @@ function renderValue(item, el) {
   el.append(q, hint, opts);
 }
 
+function signedMoney(v) { return (v < 0 ? '-' : '+') + Math.abs(v).toFixed(2); }
+
+function explainValue(item) {
+  if (item.kind === 'evL') return 'Average result: ' + signedMoney(evValue(item.bets[0])) + ' per bet.';
+  const [best, second] = item.bets.map(evValue).sort((a, b) => b - a);
+  return 'Best: ' + signedMoney(best) + ' per bet, next: ' + signedMoney(second) + '.';
+}
+
 registerDrill('ev', {
   op: 'odds', name: 'Value',
   light: makeEvLight,
@@ -1111,7 +1228,8 @@ registerDrill('ev', {
   timeline: () => [],
   render: renderValue,
   answer: item => item.answer,
-  options: item => item.options
+  options: item => item.options,
+  explain: explainValue
 });
 
 // ===== SEQUENCE =====
@@ -1204,6 +1322,12 @@ function markSeqMiss(el, item) {
   });
 }
 
+function explainSeq(item) {
+  if (item.kind === 'seqD') return 'The numbers show the order.';
+  const name = i => SEQ_SYMBOLS[+item.seq[i]].name;
+  return 'After the ' + name(item.asked) + ' came the ' + name(item.asked + 1) + '.';
+}
+
 registerDrill('seq', {
   op: 'memory', name: 'Sequence',
   light: makeSeqLight, deep: makeSeqDeep,
@@ -1211,7 +1335,8 @@ registerDrill('seq', {
   render: renderSeq,
   answer: item => item.answer,
   options: item => item.kind === 'seqL' ? item.options : null,
-  markMiss: markSeqMiss
+  markMiss: markSeqMiss,
+  explain: explainSeq
 });
 
 // ===== CARDS =====
@@ -1295,13 +1420,21 @@ function renderCards(item, el, phase, index) {
   el.append(...(item.kind === 'crdL' ? cardsLightAnswer(item) : cardsDeepAnswer(item)));
 }
 
+const SUIT_NAMES = { '♠': 'Spades', '♥': 'Hearts', '♦': 'Diamonds', '♣': 'Clubs' };
+
+function explainCards(item) {
+  if (item.kind === 'crdD') return 'The ' + item.options[+item.answer] + ' was never played.';
+  return SUIT_NAMES[item.answer] + ' came up ' + item.cards.filter(c => cardSuit(c) === item.answer).length + ' times.';
+}
+
 registerDrill('crd', {
   op: 'memory', name: 'Cards',
   light: makeCardsLight, deep: makeCardsDeep,
   timeline: cardsTimeline,
   render: renderCards,
   answer: item => item.answer,
-  options: item => item.kind === 'crdL' ? item.options : ['0', '1', '2', '3']
+  options: item => item.kind === 'crdL' ? item.options : ['0', '1', '2', '3'],
+  explain: explainCards
 });
 
 // ===== TAKE-AWAY =====
@@ -1384,6 +1517,15 @@ function markNimMiss(el, item) {
   el.querySelector('.oddOpts').before(note);
 }
 
+function explainNim(item) {
+  if (item.kind === 'nimL') {
+    if (item.answer === 'no') return 'Every move from ' + item.pile + ' loses.';
+    return 'From ' + item.pile + ' you can force a win: take ' + winningTakes(item.pile, item.takes)[0] + '.';
+  }
+  if (item.answer === 'none') return 'Every take leaves a winning pile.';
+  return 'Take ' + item.answer + ' leaves ' + (item.pile - item.answer) + ', a losing pile.';
+}
+
 registerDrill('nim', {
   op: 'backward', name: 'Take-away',
   light: makeNimLight, deep: makeNimDeep,
@@ -1391,7 +1533,8 @@ registerDrill('nim', {
   render: renderNim,
   answer: item => item.answer,
   options: item => item.options,
-  markMiss: markNimMiss
+  markMiss: markNimMiss,
+  explain: explainNim
 });
 
 // ===== REACH =====
@@ -1474,6 +1617,9 @@ function markReachMiss(el, item) {
   el.querySelector('.oddOpts').before(note);
 }
 
+// The path is already shown by markReachMiss.
+function explainReach(item) { return 'Shortest: ' + item.answer + ' moves.'; }
+
 registerDrill('rch', {
   op: 'backward', name: 'Reach',
   light: makeReachLight, deep: makeReachDeep,
@@ -1481,7 +1627,8 @@ registerDrill('rch', {
   render: renderReach,
   answer: item => item.answer,
   options: item => item.options,
-  markMiss: markReachMiss
+  markMiss: markReachMiss,
+  explain: explainReach
 });
 
 // ===== STATE =====
@@ -1490,10 +1637,11 @@ const STORAGE_KEY = 'brain-game-v1';
 const HISTORY_CAP = 20000;
 const DAY_MS = 864e5;
 
+// run and streak are no longer used; they stay so an older open copy of the page still accepts the save.
 function defaultState() {
-  const skill = {}, run = {};
-  ALL_DRILL_IDS.forEach(id => { skill[id] = 1; run[id] = 0; });
-  return { v: 1, skill, run, streak: 0, history: [] };
+  const skill = {}, run = {}, recent = {};
+  ALL_DRILL_IDS.forEach(id => { skill[id] = 1; run[id] = 0; recent[id] = []; });
+  return { v: 1, skill, run, streak: 0, recent, history: [] };
 }
 
 function isObject(o) { return !!o && typeof o === 'object' && !Array.isArray(o); }
@@ -1508,6 +1656,8 @@ function fillDrills(s) {
   for (const k of ['skill', 'run']) {
     ALL_DRILL_IDS.forEach(id => { if (!Number.isFinite(s[k][id])) s[k][id] = d[k][id]; });
   }
+  if (!isObject(s.recent)) s.recent = {};
+  ALL_DRILL_IDS.forEach(id => { if (!Array.isArray(s.recent[id])) s.recent[id] = []; });
   return s;
 }
 
@@ -1529,14 +1679,18 @@ function saveState(state, storage = localStorage) {
   }
 }
 
+// recent holds the results since the last level change (max 6). Up after 6 right in a row;
+// down only when 2 of the last 5 are misses, so a single miss never lowers the level.
 function stepSkill(state, drill, correct) {
-  if (!correct) {
-    state.run[drill] = 0;
-    state.skill[drill] = Math.max(1, state.skill[drill] - 1);
-  } else if (++state.run[drill] >= 3) {
-    state.run[drill] = 0;
-    state.skill[drill] = Math.min(10, state.skill[drill] + 1);
-  }
+  const recent = state.recent[drill];
+  recent.push(correct ? 1 : 0);
+  if (recent.length > 6) recent.shift();
+  let step = 0;
+  if (recent.length === 6 && recent.every(Boolean)) step = 1;
+  else if (recent.slice(-5).filter(r => !r).length >= 2) step = -1;
+  if (!step) return;
+  state.skill[drill] = Math.min(10, Math.max(1, state.skill[drill] + step));
+  state.recent[drill] = [];
 }
 
 function recordAnswer(state, a) {
@@ -1544,7 +1698,6 @@ function recordAnswer(state, a) {
   if (state.history.length > HISTORY_CAP) state.history.shift();
   if (a.mode !== 'L') return state;
   stepSkill(state, a.drill, a.correct);
-  state.streak = a.correct ? state.streak + 1 : 0;
   return state;
 }
 
@@ -1713,12 +1866,12 @@ function markTrackingMiss(el, item) {
   const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
   svg.setAttribute('class', 'path'); svg.setAttribute('viewBox', '0 0 ' + n + ' ' + n);
   svg.setAttribute('width', cell * n); svg.setAttribute('height', cell * n);
-  svg.innerHTML = '<polyline pathLength="1" fill="none" stroke="#e5484d" stroke-width=".09" stroke-linejoin="round" points="' + pts.map(xy).join(' ') + '"/>';
+  svg.innerHTML = '<polyline pathLength="1" fill="none" stroke="#e09b2d" stroke-width=".09" stroke-linejoin="round" points="' + pts.map(xy).join(' ') + '"/>';
   el.querySelector('.board').appendChild(svg);
 }
 
 // ----- Light feed -----
-const app = { state: null, storage: window.localStorage, mode: 'L', item: null, phase: null, startedAt: 0, locked: true, timers: [] };
+const app = { state: null, storage: window.localStorage, mode: 'L', item: null, phase: null, startedAt: 0, locked: true, timers: [], missAt: 0 };
 
 function setTimer(fn, ms) { app.timers.push(setTimeout(fn, ms)); }
 function clearTimers() { app.timers.forEach(clearTimeout); app.timers = []; }
@@ -1727,9 +1880,11 @@ function correctAnswer(item) {
   return DRILLS[drillOf(item)].answer(item);
 }
 
+// Correct Light answers since local midnight, then the median time of the last 10 Light answers.
 function lightCornerText() {
-  const ms = app.state.history.filter(h => h[2] === 'L').slice(-10).map(h => h[5]);
-  return 'streak ' + app.state.streak + ' · ' + (ms.length ? (median(ms) / 1000).toFixed(1) + ' s' : '– s');
+  const light = app.state.history.filter(h => h[2] === 'L'), midnight = new Date().setHours(0, 0, 0, 0);
+  const today = light.filter(h => h[4] === 1 && h[0] >= midnight).length, ms = light.slice(-10).map(h => h[5]);
+  return 'today ' + today + ' · ' + (ms.length ? (median(ms) / 1000).toFixed(1) + ' s' : '– s');
 }
 
 function updateCorner() { document.getElementById('lightCorner').textContent = lightCornerText(); }
@@ -1772,7 +1927,7 @@ function startLight() {
 }
 
 function exitLight() {
-  app.item = null; app.locked = true;
+  app.item = null; app.phase = null; app.locked = true;
   document.getElementById('lightFlash').className = '';
   showStart();
 }
@@ -1785,13 +1940,57 @@ function markRight(el, item) {
   if (btn) btn.classList.add('right');
 }
 
+// Deep Take-away and Reach keep their question: it states the takes / moves the reason refers to.
+const DEEP_KEEP_QUESTION = ['nim', 'rch'];
+
+// Light: the reason goes under the item, just above the answer area (the item's last block).
+// Deep: it replaces the question text, so the item's height does not grow; DEEP_KEEP_QUESTION drills add it under the question.
+function showReason(el, item) {
+  const def = DRILLS[drillOf(item)];
+  if (!def.explain) return;
+  if (app.mode === 'D') {
+    let q = el.querySelector('.q');
+    if (DEEP_KEEP_QUESTION.includes(drillOf(item))) { q.after(makeDiv('q', '')); q = q.nextSibling; }
+    q.textContent = def.explain(item); q.classList.add('why');
+    return;
+  }
+  const why = makeDiv('why', '');
+  why.textContent = def.explain(item);
+  el.lastElementChild.before(why);
+}
+
 function showFeedback(correct) {
   document.getElementById('lightFlash').className = correct ? 'ok' : 'miss';
-  if (!correct) markRight(document.getElementById('lightItem'), app.item);
+  if (correct) return;
+  const el = document.getElementById('lightItem');
+  markRight(el, app.item);
+  showReason(el, app.item);
 }
+
+// After a Light miss the next item comes on a tap anywhere (taps in the first 300 ms are ignored) or at 3 s.
+const MISS_WAIT_MS = 3000;
+
+function waitAfterMiss() {
+  app.phase = 'miss'; app.missAt = performance.now();
+  setTimer(() => guarded(nextLightItem), MISS_WAIT_MS);
+}
+
+// A tap during the miss wait only advances; it never answers the next item.
+function lightTap(target) {
+  if (app.phase === 'miss') {
+    if (performance.now() - app.missAt >= TAP_GUARD_MS) guarded(nextLightItem);
+    return;
+  }
+  const btn = target.closest('[data-answer]');
+  if (btn) answer(btn.dataset.answer);
+}
+
+// A tap within TAP_GUARD_MS of an item becoming answerable (startedAt) is ignored: it was meant for the screen before.
+const TAP_GUARD_MS = 300;
 
 function answer(choice) {
   if (app.locked || app.phase !== 'answer') return;
+  if (performance.now() - app.startedAt < TAP_GUARD_MS) return;
   app.locked = true;
   const correct = choice === correctAnswer(app.item), drill = drillOf(app.item);
   const ms = Math.round(performance.now() - app.startedAt);
@@ -1800,7 +1999,8 @@ function answer(choice) {
   updateCorner();
   if (app.mode === 'D') return showDeepFeedback(correct, ms);
   showFeedback(correct);
-  setTimer(() => guarded(nextLightItem), correct ? 250 : 1200);
+  if (correct) setTimer(() => guarded(nextLightItem), 250);
+  else waitAfterMiss();
 }
 
 // ----- Deep sets -----
@@ -1810,6 +2010,7 @@ function showDeepFeedback(correct, ms) {
   app.deepSet.results.push({ correct, ms });
   document.getElementById('deepStatus').textContent = (correct ? '✓ ' : '✗ ') + (ms / 1000).toFixed(1) + ' s';
   markRight(deepEl(), app.item);
+  if (!correct) showReason(deepEl(), app.item);
   document.getElementById('deepNext').hidden = false;
 }
 
@@ -1930,10 +2131,7 @@ function showStart() {
 function wireLight() {
   document.getElementById('goLight').addEventListener('click', startLight);
   document.getElementById('lightExit').addEventListener('click', exitLight);
-  document.getElementById('light').addEventListener('click', e => {
-    const btn = e.target.closest('[data-answer]');
-    if (btn) answer(btn.dataset.answer);
-  });
+  document.getElementById('light').addEventListener('click', e => lightTap(e.target));
 }
 
 function showScreen(id) {
@@ -2131,16 +2329,36 @@ test('state: save and reload keeps history', () => {
   saveState(s, fake);
   assert(loadState(fake).history.length === 1, 'kept');
 });
-test('state: staircase and clamp', () => {
-  let s = defaultState();
-  for (let i = 0; i < 3; i++) s = recordAnswer(s, { drill: 'rot', mode: 'L', level: 1, correct: true, ms: 1, t: i });
-  assert(s.skill.rot === 2 && s.streak === 3, 'up');
-  s = recordAnswer(s, { drill: 'rot', mode: 'L', level: 2, correct: false, ms: 1, t: 9 });
-  s = recordAnswer(s, { drill: 'rot', mode: 'L', level: 1, correct: false, ms: 1, t: 10 });
-  assert(s.skill.rot === 1 && s.streak === 0, 'down and clamp');
-  for (let i = 0; i < 3; i++) s = recordAnswer(s, { drill: 'rot', mode: 'D', level: 6, correct: true, ms: 1, t: 20 + i });
-  assert(s.skill.rot === 1 && s.run.rot === 0 && s.history.length === 8, 'deep recorded, no step');
-  assert(itemLevel(s, 'rot', 'D') === 6, 'deep offset');
+// Test helper: the item is answerable and the tap guard has passed.
+function readyToAnswer() { app.phase = 'answer'; app.locked = false; app.startedAt = performance.now() - 1000; }
+function answerRot(s, correct, mode) {
+  return recordAnswer(s, { drill: 'rot', mode: mode || 'L', level: s.skill.rot, correct, ms: 1, t: 1 });
+}
+test('state: staircase steps up after 6 right in a row; one miss after 5 right keeps the level', () => {
+  const s = defaultState();
+  for (let i = 0; i < 5; i++) answerRot(s, true);
+  assert(s.skill.rot === 1, 'no step after 5');
+  answerRot(s, true);
+  assert(s.skill.rot === 2 && s.recent.rot.length === 0, 'up after 6, recent reset');
+  for (let i = 0; i < 5; i++) answerRot(s, true);
+  answerRot(s, false);
+  assert(s.skill.rot === 2, 'one miss after 5 right keeps level ' + s.skill.rot);
+  for (let i = 0; i < 6; i++) answerRot(s, true);
+  assert(s.skill.rot === 3 && s.recent.rot.length === 0, 'six in a row after a miss steps up');
+  assert(itemLevel(s, 'rot', 'D') === 8, 'deep offset');
+});
+test('state: two misses within 5 step down, misses 5 apart do not, clamp at 1, Deep never steps', () => {
+  const s = defaultState();
+  s.skill.rot = 4;
+  [false, true, true, true, true, false].forEach(c => answerRot(s, c));
+  assert(s.skill.rot === 4, 'misses 5 apart keep level ' + s.skill.rot);
+  answerRot(s, false);
+  assert(s.skill.rot === 3 && s.recent.rot.length === 0, 'two misses within 5 step down');
+  s.skill.rot = 1;
+  answerRot(s, false); answerRot(s, false);
+  assert(s.skill.rot === 1, 'clamp');
+  for (let i = 0; i < 6; i++) answerRot(s, true, 'D');
+  assert(s.skill.rot === 1 && s.recent.rot.length === 0 && s.history.length === 15, 'deep recorded, no step');
 });
 test('state: three Deep misses leave skill.rot unchanged', () => {
   let s = defaultState();
@@ -2199,7 +2417,7 @@ test('progressLine: Deep answers in either week do not change the line', () => {
 
 test('light: double tap records one answer', () => {
   app.state = defaultState(); startLight();
-  app.item = makeLightRotation(1, makeRng(8)); app.phase = 'answer'; app.locked = false;
+  app.item = makeLightRotation(1, makeRng(8)); readyToAnswer();
   answer(app.item.answer); answer(app.item.answer);
   assert(app.state.history.length === 1, 'one record');
 });
@@ -2217,7 +2435,7 @@ test('light: tracking answer screen has a button per square', () => {
 
 test('deep: a set is 3 puzzles then a summary', () => {
   app.state = defaultState(); startDeep('rot');
-  for (let k = 0; k < 3; k++) { app.phase = 'answer'; app.locked = false; answer(String(app.item.answer)); nextDeepItem(); }
+  for (let k = 0; k < 3; k++) { readyToAnswer(); answer(String(app.item.answer)); nextDeepItem(); }
   assert(document.querySelector('#deep .summary'), 'summary shown');
   assert(app.state.history.filter(h => h[2] === 'D').length === 3, '3 records');
   document.getElementById('deepDone').click();
@@ -2241,7 +2459,7 @@ test('deep tracking: answer screen keeps piece and start square visible', () => 
 
 test('backgrounding drops the item unrecorded and shows start', () => {
   app.state = defaultState(); startLight();
-  app.item = makeLightRotation(1, makeRng(12)); app.phase = 'answer'; app.locked = false;
+  app.item = makeLightRotation(1, makeRng(12)); readyToAnswer();
   setTimer(() => { throw new Error('timer survived'); }, 1);
   dropToStart();
   assert(app.timers.length === 0 && app.locked && app.item === null, 'cleared');
@@ -2296,51 +2514,88 @@ test('registry: transform drills registered, five operations', () => {
   assert(DRILLS.rot && DRILLS.trk && DRILLS.rot.op === 'transform', 'rot/trk');
   fuzzDrill('rot', 40); fuzzDrill('trk', 200);
 });
-function cellFromKey(k) { return { shape: +k[0], count: +k[1], fill: +k[2] }; }
+function cellFromKey(k) { return { shape: +k[0], count: +k[1], fill: +k[2], size: +k[3] }; }
 function attrsDiffering(a, b) { return ATTR_VALUE.filter(f => f(a) !== f(b)).length; }
+// For each option, how many (other option, attribute) pairs share its value.
+function agreementTotals(vecs) {
+  return vecs.map((v, i) => vecs.reduce((n, w, j) => n + (i === j ? 0 : v.filter((x, a) => x === w[a]).length), 0));
+}
+function valueCounts(vecs, a) {
+  const n = {};
+  vecs.forEach(v => { n[v[a]] = (n[v[a]] || 0) + 1; });
+  return n;
+}
 
-test('matrices: exactly one option fits the rules; decoys differ in one attribute', () => {
+test('matrices Light: one fit, decoy differs in one attribute, size medium', () => {
   const rng = makeRng(77);
-  for (let i = 0; i < 300; i++) {
-    const varying = 1 + (i % 3), nOptions = i % 2 ? 4 : 2;
-    const m = makeMatrix(varying, nOptions, rng);
-    assert(m.grid.length === 9 && m.options.length === nOptions, 'sizes ' + i);
-    assert(new Set(m.options).size === nOptions && m.options.includes(m.answer), 'options ' + i);
-    assert(m.rules.filter(r => r !== 'fixed').length === varying, 'varying ' + i);
+  for (let i = 0; i < 100; i++) {
+    const m = makeMatrix(1, 2, rng);
+    assert(m.grid.length === 9 && m.options.length === 2 && m.options.includes(m.answer), 'sizes ' + i);
+    assert(m.rules.length === 4 && m.rules[3] === 'fixed' && m.rules.filter(r => r !== 'fixed').length === 1 && !m.rules.includes('add'), 'rules ' + i);
+    assert(m.grid.every(c => c.size === 1) && m.options.every(k => k[3] === '1'), 'size medium ' + i);
     const fits = m.options.filter(k => satisfiesRules(m.grid, cellFromKey(k), m.rules));
-    assert(fits.length === 1 && fits[0] === m.answer, 'one fit ' + i);
-    assert(cellKey(m.grid[8]) === m.answer, 'hidden cell is the answer ' + i);
-    for (const k of m.options) {
-      if (k !== m.answer) assert(attrsDiffering(cellFromKey(k), m.grid[8]) === 1, 'decoy ' + i);
-    }
+    assert(fits.length === 1 && fits[0] === m.answer && cellKey(m.grid[8]) === m.answer, 'one fit ' + i);
+    const decoy = m.options.find(k => k !== m.answer);
+    assert(attrsDiffering(cellFromKey(decoy), m.grid[8]) === 1, 'decoy ' + i);
   }
 });
+test('matrices Deep: 6 options, fixed copied, varying balanced, one fit, no most typical option', () => {
+  const rng = makeRng(78);
+  let countVaries = 0, adds = 0;
+  for (let i = 0; i < 300; i++) {
+    const varying = 3 + (i % 2), m = makeMatrix(varying, 6, rng);
+    if (m.rules[1] !== 'fixed') countVaries++;
+    if (m.rules[1] === 'add') adds++;
+    assert(m.rules.every((r, a) => r !== 'add' || a === 1), 'add only on count ' + i);
+    assert(m.options.length === 6 && new Set(m.options).size === 6 && m.options.includes(m.answer), 'options ' + i);
+    assert(m.rules.filter(r => r !== 'fixed').length === varying, 'varying ' + i);
+    const fits = m.options.filter(k => satisfiesRules(m.grid, cellFromKey(k), m.rules));
+    assert(fits.length === 1 && fits[0] === m.answer && cellKey(m.grid[8]) === m.answer, 'one fit ' + i);
+    const vecs = m.options.map(k => ATTR_VALUE.map(f => f(cellFromKey(k))));
+    for (let a = 0; a < 4; a++) {
+      const want = m.rules[a] === 'fixed' ? '6' : '2,2,2';
+      assert(Object.values(valueCounts(vecs, a)).join() === want, 'attribute ' + a + ' counts #' + i);
+    }
+    assert(new Set(agreementTotals(vecs)).size === 1, 'equal agreement ' + i);
+  }
+  assert(adds > 0.35 * countVaries && adds < 0.65 * countVaries, 'add in about half: ' + adds + '/' + countVaries);
+});
 test('matrices: oracle rejects a broken row', () => {
-  const rules = ['const', 'fixed', 'fixed'];
-  const grid = [0, 0, 0, 1, 1, 1, 2, 2, 2].map(s => ({ shape: s, count: 1, fill: 0 }));
-  assert(satisfiesRules(grid, { shape: 2, count: 1, fill: 0 }, rules), 'good');
-  assert(!satisfiesRules(grid, { shape: 1, count: 1, fill: 0 }, rules), 'bad shape');
-  assert(!satisfiesRules(grid, { shape: 2, count: 2, fill: 0 }, rules), 'bad count');
-  const cells = shapes => shapes.map(shape => ({ shape, count: 1, fill: 0 }));
+  const rules = ['const', 'fixed', 'fixed', 'fixed'];
+  const grid = [0, 0, 0, 1, 1, 1, 2, 2, 2].map(s => ({ shape: s, count: 1, fill: 0, size: 0 }));
+  assert(satisfiesRules(grid, { shape: 2, count: 1, fill: 0, size: 0 }, rules), 'good');
+  const sized = [0, 0, 0, 1, 1, 1, 2, 2, 2].map(z => ({ shape: 0, count: 1, fill: 0, size: z }));
+  assert(satisfiesRules(sized, { shape: 0, count: 1, fill: 0, size: 2 }, ['fixed', 'fixed', 'fixed', 'const']), 'size good');
+  assert(!satisfiesRules(sized, { shape: 0, count: 1, fill: 0, size: 1 }, ['fixed', 'fixed', 'fixed', 'const']), 'size bad');
+  assert(!satisfiesRules(grid, { shape: 1, count: 1, fill: 0, size: 0 }, rules), 'bad shape');
+  assert(!satisfiesRules(grid, { shape: 2, count: 2, fill: 0, size: 0 }, rules), 'bad count');
+  assert(!satisfiesRules(grid, { shape: 2, count: 1, fill: 0, size: 1 }, rules), 'bad size');
+  const cells = shapes => shapes.map(shape => ({ shape, count: 1, fill: 0, size: 0 }));
   const pg = cells([0, 1, 2, 1, 2, 0, 2, 0]), dg = cells([0, 1, 2, 2, 0, 1, 1, 2]);
-  const fixed = ['fixed', 'fixed'];
-  assert(satisfiesRules(pg, { shape: 1, count: 1, fill: 0 }, ['prog', ...fixed]), 'prog good');
-  assert(!satisfiesRules(pg, { shape: 2, count: 1, fill: 0 }, ['prog', ...fixed]), 'prog bad');
-  assert(satisfiesRules(dg, { shape: 0, count: 1, fill: 0 }, ['dist', ...fixed]), 'dist good');
-  assert(!satisfiesRules(dg, { shape: 1, count: 1, fill: 0 }, ['dist', ...fixed]), 'dist bad');
+  const fixed = ['fixed', 'fixed', 'fixed'];
+  assert(satisfiesRules(pg, { shape: 1, count: 1, fill: 0, size: 0 }, ['prog', ...fixed]), 'prog good');
+  assert(!satisfiesRules(pg, { shape: 2, count: 1, fill: 0, size: 0 }, ['prog', ...fixed]), 'prog bad');
+  assert(satisfiesRules(dg, { shape: 0, count: 1, fill: 0, size: 0 }, ['dist', ...fixed]), 'dist good');
+  assert(!satisfiesRules(dg, { shape: 1, count: 1, fill: 0, size: 0 }, ['dist', ...fixed]), 'dist bad');
+  const counted = ns => ns.map(count => ({ shape: 0, count, fill: 0, size: 0 })), addRules = ['fixed', 'add', 'fixed', 'fixed'];
+  const ag = counted([1, 2, 3, 2, 1, 3, 1, 1]);
+  assert(satisfiesRules(ag, { shape: 0, count: 2, fill: 0, size: 0 }, addRules), 'add good');
+  assert(!satisfiesRules(ag, { shape: 0, count: 3, fill: 0, size: 0 }, addRules), 'add bad sum');
+  assert(!satisfiesRules(counted([1, 2, 3, 1, 2, 3, 1, 1]), { shape: 0, count: 2, fill: 0, size: 0 }, addRules), 'add repeated row');
 });
 test('matrices: difficulty config and cell drawing', () => {
-  assert(CONFIG.mat.deepVarying(10) === 2 && CONFIG.mat.deepVarying(11) === 3, 'deepVarying');
+  assert(CONFIG.mat.deepVarying(10) === 3 && CONFIG.mat.deepVarying(11) === 4, 'deepVarying');
+  assert(cellKey({ shape: 2, count: 3, fill: 1, size: 0 }) === '2310', 'key format');
   const seen = new Set();
-  for (let s = 0; s < 3; s++) for (let n = 1; n <= 3; n++) for (let f = 0; f < 3; f++) {
-    const svg = drawCell({ shape: s, count: n, fill: f }, 70, false);
+  for (let s = 0; s < 3; s++) for (let n = 1; n <= 3; n++) for (let f = 0; f < 3; f++) for (let z = 0; z < 3; z++) {
+    const svg = drawCell({ shape: s, count: n, fill: f, size: z }, 70, false);
     assert(svg.tagName.toLowerCase() === 'svg' && svg.getAttribute('width') === '70', 'svg');
     seen.add(svg.innerHTML.replace(/hc\d+/g, 'hc'));
   }
-  assert(seen.size === 27, 'all 27 cells draw differently');
+  assert(seen.size === 81, 'all 81 cells draw differently');
   const el = document.createElement('div');
   DRILLS.mat.render(DRILLS.mat.deep(3, makeRng(5)), el, 'answer');
-  assert(el.querySelectorAll('[data-answer]').length === 4 && el.querySelector('.matQ'), 'deep layout');
+  assert(el.querySelectorAll('[data-answer]').length === 6 && el.querySelector('.matQ'), 'deep layout');
   fuzzDrill('mat', 300);
 });
 // Oracle: reads only the shown terms. Each attribute's step is the common difference of consecutive terms.
@@ -2354,25 +2609,39 @@ function dialNext(terms) {
   return next;
 }
 
-test('series: the shown terms fix the next dial; decoys are one position off', () => {
+test('series Light: the shown terms fix the next dial; decoy is one position off', () => {
   const rng = makeRng(91);
   let differs = 0;
-  for (let i = 0; i < 300; i++) {
-    const varying = 1 + (i % 3), terms = 4 + (i % 2), nOptions = varying === 1 ? 2 : 4;
-    const s = makeSeries(varying, terms, nOptions, rng);
-    assert(s.terms.length === terms && s.options.length === nOptions, 'sizes ' + i);
-    assert(new Set(s.options).size === nOptions && s.options.includes(s.answer), 'options ' + i);
+  for (let i = 0; i < 100; i++) {
+    const terms = 4 + (i % 2), s = makeSeries(1, terms, 2, rng);
+    assert(s.terms.length === terms && s.options.length === 2 && new Set(s.options).size === 2, 'sizes ' + i);
     const next = dialNext(s.terms), nextKey = dialKey(next);
-    const moving = DIAL_ATTRS.filter(a => s.terms[0][a] !== s.terms[1][a]).length;
-    assert(moving === varying, 'varying ' + i);
-    assert(s.options.filter(k => k === nextKey).length === 1 && nextKey === s.answer, 'one fit ' + i);
+    assert(DIAL_ATTRS.filter(a => s.terms[0][a] !== s.terms[1][a]).length === 1, 'varying ' + i);
+    assert(nextKey === s.answer && s.options.includes(nextKey), 'one fit ' + i);
     if (s.terms.every(t => dialKey(t) !== s.answer)) differs++;
-    for (const k of s.options) {
-      const off = DIAL_ATTRS.filter(a => dialFromKey(k)[a] !== next[a]);
-      if (k !== s.answer) assert(off.length === 1, 'decoy one attribute ' + i);
-    }
+    const decoy = dialFromKey(s.options.find(k => k !== s.answer));
+    assert(DIAL_ATTRS.filter(a => decoy[a] !== next[a]).length === 1, 'decoy one attribute ' + i);
   }
-  assert(differs >= 240, 'answer differs from every shown term: ' + differs);
+  assert(differs >= 80, 'answer differs from every shown term: ' + differs);
+});
+test('series Deep: one fit, fixed copied, answer never the plurality value, equal agreement', () => {
+  const rng = makeRng(92);
+  for (let i = 0; i < 300; i++) {
+    const varying = 2 + (i % 2), s = makeSeries(varying, 5, 4, rng);
+    assert(s.terms.length === 5 && s.options.length === 4 && new Set(s.options).size === 4, 'sizes ' + i);
+    assert(DIAL_ATTRS.filter(a => s.terms[0][a] !== s.terms[1][a]).length === varying, 'varying ' + i);
+    const nextKey = dialKey(dialNext(s.terms));
+    assert(nextKey === s.answer && s.options.filter(k => k === nextKey).length === 1, 'one fit ' + i);
+    const vecs = s.options.map(k => DIAL_ATTRS.map(a => dialFromKey(k)[a])), ans = dialFromKey(s.answer);
+    DIAL_ATTRS.forEach((a, j) => {
+      const n = valueCounts(vecs, j);
+      if (s.terms[0][a] === s.terms[1][a]) return assert(n[ans[a]] === 4, 'fixed copied ' + a + ' #' + i);
+      assert(vecs.every(v => v[j] !== s.terms[4][a]), 'no option repeats the last term ' + a + ' #' + i);
+      const others = Object.keys(n).filter(v => +v !== ans[a]).map(v => n[v]);
+      assert(others.some(c => c >= n[ans[a]]), 'answer plurality ' + a + ' #' + i);
+    });
+    assert(new Set(agreementTotals(vecs)).size === 1, 'equal agreement ' + i);
+  }
 });
 test('series: config, layout, drawing, registration', () => {
   assert(CONFIG.ser.deepVarying(10) === 2 && CONFIG.ser.deepVarying(11) === 3, 'deepVarying');
@@ -2539,7 +2808,7 @@ test('sequence: deep multi-tap records once, right and wrong', () => {
   app.state = defaultState(); app.mode = 'D';
   function play(order) {
     const it = d.deep(1, rng), el = document.createElement('div');
-    app.item = it; app.deepSet = { drill: 'seq', results: [] }; app.locked = false; app.phase = 'answer'; app.startedAt = performance.now();
+    app.item = it; app.deepSet = { drill: 'seq', results: [] }; readyToAnswer();
     d.render(it, el, 'answer');
     order(it).forEach(id => el.querySelector('[data-tap="' + id + '"]').click());
     el.querySelectorAll('[data-tap]').forEach(b => b.click());
@@ -2676,7 +2945,7 @@ test('reach: text, miss path, layout and registration', () => {
 test('deep ramps start at the Deep entry level (skill 1 + 5)', () => {
   const lvl = id => itemLevel(defaultState(), id, 'D'), rng = makeRng(31);
   assert(lvl('mat') === 6, 'entry level ' + lvl('mat'));
-  assert(DRILLS.mat.deep(lvl('mat'), rng).rules.filter(r => r !== 'fixed').length === 2, 'matrices 2 varying');
+  assert(DRILLS.mat.deep(lvl('mat'), rng).rules.filter(r => r !== 'fixed').length === 3, 'matrices 3 varying');
   const ser = DRILLS.ser.deep(lvl('ser'), rng).terms;
   assert(DIAL_ATTRS.filter(a => ser[0][a] !== ser[1][a]).length === 2, 'series 2 varying');
   assert(DRILLS.seq.deep(lvl('seq'), rng).seq.length === 6 && DRILLS.crd.deep(lvl('crd'), rng).cards.length === 16, 'sequence 6, cards 16');
@@ -2696,12 +2965,14 @@ test('every drill question uses one font size; cards miss uses the default outli
   assert(!DRILLS.crd.markMiss && host.querySelector('[data-answer="' + item.answer + '"]').classList.contains('right'), 'cards outline');
   host.remove();
 });
-test('state: v1 save keeps history and gains new drills', () => {
+test('state: v1 save keeps history and skill, gains new drills and recent', () => {
   const old = { v: 1, skill: { rot: 4, trk: 2 }, run: { rot: 1, trk: 0 }, streak: 3, history: [[1, 'rot', 'L', 4, 1, 1500]] };
   const s = loadState({ getItem: () => JSON.stringify(old), setItem() {} });
-  assert(s.history.length === 1 && s.skill.rot === 4 && s.streak === 3, 'kept');
-  ALL_DRILL_IDS.forEach(id => assert(typeof s.skill[id] === 'number' && typeof s.run[id] === 'number', id));
+  assert(s.history.length === 1 && s.skill.rot === 4 && s.skill.trk === 2, 'kept');
+  ALL_DRILL_IDS.forEach(id => assert(typeof s.skill[id] === 'number' && Array.isArray(s.recent[id]) && !s.recent[id].length, id));
   assert(s.skill.nim === 1, 'new default');
+  answerRot(s, true);
+  assert(s.recent.rot.join() === '1' && s.skill.rot === 4, 'staircase runs on a migrated save');
 });
 test('start halves say only LIGHT and DEEP', () => {
   assert(document.getElementById('goLight').textContent.trim() === 'LIGHT', 'light');
@@ -2713,6 +2984,138 @@ test('deep menu: five operations, transform opens rotation and tracking', () => 
   showDeepSub('transform');
   const ids = [...document.querySelectorAll('#deepSub [data-drill]')].map(b => b.dataset.drill).join();
   assert(ids === 'rot,trk', ids);
+});
+
+// Red means a hue within 25 degrees of pure red with real saturation.
+function isReddish(css) {
+  const [r, g, b] = css.match(/[\d.]+/g).map(Number), max = Math.max(r, g, b), min = Math.min(r, g, b);
+  if (max === 0 || (max - min) / max < 0.25) return false;
+  let h = max === r ? (g - b) / (max - min) : max === g ? 2 + (b - r) / (max - min) : 4 + (r - g) / (max - min);
+  h = (h * 60 + 360) % 360;
+  return h < 25 || h > 335;
+}
+test('corner: today N counts only today\'s correct Light answers', () => {
+  const now = Date.now(), midnight = new Date(now).setHours(0, 0, 0, 0);
+  app.state = defaultState();
+  app.state.history.push([now, 'rot', 'L', 1, 1, 1500], [now, 'mat', 'L', 1, 1, 2500], [now, 'rot', 'L', 1, 0, 900],
+    [now, 'rot', 'D', 6, 1, 9000], [midnight - 1, 'rot', 'L', 1, 1, 1000]);
+  assert(lightCornerText().startsWith('today 2 · ') && lightCornerText().endsWith(' s'), lightCornerText());
+});
+function lightMissSetup(seed) {
+  app.state = defaultState(); startLight();
+  const el = document.getElementById('lightItem');
+  app.item = DRILLS.mat.light(1, makeRng(seed)); DRILLS.mat.render(app.item, el, 'answer');
+  readyToAnswer();
+  return el;
+}
+function answerCapturingDelays(choice) {
+  const delays = [], real = window.setTimeout;
+  window.setTimeout = (fn, ms) => { delays.push(ms); return 0; };
+  try { answer(choice); } finally { window.setTimeout = real; }
+  return delays;
+}
+test('light miss: neutral flash, reason, right marked; next item on a tap after 300 ms or at 3 s', () => {
+  const el = lightMissSetup(5), item = app.item;
+  const delays = answerCapturingDelays(item.options.find(o => o !== item.answer));
+  assert(delays.join() === '3000', 'auto-advance at 3000, got ' + delays);
+  assert(document.getElementById('lightFlash').className === 'miss', 'miss flash');
+  assert(el.querySelector('.why').textContent === DRILLS.mat.explain(item), 'reason shown');
+  assert(el.querySelector('[data-answer="' + item.answer + '"]').classList.contains('right'), 'right marked');
+  const btn = el.querySelector('[data-answer]');
+  lightTap(btn);
+  assert(app.item === item, 'tap in the first 300 ms is ignored');
+  app.missAt -= 300;
+  lightTap(btn);
+  assert(app.item !== item && app.state.history.length === 1, 'tap advances and is not an answer');
+  assert(!document.getElementById('lightFlash').className, 'flash cleared');
+});
+test('light: a tap within 300 ms of the next item becoming answerable is ignored (after the 3 s auto-advance)', () => {
+  const el = lightMissSetup(8);
+  answerCapturingDelays(app.item.options.find(o => o !== app.item.answer));
+  clearTimers(); nextLightItem(); // what the 3 s timer runs
+  app.item = makeLightRotation(1, makeRng(3)); becomeAnswerable(app.item, el);
+  const btn = () => el.querySelector('[data-answer="same"]');
+  app.startedAt = performance.now() - 50; lightTap(btn());
+  assert(app.state.history.length === 1 && !app.locked, 'tap at +50 ms not recorded');
+  app.startedAt = performance.now() - 400; lightTap(btn());
+  assert(app.state.history.length === 2, 'tap at +400 ms recorded');
+  clearTimers();
+});
+test('light correct: green flash, auto-advance at 250 ms, no reason', () => {
+  const el = lightMissSetup(6);
+  const delays = answerCapturingDelays(app.item.answer);
+  assert(delays.join() === '250' && document.getElementById('lightFlash').className === 'ok' && !el.querySelector('.why'), 'correct unchanged');
+});
+test('light miss style has no red: flash, reason, tracking path', () => {
+  const flash = document.getElementById('lightFlash');
+  flash.className = 'miss';
+  const bg = getComputedStyle(flash).backgroundColor;
+  flash.className = '';
+  assert(!isReddish(bg) && !bg.endsWith(', 0)'), 'flash ' + bg);
+  const el = lightMissSetup(7);
+  answerCapturingDelays(app.item.options.find(o => o !== app.item.answer));
+  const why = getComputedStyle(el.querySelector('.why'));
+  assert(!isReddish(why.color) && !isReddish(why.backgroundColor), 'reason ' + why.color + ' ' + why.backgroundColor);
+  const host = document.createElement('div'), trk = makeLightTracking(3, makeRng(4));
+  document.body.appendChild(host);
+  renderTracking(trk, host, 'answer'); markTrackingMiss(host, trk);
+  const stroke = getComputedStyle(host.querySelector('.path polyline')).stroke;
+  host.remove();
+  assert(!isReddish(stroke), 'path ' + stroke);
+});
+test('deep miss shows the reason and keeps Next', () => {
+  app.state = defaultState(); startDeep('nim');
+  const item = app.item;
+  readyToAnswer();
+  answer(item.options.find(o => o !== item.answer));
+  assert(deepEl().querySelector('.why').textContent === DRILLS.nim.explain(item), 'reason');
+  assert(deepEl().querySelector('.q').textContent === nimQuestion(item), 'Take-away question kept');
+  assert(!document.getElementById('deepNext').hidden && app.item === item, 'Next waits');
+  exitDeep();
+  app.state = defaultState(); startDeep('rch');
+  const r = app.item;
+  readyToAnswer();
+  answer(r.options.find(o => o !== r.answer));
+  assert(deepEl().querySelector('.q').textContent === reachQuestion(r) && deepEl().querySelector('.why').textContent === DRILLS.rch.explain(r), 'Reach keeps question');
+  exitDeep();
+  app.state = defaultState(); startDeep('mat');
+  readyToAnswer();
+  answer(app.item.options.find(o => o !== app.item.answer));
+  assert(deepEl().querySelectorAll('.q').length === 1 && deepEl().querySelector('.q.why'), 'Matrices reason replaces the question');
+  exitDeep();
+});
+test('explain: 50 items per drill and mode give a non-empty line of at most 60 chars', () => {
+  ALL_DRILL_IDS.forEach(id => {
+    const d = DRILLS[id], rng = makeRng(77 + id.length);
+    for (let i = 0; i < 100; i++) {
+      const mode = i % 2 ? 'deep' : 'light', s = d.explain(d[mode](1 + (i >> 1) % 15, rng));
+      assert(typeof s === 'string' && s.length > 0 && s.length <= 60, id + ' ' + mode + ': "' + s + '"');
+      assert(mode === 'light' || s.length <= 36, 'deep line fits one line at 320 px: ' + id + ' "' + s + '"');
+    }
+  });
+});
+test('explain: exact lines for fixed items', () => {
+  const ex = (id, item) => DRILLS[id].explain(item);
+  const eq = (got, want) => assert(got === want, 'got "' + got + '" want "' + want + '"');
+  eq(ex('rot', { kind: 'rotL', answer: 'mirror' }), 'It was the mirror image.');
+  eq(ex('rot', { kind: 'rotL', answer: 'same' }), 'Same object, turned.');
+  eq(ex('trk', { kind: 'trkL', end: [2, 1] }), 'It ended on c2.');
+  eq(ex('mat', { kind: 'matL', rules: ['fixed', 'dist', 'fixed', 'fixed'] }), 'Count: each row has 1, 2 and 3.');
+  eq(ex('mat', { kind: 'matD', rules: ['fixed', 'add', 'prog', 'fixed'] }), 'Count: 3rd = 1st + 2nd in each row.');
+  eq(ex('mat', { kind: 'matD', rules: ['const', 'add', 'const', 'fixed'] }), 'Count: 3rd = 1st + 2nd in each row.');
+  eq(ex('mat', { kind: 'matD', rules: ['const', 'prog', 'dist', 'const'] }), 'Fill: each row has all three.');
+  const t = a => ({ arrow: a, dot: 5, centre: 1 });
+  eq(ex('ser', { kind: 'serL', terms: [t(0), t(2), t(4), t(6)] }), 'Arrow turns 2 steps each time.');
+  eq(ex('ser', { kind: 'serD', terms: [t(3), t(2), t(1), t(0), t(7)] }), 'Arrow turns 1 step back each time.');
+  eq(ex('odd', { kind: 'oddL', answer: '1', events: [{ p: [5, 18] }, { p: [11, 36] }] }), '11/36 beats 10/36.');
+  eq(ex('ev', { kind: 'evL', bets: [{ cost: 2, win: 5, event: { p: [1, 2] } }] }), 'Average result: +0.50 per bet.');
+  eq(ex('seq', { kind: 'seqL', seq: ['3', '4', '0', '1'], asked: 0 }), 'After the diamond came the star.');
+  eq(ex('crd', { kind: 'crdL', answer: '♥', cards: ['2♥', '3♥', 'K♥', 'A♥', '2♠', '3♣', '4♦', '5♠'] }), 'Hearts came up 4 times.');
+  eq(ex('crd', { kind: 'crdD', answer: '2', options: ['2♠', '3♠', '7♥', 'K♦'] }), 'The 7♥ was never played.');
+  eq(ex('nim', { kind: 'nimL', pile: 10, takes: [1, 2], answer: 'yes' }), 'From 10 you can force a win: take 1.');
+  eq(ex('nim', { kind: 'nimL', pile: 9, takes: [1, 2], answer: 'no' }), 'Every move from 9 loses.');
+  eq(ex('nim', { kind: 'nimD', pile: 23, takes: [1, 2, 3], answer: '3' }), 'Take 3 leaves 20, a losing pile.');
+  eq(ex('rch', { kind: 'rchL', answer: '5' }), 'Shortest: 5 moves.');
 });
 
 // ===== BOOT =====
