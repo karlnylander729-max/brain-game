@@ -1,0 +1,1282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Brain">
+<meta name="theme-color" content="#14161a">
+<title>Brain</title>
+<style>
+html, body { margin: 0; height: 100%; }
+body { font-family: -apple-system, system-ui, sans-serif; -webkit-tap-highlight-color: transparent; touch-action: manipulation; user-select: none; -webkit-user-select: none; background: #14161a; }
+section { display: none; height: 100%; height: 100dvh; }
+section.active { display: flex; flex-direction: column; }
+.half { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; font-weight: 700; font-size: 32px; border: 0; font-family: inherit; }
+.half small { font-weight: 400; font-size: 14px; opacity: .7; margin-top: 8px; }
+#goLight { background: #e8f3ff; color: #1a5fb4; }
+#goDeep { background: #1d2333; color: #e6e9f2; padding-bottom: env(safe-area-inset-bottom); }
+.lightRot { background: #f5f9ff; height: 100%; display: flex; flex-direction: column; }
+.deepRot { background: #1d2333; color: #e6e9f2; height: 100%; display: flex; flex-direction: column; }
+.q { text-align: center; padding: 14px 12px 6px; font-size: 15px; }
+.fig { display: flex; justify-content: center; gap: 0; padding: 6px; }
+.btns { display: flex; margin-top: auto; }
+.lightRot .fig { flex: 1; align-items: center; }
+#light { position: relative; background: #f5f9ff; }
+#lightBar { display: flex; justify-content: space-between; align-items: center; height: 44px; padding-top: env(safe-area-inset-top); flex: none; color: #1a5fb4; font-size: 14px; padding-right: 14px; }
+#lightExit { border: 0; background: none; color: #1a5fb4; font-size: 20px; width: 48px; height: 44px; font-family: inherit; }
+#lightItem { flex: 1; min-height: 0; }
+#lightFlash { position: absolute; inset: 0; pointer-events: none; }
+#lightFlash.ok { background: rgba(46,160,67,.3); }
+#lightFlash.miss { background: rgba(220,50,50,.3); }
+.btns button.right { outline: 4px solid #2ea043; outline-offset: -4px; }
+.trkL, .trkD { height: 100%; box-sizing: border-box; padding-bottom: env(safe-area-inset-bottom); display: flex; flex-direction: column; align-items: center; --lo: #1a5fb4; --st: #fff; --en: #1a5fb4; --ic: #d6e8ff; }
+.trkL { background: #f5f9ff; color: #1a3050; }
+.trkD { background: #1d2333; color: #e6e9f2; --st: #e6e9f2; --en: #9fb6ff; --ic: #2a3247; }
+.trkL .q, .trkD .q { font-size: 20px; }
+.board { position: relative; display: grid; grid-template-rows: repeat(var(--n), var(--cell)) auto; margin: auto 0 0; }
+.sq { width: var(--cell); height: var(--cell); border: 0; padding: 0; display: flex; align-items: center; justify-content: center; font-size: calc(var(--cell) * .5); background: #dfe8f7; color: inherit; font-family: inherit; }
+.sq.dk { background: #c4d3ee; }
+.trkD .sq { background: #2a3247; } .trkD .sq.dk { background: #343d57; }
+.sq.right { outline: 4px solid #2ea043; outline-offset: -4px; }
+.lbl { display: flex; align-items: center; justify-content: center; font-size: 13px; opacity: .6; min-width: 20px; height: 20px; }
+.path { position: absolute; left: 20px; top: 0; pointer-events: none; }
+.icons { height: 90px; margin: 12px 0 auto; display: flex; align-items: center; gap: 8px; }
+.icon { display: grid; grid-template-columns: repeat(3, 18px); gap: 3px; padding: 8px; border-radius: 10px; background: var(--ic); }
+.icon i { width: 18px; height: 18px; border-radius: 4px; background: rgba(128,128,128,.18); }
+.icon i.s { background: var(--st); border: 1px solid rgba(128,128,128,.4); box-sizing: border-box; }
+.icon i.e { background: var(--en); }
+.btns button { flex: 1; border: 0; padding: 28px 0 calc(28px + env(safe-area-inset-bottom)); font-weight: 700; font-size: 18px; font-family: inherit; }
+.btnSame { background: #d6e8ff; color: #1a5fb4; }
+.btnMirror { background: #ffe1d6; color: #a3401a; }
+.grid4 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 8px 12px; }
+.tile { position: relative; background: #2a3247; border: 0; border-radius: 12px; padding: 0; display: flex; justify-content: center; align-items: center; color: #e6e9f2; }
+#start { position: relative; }
+#progress { position: absolute; top: 0; left: 0; right: 0; padding: calc(14px + env(safe-area-inset-top)) 12px 14px; text-align: center; font-size: 14px; color: #1a5fb4; background: rgba(232,243,255,.92); pointer-events: none; z-index: 1; }
+#deepPick, #deep { background: #1d2333; color: #e6e9f2; position: relative; }
+.bar { display: flex; justify-content: space-between; align-items: center; height: 44px; padding-top: env(safe-area-inset-top); flex: none; font-size: 14px; padding-right: 14px; }
+.xbtn { border: 0; background: none; color: #9fb6ff; font-size: 20px; width: 48px; height: 44px; font-family: inherit; }
+#deepPick .half { background: #2a3247; color: #e6e9f2; margin: 8px 12px; border-radius: 16px; }
+#deepPick .half:last-child { margin-bottom: calc(20px + env(safe-area-inset-bottom)); }
+#deepItem { flex: 1; min-height: 0; }
+#deepNext, #deepDone { flex: none; width: 100%; margin-top: auto; border: 0; padding: 20px 0 calc(20px + env(safe-area-inset-bottom)); font-weight: 700; font-size: 18px; font-family: inherit; background: #3d5bd9; color: #fff; }
+#deepNext[hidden] { display: none; }
+.summary { padding: 12px 24px; display: flex; flex-direction: column; gap: 14px; font-size: 18px; }
+.summary h2 { margin: 8px 0; font-size: 22px; }
+.summary .row { display: flex; justify-content: space-between; }
+.summary .ok { color: #7ee2a0; } .summary .miss { color: #ff9b9b; }
+.tile.right { outline: 4px solid #2ea043; outline-offset: -4px; }
+.trkD .icon { grid-template-columns: repeat(3, 12px); gap: 2px; padding: 5px; border-radius: 8px; }
+.trkD .icon i { width: 12px; height: 12px; border-radius: 3px; }
+.trkD .icons { height: auto; flex-wrap: wrap; justify-content: center; margin: 8px 8px 0; }
+.path polyline { stroke-dasharray: 1; animation: draw 1s linear; } /* Light miss feedback lasts 1200 ms, so the path is fully drawn */
+@keyframes draw { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
+.tile span { position: absolute; top: 6px; left: 10px; font-size: 13px; opacity: .6; }
+</style>
+</head>
+<body>
+<section id="start">
+  <div id="progress" hidden></div>
+  <button class="half" id="goLight">LIGHT<small>queue · instant</small></button>
+  <button class="half" id="goDeep">DEEP<small>seated · think</small></button>
+</section>
+<section id="light">
+  <div id="lightBar"><button id="lightExit" aria-label="Back">✕</button><span id="lightCorner"></span></div>
+  <div id="lightItem"></div>
+  <div id="lightFlash"></div>
+</section>
+<section id="deepPick">
+  <div class="bar"><button class="xbtn" id="pickExit" aria-label="Back">✕</button></div>
+  <button class="half" data-drill="rot">ROTATION</button>
+  <button class="half" data-drill="trk">TRACKING</button>
+</section>
+<section id="deep">
+  <div class="bar"><button class="xbtn" id="deepExit" aria-label="Back">✕</button><span id="deepCount"></span><span id="deepStatus"></span></div>
+  <div id="deepItem"></div>
+  <button id="deepNext" hidden>Next</button>
+</section>
+<pre id="selftest" style="display:none"></pre>
+<script>
+// ===== CONFIG =====
+const CONFIG = {
+  rot: {
+    cubes: lvl => Math.min(4 + lvl, 14),
+    maxTurnDeg: lvl => Math.min(30 + 15 * lvl, 180),
+    depthTurnFrom: 3,
+    minCubeVisible: 0.15
+  },
+  deepSetSize: 3,
+  trk: {
+    lightMoves: lvl => Math.min(3 + Math.floor(lvl / 2), 9),
+    lightDiagonalFrom: 4,
+    deepMoves: lvl => Math.min(3 + Math.floor(lvl / 3), 8),
+    flashMs: lvl => Math.max(350, 900 - 50 * lvl),
+    showStartMs: 800
+  }
+};
+
+// ===== RNG =====
+function makeRng(seed) {
+  let a = seed >>> 0;
+  return () => {
+    a = (a + 0x6D2B79F5) >>> 0;
+    let t = a;
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+
+// ===== GEOMETRY =====
+const FACE_DIRS = [[1,0,0],[-1,0,0],[0,1,0],[0,-1,0],[0,0,1],[0,0,-1]];
+
+function buildRotations() {
+  const perms = [[0,1,2,1],[0,2,1,-1],[1,0,2,-1],[1,2,0,1],[2,0,1,1],[2,1,0,-1]]; // last = parity
+  const out = [];
+  for (const [a, b, c, parity] of perms) {
+    for (let s = 0; s < 8; s++) {
+      const sign = [s & 1 ? -1 : 1, s & 2 ? -1 : 1, s & 4 ? -1 : 1];
+      if (parity * sign[0] * sign[1] * sign[2] !== 1) continue;
+      const m = [[0,0,0],[0,0,0],[0,0,0]];
+      [a, b, c].forEach((col, r) => { m[r][col] = sign[r]; });
+      out.push(m);
+    }
+  }
+  return out;
+}
+const ROTATIONS = buildRotations();
+
+function normalize(vox) {
+  const min = [0, 1, 2].map(i => Math.min(...vox.map(v => v[i])));
+  return vox
+    .map(v => [v[0] - min[0], v[1] - min[1], v[2] - min[2]])
+    .sort((a, b) => a[0] - b[0] || a[1] - b[1] || a[2] - b[2]);
+}
+
+function rotate(vox, m) {
+  return vox.map(v => m.map(row => row[0] * v[0] + row[1] * v[1] + row[2] * v[2]));
+}
+
+function mirror(vox) {
+  return vox.map(v => [-v[0], v[1], v[2]]);
+}
+
+function shapeKey(vox) {
+  return normalize(vox).map(v => v.join(',')).join(';');
+}
+
+function sameShape(a, b) {
+  const target = shapeKey(b);
+  return ROTATIONS.some(m => shapeKey(rotate(a, m)) === target);
+}
+
+function isChiral(vox) {
+  return !sameShape(vox, mirror(vox));
+}
+
+function isConnected(vox) {
+  const cells = new Set(vox.map(v => v.join(',')));
+  const seen = new Set([vox[0].join(',')]);
+  const stack = [vox[0]];
+  while (stack.length) {
+    const [x, y, z] = stack.pop();
+    for (const d of FACE_DIRS) {
+      const n = [x + d[0], y + d[1], z + d[2]], k = n.join(',');
+      if (cells.has(k) && !seen.has(k)) { seen.add(k); stack.push(n); }
+    }
+  }
+  return seen.size === cells.size;
+}
+
+function randomPolycube(n, rng) {
+  const vox = [[0, 0, 0]];
+  const used = new Set(['0,0,0']);
+  while (vox.length < n) {
+    const c = vox[Math.floor(rng() * vox.length)];
+    const d = FACE_DIRS[Math.floor(rng() * 6)];
+    const v = [c[0] + d[0], c[1] + d[1], c[2] + d[2]], k = v.join(',');
+    if (!used.has(k)) { used.add(k); vox.push(v); }
+  }
+  return vox;
+}
+
+function randomChiralPolycube(n, rng) {
+  for (let i = 0; i < 200; i++) {
+    const v = randomPolycube(n, rng);
+    if (isChiral(v)) return v;
+  }
+  throw new Error('no chiral polycube of size ' + n);
+}
+
+
+// ===== ROTATION ITEMS =====
+const DEG = Math.PI / 180;
+
+function pick(arr, rng) { return arr[Math.floor(rng() * arr.length)]; }
+
+// Ruling D: every rotated axis must tilt toward the viewer enough that no view looks flat.
+function isObliquePose(pose) {
+  return [[1, 0, 0], [0, 1, 0], [0, 0, 1]].every(a => Math.abs(applyPose(a, pose)[2]) >= 0.3);
+}
+
+function randomPose(rng) {
+  for (let i = 0; i < 100; i++) {
+    const pose = { yaw: rng() * 2 * Math.PI, pitch: rng() * 2 * Math.PI, roll: rng() * 2 * Math.PI };
+    if (isObliquePose(pose)) return pose;
+  }
+  throw new Error('no oblique pose found');
+}
+
+function shuffle(arr, rng) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(rng() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+// Turn from pose a: roll always moves 20 deg..max; yaw and pitch move only from depthTurnFrom.
+function drawTurn(a, level, rng) {
+  const max = CONFIG.rot.maxTurnDeg(level) * DEG;
+  const deep = level >= CONFIG.rot.depthTurnFrom;
+  const roll = (20 * DEG + rng() * (max - 20 * DEG)) * (rng() < 0.5 ? -1 : 1);
+  const swing = () => (deep ? (rng() * 2 - 1) * max : 0);
+  return { yaw: a.yaw + swing(), pitch: a.pitch + swing(), roll: a.roll + roll };
+}
+
+function turnedPose(a, level, rng) {
+  for (let i = 0; i < 100; i++) {
+    const pose = drawTurn(a, level, rng);
+    if (isObliquePose(pose)) return pose;
+  }
+  throw new Error('no oblique turned pose found');
+}
+
+// Ruling I: a pose is used only if every cube shows enough of itself; null after 100 draws.
+function visiblePose(vox, drawPose) {
+  for (let i = 0; i < 100; i++) {
+    const pose = drawPose();
+    if (allCubesVisible(vox, pose, CONFIG.rot.minCubeVisible)) return pose;
+  }
+  return null;
+}
+
+function tryLightRotation(level, rng) {
+  const shape = randomChiralPolycube(CONFIG.rot.cubes(level), rng);
+  const answer = rng() < 0.5 ? 'same' : 'mirror';
+  const bVox = answer === 'same' ? shape : mirror(shape);
+  const aPose = visiblePose(shape, () => randomPose(rng));
+  const bPose = aPose && visiblePose(bVox, () => turnedPose(aPose, level, rng));
+  if (!bPose) return null;
+  return { kind: 'rotL', shape, a: { vox: shape, pose: aPose }, b: { vox: bVox, pose: bPose }, answer };
+}
+
+function makeLightRotation(level, rng) {
+  for (let i = 0; i < 100; i++) {
+    const item = tryLightRotation(level, rng);
+    if (item) return item;
+  }
+  throw new Error('no visible light rotation item');
+}
+
+function removableCubes(vox) {
+  if (vox.length < 2) return [];
+  return vox.filter((_, i) => isConnected(vox.filter((__, j) => j !== i)));
+}
+
+function emptyNeighbours(vox) {
+  const used = new Set(vox.map(v => v.join(',')));
+  const out = new Map();
+  for (const [x, y, z] of vox) {
+    for (const d of FACE_DIRS) {
+      const n = [x + d[0], y + d[1], z + d[2]], k = n.join(',');
+      if (!used.has(k)) out.set(k, n);
+    }
+  }
+  return [...out.values()];
+}
+
+function nearMiss(vox, rng) {
+  const mirrored = mirror(vox);
+  for (let i = 0; i < 100; i++) {
+    const gone = pick(removableCubes(vox), rng);
+    if (!gone) break;
+    const rest = vox.filter(v => v !== gone);
+    const added = pick(emptyNeighbours(rest).filter(n => n.join() !== gone.join()), rng);
+    const result = rest.concat([added]);
+    if (!sameShape(result, vox) && !sameShape(result, mirrored)) return result;
+  }
+  throw new Error('no near miss found');
+}
+
+function turnedCopy(vox, rng) {
+  const turned = rotate(vox, pick(ROTATIONS, rng)), pose = visiblePose(turned, () => randomPose(rng));
+  return pose && { vox: turned, pose };
+}
+
+function distinctNearMiss(vox, others, rng) {
+  for (let i = 0; i < 100; i++) {
+    const v = nearMiss(vox, rng);
+    if (!others.some(o => sameShape(o, v))) return v;
+  }
+  throw new Error('no distinct near miss found');
+}
+
+// Figures are posed one by one and the attempt stops at the first figure that fails the gate.
+function visibleCopies(voxes, rng) {
+  const out = [];
+  for (const v of voxes) {
+    const fig = turnedCopy(v, rng);
+    if (!fig) return null;
+    out.push(fig);
+  }
+  return out;
+}
+
+function tryDeepRotation(level, rng) {
+  const target = randomChiralPolycube(CONFIG.rot.cubes(level), rng);
+  const targetPose = visiblePose(target, () => randomPose(rng));
+  if (!targetPose) return null;
+  const miss1 = nearMiss(target, rng);
+  const figs = visibleCopies([target, mirror(target), miss1, distinctNearMiss(mirror(target), [miss1], rng)], rng);
+  if (!figs) return null;
+  const right = figs[0], candidates = shuffle(figs, rng);
+  return { kind: 'rotD', target: { vox: target, pose: targetPose }, candidates, answer: candidates.indexOf(right) };
+}
+
+function makeDeepRotation(level, rng) {
+  for (let i = 0; i < 100; i++) {
+    const item = tryDeepRotation(level, rng);
+    if (item) return item;
+  }
+  throw new Error('no visible deep rotation item');
+}
+
+// ===== RENDER =====
+const LIGHT_DIR = (() => { const l = [-0.4, 0.6, 0.7], n = Math.hypot(...l); return l.map(x => x / n); })();
+
+// Yaw about y, then pitch about x, then roll about the viewing axis z (Ruling C). z points at the viewer.
+function applyPose(p, pose) {
+  let [x, y, z] = p;
+  let c = Math.cos(pose.yaw), s = Math.sin(pose.yaw);
+  [x, z] = [c * x + s * z, -s * x + c * z];
+  c = Math.cos(pose.pitch); s = Math.sin(pose.pitch);
+  [y, z] = [c * y - s * z, s * y + c * z];
+  c = Math.cos(pose.roll); s = Math.sin(pose.roll);
+  [x, y] = [c * x - s * y, s * x + c * y];
+  return [x, y, z];
+}
+
+// Four corners of the unit face of the cube at v facing direction d, around the shape centre.
+function faceCorners(v, d, centre) {
+  const k = d.findIndex(x => x !== 0), [u, w] = [0, 1, 2].filter(i => i !== k);
+  return [[-1, -1], [1, -1], [1, 1], [-1, 1]].map(([a, b]) => {
+    const p = [v[0] + d[0] * 0.5, v[1] + d[1] * 0.5, v[2] + d[2] * 0.5];
+    p[u] += a * 0.5; p[w] += b * 0.5;
+    return [p[0] - centre[0], p[1] - centre[1], p[2] - centre[2]];
+  });
+}
+
+function exteriorFaces(vox) {
+  const used = new Set(vox.map(v => v.join(',')));
+  const out = [];
+  for (const v of vox) {
+    for (const d of FACE_DIRS) {
+      if (!used.has([v[0] + d[0], v[1] + d[1], v[2] + d[2]].join(','))) out.push({ v, d });
+    }
+  }
+  return out;
+}
+
+function facePolygons(vox, pose) {
+  const centre = [0, 1, 2].map(i => vox.reduce((s, v) => s + v[i], 0) / vox.length);
+  const polys = [];
+  for (const { v, d } of exteriorFaces(vox)) {
+    const cubeDepth = applyPose([v[0] - centre[0], v[1] - centre[1], v[2] - centre[2]], pose)[2];
+    const n = applyPose(d, pose);
+    if (n[2] <= 1e-9) continue;
+    const pts = faceCorners(v, d, centre).map(p => applyPose(p, pose));
+    const dot = n[0] * LIGHT_DIR[0] + n[1] * LIGHT_DIR[1] + n[2] * LIGHT_DIR[2];
+    polys.push({ v, cubeDepth, pts: pts.map(p => [p[0], p[1]]), depth: pts.reduce((s, p) => s + p[2], 0) / 4, light: 0.45 + 0.55 * Math.max(0, dot) });
+  }
+  // Ruling E: order by cube centre depth, not face depth, so non-convex shapes overlap correctly.
+  return polys.sort((p, q) => p.cubeDepth - q.cubeDepth);
+}
+
+// Fixed scale from the farthest cube corner, so every pose of one shape has the same size.
+function fitScale(vox, canvas) {
+  const centre = [0, 1, 2].map(i => vox.reduce((s, v) => s + v[i], 0) / vox.length);
+  const radius = Math.max(...vox.map(v => Math.hypot(...v.map((x, i) => Math.abs(x - centre[i]) + 0.5))));
+  return (Math.min(canvas.width, canvas.height) / 2 - 4) / radius;
+}
+
+// view = { cx, cy, sc }: screen centre and pixels per unit, shared by drawPolycube and the visibility gate.
+function tracePolygon(g, pts, view) {
+  g.beginPath();
+  pts.forEach(([x, y], i) => { const X = view.cx + x * view.sc, Y = view.cy - y * view.sc; if (i) g.lineTo(X, Y); else g.moveTo(X, Y); });
+  g.closePath();
+}
+
+function fillPolygon(g, poly, view) {
+  const dark = view.dark;
+  tracePolygon(g, poly.pts, view);
+  const L = Math.round(poly.light * (dark ? 200 : 225));
+  g.fillStyle = dark ? `rgb(${L * 0.55},${L * 0.65},${L})` : `rgb(${L * 0.5},${L * 0.7},${L})`;
+  g.fill();
+  g.strokeStyle = dark ? '#111827' : '#fff';
+  g.lineWidth = Math.max(1, view.sc / 22);
+  g.stroke();
+}
+
+function drawPolycube(canvas, vox, pose, dark) {
+  const g = canvas.getContext('2d');
+  g.clearRect(0, 0, canvas.width, canvas.height);
+  g.lineJoin = 'round';
+  const view = { cx: canvas.width / 2, cy: canvas.height / 2, sc: fitScale(vox, canvas), dark };
+  for (const poly of facePolygons(vox, pose)) fillPolygon(g, poly, view);
+}
+
+// Ruling I gate: draw each cube in its own ID colour and count the pixels it keeps on top.
+const GATE_PX = 160;
+let gateCanvas = null;
+
+const idRed = i => 17 * (i + 1), idGreen = i => (i * 97 + 31) % 256;
+function idColour(i) { return 'rgb(' + idRed(i) + ',' + idGreen(i) + ',0)'; }
+
+// Opaque pixels whose colour is exactly cube i's ID colour; antialiased edge blends do not count.
+function countIdPixels(d, n) {
+  const byRed = new Int8Array(256).fill(-1), counts = new Array(n).fill(0);
+  for (let i = 0; i < n; i++) byRed[idRed(i)] = i;
+  for (let k = 0; k < d.length; k += 4) {
+    const i = d[k + 3] === 255 ? byRed[d[k]] : -1;
+    if (i >= 0 && d[k + 1] === idGreen(i) && d[k + 2] === 0) counts[i]++;
+  }
+  return counts;
+}
+
+function cubePixelCounts(vox, pose) {
+  gateCanvas = gateCanvas || Object.assign(document.createElement('canvas'), { width: GATE_PX, height: GATE_PX });
+  const g = gateCanvas.getContext('2d', { willReadFrequently: true });
+  g.clearRect(0, 0, GATE_PX, GATE_PX);
+  const view = { cx: GATE_PX / 2, cy: GATE_PX / 2, sc: fitScale(vox, gateCanvas) };
+  for (const poly of facePolygons(vox, pose)) {
+    tracePolygon(g, poly.pts, view);
+    g.fillStyle = idColour(vox.indexOf(poly.v));
+    g.fill();
+  }
+  return { counts: countIdPixels(g.getImageData(0, 0, GATE_PX, GATE_PX).data, vox.length), sc: view.sc };
+}
+
+// Every cube must keep at least minFrac of one unit face (sc * sc pixels) visible.
+function allCubesVisible(vox, pose, minFrac) {
+  const { counts, sc } = cubePixelCounts(vox, pose);
+  return counts.every(n => n >= minFrac * sc * sc);
+}
+
+function makeFigureCanvas(cssW, cssH) {
+  const c = document.createElement('canvas'), dpr = window.devicePixelRatio || 1;
+  c.width = Math.round(cssW * dpr); c.height = Math.round(cssH * dpr);
+  c.style.width = cssW + 'px'; c.style.height = cssH + 'px';
+  return c;
+}
+
+// ===== TRACKING ITEMS =====
+const KING_STEPS = [[1,0],[-1,0],[0,1],[0,-1],[1,1],[1,-1],[-1,1],[-1,-1]];
+const KNIGHT_MOVES = [[1,2],[2,1],[2,-1],[1,-2],[-1,-2],[-2,-1],[-2,1],[-1,2]];
+
+function squareName([f, r]) { return 'abcde'[f] + (r + 1); }
+
+function makeTracking(size, steps, count, rng) {
+  const start = [Math.floor(rng() * size), Math.floor(rng() * size)];
+  let cur = start;
+  const moves = [];
+  for (let i = 0; i < count; i++) {
+    const legal = steps.filter(([df, dr]) => {
+      const f = cur[0] + df, r = cur[1] + dr;
+      return f >= 0 && r >= 0 && f < size && r < size;
+    });
+    const m = pick(legal, rng);
+    moves.push(m);
+    cur = [cur[0] + m[0], cur[1] + m[1]];
+  }
+  return { start, moves, end: cur };
+}
+
+function makeLightTracking(level, rng) {
+  const steps = level < CONFIG.trk.lightDiagonalFrom ? KING_STEPS.slice(0, 4) : KING_STEPS;
+  return { kind: 'trkL', size: 3, ...makeTracking(3, steps, CONFIG.trk.lightMoves(level), rng) };
+}
+
+function makeDeepTracking(level, rng) {
+  return { kind: 'trkD', size: 5, piece: '♞', ...makeTracking(5, KNIGHT_MOVES, CONFIG.trk.deepMoves(level), rng) };
+}
+
+function iconCells([df, dr]) {
+  const startCol = df > 0 ? 0 : df < 0 ? 2 : 1;
+  const startRow = dr > 0 ? 2 : dr < 0 ? 0 : 1;
+  return { start: [startCol, startRow], end: [startCol + df, startRow - dr] };
+}
+
+// ===== STATE =====
+// Progress and the staircase use Light answers only: Deep runs at skill + 5 and takes ~10x longer.
+const STORAGE_KEY = 'brain-game-v1';
+const HISTORY_CAP = 20000;
+const DAY_MS = 864e5;
+const DRILL_NAMES = { rot: 'rotation', trk: 'tracking' };
+
+function defaultState() {
+  return { v: 1, skill: { rot: 1, trk: 1 }, run: { rot: 0, trk: 0 }, streak: 0, history: [] };
+}
+
+function hasDrillNumbers(o) {
+  return !!o && typeof o.rot === 'number' && typeof o.trk === 'number';
+}
+
+function isValidState(s) {
+  return !!s && s.v === 1 && Array.isArray(s.history) && hasDrillNumbers(s.skill) && hasDrillNumbers(s.run);
+}
+
+function loadState(storage = localStorage) {
+  try {
+    const s = JSON.parse(storage.getItem(STORAGE_KEY));
+    return isValidState(s) ? s : defaultState();
+  } catch (e) {
+    return defaultState();
+  }
+}
+
+// A full or blocked storage must not stop the feed; the answer stays in memory.
+function saveState(state, storage = localStorage) {
+  try {
+    storage.setItem(STORAGE_KEY, JSON.stringify(state));
+  } catch (e) {
+    console.warn('saveState failed', e);
+  }
+}
+
+function stepSkill(state, drill, correct) {
+  if (!correct) {
+    state.run[drill] = 0;
+    state.skill[drill] = Math.max(1, state.skill[drill] - 1);
+  } else if (++state.run[drill] >= 3) {
+    state.run[drill] = 0;
+    state.skill[drill] = Math.min(10, state.skill[drill] + 1);
+  }
+}
+
+function recordAnswer(state, a) {
+  state.history.push([a.t, a.drill, a.mode, a.level, a.correct ? 1 : 0, a.ms]);
+  if (state.history.length > HISTORY_CAP) state.history.shift();
+  if (a.mode !== 'L') return state;
+  stepSkill(state, a.drill, a.correct);
+  state.streak = a.correct ? state.streak + 1 : 0;
+  return state;
+}
+
+function itemLevel(state, drill, mode) {
+  const skill = state.skill[drill];
+  return mode === 'L' ? skill : Math.min(skill + 5, 15);
+}
+
+function median(xs) {
+  const s = [...xs].sort((x, y) => x - y), m = s.length >> 1;
+  return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2;
+}
+
+function correctMs(state, drill, from, to) {
+  return state.history.filter(h => h[1] === drill && h[2] === 'L' && h[4] === 1 && h[0] >= from && h[0] < to).map(h => h[5]);
+}
+
+function progressLine(state, now) {
+  let best = null;
+  for (const drill of Object.keys(DRILL_NAMES)) {
+    const cur = correctMs(state, drill, now - 7 * DAY_MS, now);
+    const prev = correctMs(state, drill, now - 14 * DAY_MS, now - 7 * DAY_MS);
+    if (cur.length < 10 || prev.length < 10) continue;
+    if (!best || cur.length > best.n) best = { drill, n: cur.length, a: median(cur), b: median(prev) };
+  }
+  if (!best) return null;
+  const pct = Math.round(100 * Math.abs(best.a - best.b) / best.b);
+  if (pct === 0) return null;
+  return DRILL_NAMES[best.drill] + ': ' + pct + '% ' + (best.a < best.b ? 'faster' : 'slower') + ' than last week';
+}
+
+
+// ===== UI =====
+function screenWidth() { return Math.min(window.innerWidth || 390, 480); }
+
+function makeAnswerButton(label, answer, cls) {
+  const b = document.createElement('button');
+  b.className = cls; b.textContent = label; b.dataset.answer = answer;
+  return b;
+}
+
+function renderLightRotation(item, el) {
+  el.innerHTML = '';
+  el.className = 'lightRot';
+  const q = document.createElement('div'); q.className = 'q'; q.textContent = 'Same object, or mirror image?';
+  const fig = document.createElement('div'); fig.className = 'fig';
+  const w = Math.floor((screenWidth() - 24) / 2), h = Math.round(w * 1.25);
+  for (const f of [item.a, item.b]) {
+    const c = makeFigureCanvas(w, h);
+    drawPolycube(c, f.vox, f.pose, false);
+    fig.appendChild(c);
+  }
+  const bar = document.createElement('div'); bar.className = 'btns';
+  bar.append(makeAnswerButton('SAME', 'same', 'btnSame'), makeAnswerButton('MIRROR', 'mirror', 'btnMirror'));
+  el.append(q, fig, bar);
+}
+
+function makeCandidateTile(cand, i, size) {
+  const b = makeAnswerButton('', String(i), 'tile');
+  const label = document.createElement('span'); label.textContent = 'ABCD'[i];
+  const c = makeFigureCanvas(size, size);
+  drawPolycube(c, cand.vox, cand.pose, true);
+  b.append(label, c);
+  return b;
+}
+
+// Top plus bottom safe-area insets in CSS px (0 outside a standalone notched iPhone).
+function safeInsetsPx() {
+  const probe = document.createElement('div');
+  probe.style.cssText = 'position:fixed;padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom)';
+  document.body.appendChild(probe);
+  const cs = getComputedStyle(probe), px = parseFloat(cs.paddingTop) + parseFloat(cs.paddingBottom);
+  probe.remove();
+  return px;
+}
+
+function renderDeepRotation(item, el) {
+  el.innerHTML = '';
+  el.className = 'deepRot';
+  const q = document.createElement('div'); q.className = 'q'; q.textContent = 'Which one is the target, turned?';
+  const fig = document.createElement('div'); fig.className = 'fig';
+  const ts = Math.round(screenWidth() * 0.4);
+  const t = makeFigureCanvas(ts, ts);
+  drawPolycube(t, item.target.vox, item.target.pose, true);
+  fig.appendChild(t);
+  const grid = document.createElement('div'); grid.className = 'grid4';
+  const room = ((window.innerHeight || 667) - 44 - 60 - 45 - ts - 12 - 32 - safeInsetsPx()) / 2;
+  const size = Math.floor(Math.min((screenWidth() - 36) / 2 - 4, room));
+  item.candidates.forEach((cand, i) => grid.appendChild(makeCandidateTile(cand, i, size)));
+  el.append(q, fig, grid);
+}
+
+function makeLabel(text) {
+  const d = document.createElement('div'); d.className = 'lbl'; d.textContent = text;
+  return d;
+}
+
+function makeSquare(item, sq, phase) {
+  const name = squareName(sq);
+  const el = phase === 'answer' ? makeAnswerButton('', name, 'sq') : document.createElement('div');
+  el.className = 'sq' + ((sq[0] + sq[1]) % 2 ? '' : ' dk');
+  if (phase === 'start' && sq[0] === item.start[0] && sq[1] === item.start[1]) el.textContent = item.piece || '●';
+  return el;
+}
+
+function makeBoard(item, phase) {
+  const n = item.size, board = document.createElement('div');
+  board.className = 'board';
+  board.style.setProperty('--n', n);
+  board.style.setProperty('--cell', Math.floor(Math.min(screenWidth() - 64, 330) / n) + 'px');
+  board.style.gridTemplateColumns = 'auto repeat(' + n + ', var(--cell))';
+  for (let r = n - 1; r >= 0; r--) {
+    board.appendChild(makeLabel(String(r + 1)));
+    for (let f = 0; f < n; f++) board.appendChild(makeSquare(item, [f, r], phase));
+  }
+  board.appendChild(makeLabel(''));
+  for (let f = 0; f < n; f++) board.appendChild(makeLabel('abcde'[f]));
+  return board;
+}
+
+function makeMoveIcon(move) {
+  const { start, end } = iconCells(move), icon = document.createElement('div');
+  icon.className = 'icon';
+  for (let row = 0; row < 3; row++) for (let col = 0; col < 3; col++) {
+    const c = document.createElement('i');
+    if (col === start[0] && row === start[1]) c.className = 's';
+    if (col === end[0] && row === end[1]) c.className = 'e';
+    icon.appendChild(c);
+  }
+  return icon;
+}
+
+function showMoveIcon(el, move) {
+  const row = el.querySelector('.icons');
+  row.innerHTML = '';
+  if (move) row.appendChild(makeMoveIcon(move));
+}
+
+const TRACKING_QUESTION = { start: 'Start here', moves: 'Follow the moves', answer: 'Where did it end?' };
+
+function renderTracking(item, el, phase) {
+  el.innerHTML = '';
+  el.className = item.kind;
+  const q = document.createElement('div'); q.className = 'q'; q.textContent = TRACKING_QUESTION[phase];
+  if (phase === 'start' || item.kind === 'trkD') q.textContent += ' · ' + (item.piece || '●') + ' ' + squareName(item.start);
+  const icons = document.createElement('div'); icons.className = 'icons';
+  if (phase !== 'start' && item.kind === 'trkD') item.moves.forEach(m => icons.appendChild(makeMoveIcon(m)));
+  if (item.kind === 'trkD') el.append(q, icons, makeBoard(item, phase));
+  else el.append(q, makeBoard(item, phase), icons);
+}
+
+function markTrackingMiss(el, item) {
+  const n = item.size, cell = el.querySelector('.sq').offsetWidth;
+  el.querySelector('[data-answer="' + squareName(item.end) + '"]').classList.add('right');
+  let [f, r] = item.start;
+  const pts = [[f, r], ...item.moves.map(([df, dr]) => [f += df, r += dr])];
+  const xy = ([a, b]) => (a + .5) + ',' + (n - b - .5);
+  const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  svg.setAttribute('class', 'path'); svg.setAttribute('viewBox', '0 0 ' + n + ' ' + n);
+  svg.setAttribute('width', cell * n); svg.setAttribute('height', cell * n);
+  svg.innerHTML = '<polyline pathLength="1" fill="none" stroke="#e5484d" stroke-width=".09" stroke-linejoin="round" points="' + pts.map(xy).join(' ') + '"/>';
+  el.querySelector('.board').appendChild(svg);
+}
+
+// ----- Light feed -----
+const app = { state: null, storage: window.localStorage, mode: 'L', item: null, phase: null, startedAt: 0, locked: true, timers: [] };
+
+function setTimer(fn, ms) { app.timers.push(setTimeout(fn, ms)); }
+function clearTimers() { app.timers.forEach(clearTimeout); app.timers = []; }
+
+function correctAnswer(item) {
+  return item.kind.startsWith('trk') ? squareName(item.end) : String(item.answer);
+}
+
+function lightCornerText() {
+  const ms = app.state.history.filter(h => h[2] === 'L').slice(-10).map(h => h[5]);
+  return 'streak ' + app.state.streak + ' · ' + (ms.length ? (median(ms) / 1000).toFixed(1) + ' s' : '– s');
+}
+
+function updateCorner() { document.getElementById('lightCorner').textContent = lightCornerText(); }
+
+function makeItemRng() { return makeRng((Math.random() * 2 ** 32) >>> 0); }
+
+function becomeAnswerable(item, el) {
+  app.phase = 'answer'; app.locked = false; app.startedAt = performance.now();
+  renderTracking(item, el, 'answer');
+}
+
+function playMoves(item, el) {
+  const flash = CONFIG.trk.flashMs(itemLevel(app.state, 'trk', 'L'));
+  app.phase = 'moves';
+  renderTracking(item, el, 'moves');
+  item.moves.forEach((m, i) => {
+    setTimer(() => showMoveIcon(el, m), i * flash);
+    setTimer(() => showMoveIcon(el, null), i * flash + flash * .8);
+  });
+  setTimer(() => becomeAnswerable(item, el), item.moves.length * flash);
+}
+
+function nextLightItem() {
+  clearTimers();
+  document.getElementById('lightFlash').className = '';
+  const el = document.getElementById('lightItem'), rng = makeItemRng();
+  app.locked = true; app.phase = 'start';
+  updateCorner();
+  if (Math.random() < .5) {
+    app.item = makeLightRotation(itemLevel(app.state, 'rot', 'L'), rng);
+    renderLightRotation(app.item, el);
+    app.phase = 'answer'; app.locked = false; app.startedAt = performance.now();
+    return;
+  }
+  app.item = makeLightTracking(itemLevel(app.state, 'trk', 'L'), rng);
+  renderTracking(app.item, el, 'start');
+  setTimer(() => playMoves(app.item, el), CONFIG.trk.showStartMs);
+}
+
+function startLight() {
+  app.mode = 'L';
+  showScreen('light');
+  guarded(nextLightItem);
+}
+
+function exitLight() {
+  app.item = null; app.locked = true;
+  document.getElementById('lightFlash').className = '';
+  showStart();
+}
+
+function showFeedback(correct) {
+  const el = document.getElementById('lightItem');
+  document.getElementById('lightFlash').className = correct ? 'ok' : 'miss';
+  if (correct) return;
+  if (app.item.kind.startsWith('trk')) markTrackingMiss(el, app.item);
+  else el.querySelector('[data-answer="' + app.item.answer + '"]').classList.add('right');
+}
+
+function answer(choice) {
+  if (app.locked || app.phase !== 'answer') return;
+  app.locked = true;
+  const correct = choice === correctAnswer(app.item), drill = app.item.kind.startsWith('trk') ? 'trk' : 'rot';
+  const ms = Math.round(performance.now() - app.startedAt);
+  recordAnswer(app.state, { drill, mode: app.mode, level: itemLevel(app.state, drill, app.mode), correct, ms, t: Date.now() });
+  saveState(app.state, app.storage);
+  updateCorner();
+  if (app.mode === 'D') return showDeepFeedback(correct, ms);
+  showFeedback(correct);
+  setTimer(() => guarded(nextLightItem), correct ? 250 : 1200);
+}
+
+// ----- Deep sets -----
+function deepEl() { return document.getElementById('deepItem'); }
+
+function showDeepFeedback(correct, ms) {
+  const el = deepEl();
+  app.deepSet.results.push({ correct, ms });
+  document.getElementById('deepStatus').textContent = (correct ? '✓ ' : '✗ ') + (ms / 1000).toFixed(1) + ' s';
+  if (app.item.kind.startsWith('trk')) markTrackingMiss(el, app.item);
+  else el.querySelector('[data-answer="' + app.item.answer + '"]').classList.add('right');
+  document.getElementById('deepNext').hidden = false;
+}
+
+function showDeepSummary() {
+  const rows = app.deepSet.results.map((r, i) =>
+    '<div class="row"><span>Puzzle ' + (i + 1) + '</span><span>' + (r.ms / 1000).toFixed(1) + ' s</span><span class="' + (r.correct ? 'ok">right' : 'miss">wrong') + '</span></div>').join('');
+  app.item = null; app.locked = true;
+  document.getElementById('deepCount').textContent = '';
+  document.getElementById('deepStatus').textContent = '';
+  const el = deepEl();
+  el.className = '';
+  el.innerHTML = '<div class="summary"><h2>Set done</h2>' + rows + '</div>';
+  const done = document.createElement('button');
+  done.id = 'deepDone'; done.textContent = 'Done';
+  done.addEventListener('click', exitDeep);
+  el.querySelector('.summary').appendChild(done);
+}
+
+function nextDeepItem() {
+  clearTimers();
+  const set = app.deepSet, el = deepEl();
+  document.getElementById('deepNext').hidden = true;
+  document.getElementById('deepStatus').textContent = '';
+  if (set.results.length >= CONFIG.deepSetSize) return showDeepSummary();
+  document.getElementById('deepCount').textContent = 'puzzle ' + (set.results.length + 1) + ' / ' + CONFIG.deepSetSize;
+  app.locked = true; app.phase = 'start';
+  const level = itemLevel(app.state, set.drill, 'D'), rng = makeItemRng();
+  if (set.drill === 'rot') {
+    app.item = makeDeepRotation(level, rng);
+    renderDeepRotation(app.item, el);
+    app.phase = 'answer'; app.locked = false; app.startedAt = performance.now();
+    return;
+  }
+  app.item = makeDeepTracking(level, rng);
+  renderTracking(app.item, el, 'start');
+  setTimer(() => becomeAnswerable(app.item, el), CONFIG.trk.showStartMs);
+}
+
+function startDeep(drill) {
+  app.mode = 'D';
+  app.deepSet = { drill, results: [] };
+  showScreen('deep');
+  guarded(nextDeepItem);
+}
+
+function exitDeep() {
+  app.item = null; app.locked = true; app.deepSet = null;
+  showStart();
+}
+
+// Leaving the app drops the item unrecorded, so time away never counts as an answer.
+function dropToStart() {
+  app.item = null; app.phase = null; app.locked = true; app.deepSet = null;
+  document.getElementById('lightFlash').className = '';
+  showStart();
+}
+
+// An item generator that throws gets one fresh try, then the player lands on the start screen.
+function guarded(next) {
+  try { next(); } catch (e) {
+    console.error(e);
+    try { next(); } catch (e2) { console.error(e2); dropToStart(); }
+  }
+}
+
+function wireDeep() {
+  document.getElementById('goDeep').addEventListener('click', () => showScreen('deepPick'));
+  document.getElementById('pickExit').addEventListener('click', showStart);
+  document.getElementById('deepExit').addEventListener('click', exitDeep);
+  document.getElementById('deepNext').addEventListener('click', () => guarded(nextDeepItem));
+  document.getElementById('deepPick').addEventListener('click', e => {
+    const btn = e.target.closest('[data-drill]');
+    if (btn) startDeep(btn.dataset.drill);
+  });
+  document.getElementById('deep').addEventListener('click', e => {
+    const btn = e.target.closest('[data-answer]');
+    if (btn) answer(btn.dataset.answer);
+  });
+}
+
+function wireStart() {
+  const box = document.getElementById('progress');
+  document.getElementById('start').addEventListener('click', () => { box.hidden = true; }, true);
+  document.addEventListener('visibilitychange', () => { if (document.hidden) dropToStart(); });
+}
+
+function showStart() {
+  const line = progressLine(app.state, Date.now()), box = document.getElementById('progress');
+  box.textContent = line || '';
+  box.hidden = !line;
+  showScreen('start');
+}
+
+function wireLight() {
+  document.getElementById('goLight').addEventListener('click', startLight);
+  document.getElementById('lightExit').addEventListener('click', exitLight);
+  document.getElementById('light').addEventListener('click', e => {
+    const btn = e.target.closest('[data-answer]');
+    if (btn) answer(btn.dataset.answer);
+  });
+}
+
+function showScreen(id) {
+  clearTimers();
+  document.querySelectorAll('section').forEach(s => s.classList.toggle('active', s.id === id));
+}
+
+function init() {
+  app.state = loadState(app.storage);
+  wireLight();
+  wireDeep();
+  wireStart();
+  showStart();
+}
+
+// ===== SELFTEST =====
+const TESTS = [];
+function test(name, fn) { TESTS.push({ name, fn }); }
+function assert(cond, msg) { if (!cond) throw new Error(msg); }
+
+function runSelfTest() {
+  const box = {};
+  app.storage = { getItem: k => box[k] ?? null, setItem: (k, v) => { box[k] = v; } };
+  const failed = [];
+  for (const t of TESTS) {
+    try { t.fn(); } catch (e) { failed.push({ name: t.name, error: e.message }); }
+  }
+  const out = { ok: failed.length === 0, passed: TESTS.length - failed.length, failed };
+  document.getElementById('selftest').textContent = JSON.stringify(out);
+}
+
+test('start screen has two halves', () => {
+  assert(document.getElementById('goLight').textContent.includes('LIGHT'), 'LIGHT half');
+  assert(document.getElementById('goDeep').textContent.includes('DEEP'), 'DEEP half');
+});
+
+function det3(m) {
+  return m[0][0] * (m[1][1] * m[2][2] - m[1][2] * m[2][1])
+       - m[0][1] * (m[1][0] * m[2][2] - m[1][2] * m[2][0])
+       + m[0][2] * (m[1][0] * m[2][1] - m[1][1] * m[2][0]);
+}
+test('24 distinct proper rotations', () => {
+  assert(ROTATIONS.length === 24, 'count');
+  const keys = new Set(ROTATIONS.map(m => JSON.stringify(m)));
+  assert(keys.size === 24, 'distinct');
+  ROTATIONS.forEach(m => assert(det3(m) === 1, 'det +1'));
+});
+test('known shapes: bar achiral, screw tetracube chiral', () => {
+  assert(!isChiral([[0,0,0],[1,0,0],[2,0,0]]), 'bar');
+  assert(!isChiral([[0,0,0],[1,0,0],[1,1,0],[2,1,0]]), 'flat S is achiral in 3D');
+  assert(isChiral([[0,0,0],[1,0,0],[1,1,0],[1,1,1]]), 'screw');
+});
+test('sameShape survives rotation, fails on mirror of chiral', () => {
+  const s = [[0,0,0],[1,0,0],[1,1,0],[1,1,1]];
+  ROTATIONS.forEach(m => assert(sameShape(s, rotate(s, m)), 'rotated'));
+  assert(!sameShape(s, mirror(s)), 'mirror differs');
+});
+test('random chiral polycubes: connected, right size, chiral', () => {
+  const rng = makeRng(1);
+  for (let i = 0; i < 300; i++) {
+    const n = 5 + (i % 10), v = randomChiralPolycube(n, rng);
+    assert(v.length === n && isConnected(v) && isChiral(v), 'draw ' + i);
+  }
+});
+
+// One seeded fuzz set shared by every generator test: the visibility gate makes items cost ~20-40 ms each.
+const FUZZ_N = 120;
+let fuzzCache = null;
+function fuzzItems() {
+  if (fuzzCache) return fuzzCache;
+  const rng = makeRng(21), lvl = i => 1 + (i % 15);
+  fuzzCache = {
+    light: Array.from({ length: FUZZ_N }, (_, i) => ({ lvl: lvl(i), it: makeLightRotation(lvl(i), rng) })),
+    deep: Array.from({ length: FUZZ_N }, (_, i) => ({ lvl: lvl(i), it: makeDeepRotation(lvl(i), rng) }))
+  };
+  return fuzzCache;
+}
+
+test('light rotation: stated answer is true, both answers occur', () => {
+  const n = { same: 0, mirror: 0 };
+  fuzzItems().light.forEach(({ lvl, it }, i) => {
+    assert(sameShape(it.a.vox, it.b.vox) === (it.answer === 'same'), 'answer ' + i);
+    assert(it.a.vox.length === CONFIG.rot.cubes(lvl), 'size ' + i);
+    n[it.answer]++;
+  });
+  assert(n.same > 35 && n.mirror > 35, JSON.stringify(n));
+});
+test('deep rotation: one right answer, distinct decoys', () => {
+  fuzzItems().deep.forEach(({ it }, i) => {
+    const c = it.candidates.map(x => x.vox);
+    const right = c.filter(v => sameShape(it.target.vox, v)).length;
+    assert(right === 1 && sameShape(it.target.vox, c[it.answer]), 'one right ' + i);
+    for (let p = 0; p < 4; p++) for (let q = p + 1; q < 4; q++)
+      assert(!sameShape(c[p], c[q]), 'distinct ' + i);
+    c.forEach(v => assert(isConnected(v), 'connected'));
+    assert(c.filter(v => sameShape(mirror(it.target.vox), v)).length === 1, 'one mirror decoy');
+  });
+});
+test('light rotation poses: turn bounded, flat below depthTurnFrom, never identical', () => {
+  const D = 180 / Math.PI;
+  fuzzItems().light.forEach(({ lvl, it }, i) => {
+    const max = CONFIG.rot.maxTurnDeg(lvl);
+    const d = ['yaw', 'pitch', 'roll'].map(k => Math.abs(it.b.pose[k] - it.a.pose[k]) * D);
+    assert(d.every(x => x <= max + 1e-9), 'bounded ' + i);
+    assert(d.some(x => x >= 20 - 1e-9), 'visible ' + i);
+    if (lvl < CONFIG.rot.depthTurnFrom) assert(d[0] < 1e-9 && d[1] < 1e-9, 'flat ' + i);
+  });
+});
+
+function itemFigures(it) {
+  return it.kind === 'rotL' ? [it.a, it.b] : [it.target, ...it.candidates];
+}
+test('visibility gate: every figure in Light and Deep items shows every cube, levels 1-15', () => {
+  const { light, deep } = fuzzItems();
+  [...light, ...deep].forEach(({ it }, i) => itemFigures(it).forEach(f =>
+    assert(allCubesVisible(f.vox, f.pose, CONFIG.rot.minCubeVisible), 'hidden cube in item ' + i)));
+});
+test('visibility gate: an enclosed cube fails, a lone cube passes', () => {
+  const cross = [[0,0,0],[1,0,0],[-1,0,0],[0,1,0],[0,-1,0],[0,0,1],[0,0,-1]], pose = { yaw: .5, pitch: .4, roll: 0 };
+  assert(!allCubesVisible(cross, pose, CONFIG.rot.minCubeVisible), 'centre cube hidden');
+  assert(allCubesVisible([[0,0,0]], pose, CONFIG.rot.minCubeVisible), 'lone cube');
+});
+
+test('single cube shows 3 faces in a generic pose', () => {
+  assert(facePolygons([[0,0,0]], { yaw: .5, pitch: .4, roll: 0 }).length === 3, 'faces');
+});
+test('hidden inner faces are culled', () => {
+  const two = facePolygons([[0,0,0],[1,0,0]], { yaw: .5, pitch: .4, roll: 0 });
+  assert(two.length <= 5, 'shared face not drawn');
+});
+test('drawPolycube paints pixels inside the canvas', () => {
+  const c = document.createElement('canvas'); c.width = c.height = 120;
+  drawPolycube(c, [[0,0,0],[1,0,0],[1,1,0],[1,1,1]], { yaw: .5, pitch: .4, roll: 0 }, false);
+  const d = c.getContext('2d').getImageData(0, 0, 120, 120).data;
+  let painted = 0; for (let i = 3; i < d.length; i += 4) if (d[i]) painted++;
+  assert(painted > 500, 'painted ' + painted);
+});
+test('light rotation screen has SAME and MIRROR', () => {
+  const el = document.createElement('div');
+  renderLightRotation(makeLightRotation(1, makeRng(5)), el);
+  assert(el.querySelector('[data-answer="same"]') && el.querySelector('[data-answer="mirror"]'), 'buttons');
+});
+
+test('all item poses are oblique: Light and Deep, levels 1-15', () => {
+  const { light, deep } = fuzzItems();
+  [...light, ...deep].forEach(({ it }, i) => itemFigures(it).forEach(f => assert(isObliquePose(f.pose), 'oblique ' + i)));
+});
+test('off-centre shape stays inside the canvas margin', () => {
+  const shape = [[0,0,0],[1,0,0],[2,0,0],[3,0,0],[3,1,0],[3,2,0],[3,2,1]];
+  const rng = makeRng(8), W = 120;
+  for (let i = 0; i < 40; i++) {
+    const c = document.createElement('canvas'); c.width = c.height = W;
+    drawPolycube(c, shape, randomPose(rng), false);
+    const d = c.getContext('2d').getImageData(0, 0, W, W).data;
+    for (let k = 0; k < W * W; k++) {
+      const x = k % W, y = (k / W) | 0;
+      if (x === 0 || y === 0 || x === W - 1 || y === W - 1) assert(!d[k * 4 + 3], 'border pixel ' + i);
+    }
+  }
+});
+
+test('tracking: moves stay on board and end is right, 1000 draws', () => {
+  const rng = makeRng(6);
+  for (let i = 0; i < 1000; i++) {
+    const it = i % 2 ? makeLightTracking(1 + (i % 10), rng) : makeDeepTracking(1 + (i % 10), rng);
+    let [f, r] = it.start;
+    it.moves.forEach(([df, dr]) => { f += df; r += dr; assert(f >= 0 && r >= 0 && f < it.size && r < it.size, 'on board ' + i); });
+    assert(f === it.end[0] && r === it.end[1], 'end ' + i);
+  }
+});
+test('tracking: light has no diagonals below level 4; deep uses knight moves', () => {
+  const rng = makeRng(7);
+  for (let i = 0; i < 200; i++) {
+    makeLightTracking(3, rng).moves.forEach(([df, dr]) => assert(Math.abs(df) + Math.abs(dr) === 1, 'orthogonal'));
+    makeDeepTracking(5, rng).moves.forEach(([df, dr]) => assert(Math.abs(df * dr) === 2, 'knight'));
+  }
+});
+test('squareName and iconCells', () => {
+  assert(squareName([2, 1]) === 'c2', 'c2');
+  [...KING_STEPS, ...KNIGHT_MOVES].forEach(m => {
+    const { start, end } = iconCells(m);
+    [...start, ...end].forEach(x => assert(x >= 0 && x <= 2, 'in grid ' + m));
+    assert(end[0] - start[0] === m[0] && start[1] - end[1] === m[1], 'shape ' + m);
+  });
+});
+test('state: bad storage gives default', () => {
+  const fake = { getItem: () => '{oops', setItem() {} };
+  assert(JSON.stringify(loadState(fake)) === JSON.stringify(defaultState()), 'default');
+  assert(loadState({ getItem: () => null, setItem() {} }).v === 1, 'missing');
+});
+test('state: save and reload keeps history', () => {
+  const box = {}, fake = { getItem: k => box[k] ?? null, setItem: (k, v) => { box[k] = v; } };
+  let s = defaultState();
+  s = recordAnswer(s, { drill: 'rot', mode: 'L', level: 1, correct: true, ms: 1800, t: 1 });
+  saveState(s, fake);
+  assert(loadState(fake).history.length === 1, 'kept');
+});
+test('state: staircase and clamp', () => {
+  let s = defaultState();
+  for (let i = 0; i < 3; i++) s = recordAnswer(s, { drill: 'rot', mode: 'L', level: 1, correct: true, ms: 1, t: i });
+  assert(s.skill.rot === 2 && s.streak === 3, 'up');
+  s = recordAnswer(s, { drill: 'rot', mode: 'L', level: 2, correct: false, ms: 1, t: 9 });
+  s = recordAnswer(s, { drill: 'rot', mode: 'L', level: 1, correct: false, ms: 1, t: 10 });
+  assert(s.skill.rot === 1 && s.streak === 0, 'down and clamp');
+  for (let i = 0; i < 3; i++) s = recordAnswer(s, { drill: 'rot', mode: 'D', level: 6, correct: true, ms: 1, t: 20 + i });
+  assert(s.skill.rot === 1 && s.run.rot === 0 && s.history.length === 8, 'deep recorded, no step');
+  assert(itemLevel(s, 'rot', 'D') === 6, 'deep offset');
+});
+test('state: three Deep misses leave skill.rot unchanged', () => {
+  let s = defaultState();
+  s.skill.rot = 4;
+  for (let i = 0; i < 3; i++) s = recordAnswer(s, { drill: 'rot', mode: 'D', level: 9, correct: false, ms: 1, t: i });
+  assert(s.skill.rot === 4 && s.history.length === 3, 'skill ' + s.skill.rot);
+});
+test('state: a throwing storage does not stop saveState', () => {
+  saveState(defaultState(), { setItem() { throw new Error('quota'); } });
+});
+test('state: history cap', () => {
+  let s = defaultState();
+  s.history = Array.from({ length: HISTORY_CAP }, (_, i) => [i, 'rot', 'L', 1, 1, 1]);
+  s = recordAnswer(s, { drill: 'rot', mode: 'L', level: 1, correct: true, ms: 1, t: 99999 });
+  assert(s.history.length === HISTORY_CAP && s.history[0][0] === 1, 'oldest dropped');
+});
+test('progressLine', () => {
+  const day = 864e5, now = 30 * day, s = defaultState();
+  for (let i = 0; i < 12; i++) {
+    s.history.push([now - 10 * day, 'rot', 'L', 1, 1, 2000]);
+    s.history.push([now - 2 * day, 'rot', 'L', 1, 1, 1760]);
+  }
+  assert(progressLine(s, now) === 'rotation: 12% faster than last week', progressLine(s, now));
+  assert(progressLine(defaultState(), now) === null, 'no data');
+});
+
+test('state: malformed but parseable storage gives default', () => {
+  ['{"v":1}', '{"v":1,"history":"x"}', '{"v":1,"history":[],"run":{"rot":0,"trk":0}}'].forEach(raw => {
+    const got = loadState({ getItem: () => raw, setItem() {} });
+    assert(JSON.stringify(got) === JSON.stringify(defaultState()), 'default for ' + raw);
+  });
+});
+test('progressLine: equal medians give null; slower gives exact string', () => {
+  const day = 864e5, now = 30 * day;
+  const fill = (last, cur) => {
+    const s = defaultState();
+    for (let i = 0; i < 12; i++) {
+      s.history.push([now - 10 * day, 'rot', 'L', 1, 1, last]);
+      s.history.push([now - 2 * day, 'rot', 'L', 1, 1, cur]);
+    }
+    return s;
+  };
+  assert(progressLine(fill(2000, 2000), now) === null, 'equal');
+  assert(progressLine(fill(2000, 2200), now) === 'rotation: 10% slower than last week', 'slower');
+});
+test('progressLine: Deep answers in either week do not change the line', () => {
+  const day = 864e5, now = 30 * day, s = defaultState();
+  for (let i = 0; i < 12; i++) {
+    s.history.push([now - 10 * day, 'rot', 'L', 1, 1, 2000]);
+    s.history.push([now - 2 * day, 'rot', 'L', 1, 1, 1760]);
+  }
+  const before = progressLine(s, now);
+  for (let i = 0; i < 30; i++) s.history.push([now - (i % 2 ? 10 : 2) * day, 'rot', 'D', 6, 1, 20000 + i * 1000]);
+  assert(progressLine(s, now) === before, progressLine(s, now));
+});
+
+test('light: double tap records one answer', () => {
+  app.state = defaultState(); startLight();
+  app.item = makeLightRotation(1, makeRng(8)); app.phase = 'answer'; app.locked = false;
+  answer(app.item.answer); answer(app.item.answer);
+  assert(app.state.history.length === 1, 'one record');
+});
+test('light: taps during move flash are ignored', () => {
+  app.state = defaultState(); startLight();
+  app.item = makeLightTracking(1, makeRng(9)); app.phase = 'moves'; app.locked = false;
+  answer(squareName(app.item.end));
+  assert(app.state.history.length === 0, 'nothing recorded');
+});
+test('light: tracking answer screen has a button per square', () => {
+  const el = document.createElement('div');
+  renderTracking(makeLightTracking(1, makeRng(10)), el, 'answer');
+  assert(el.querySelectorAll('[data-answer]').length === 9, '3x3');
+});
+
+test('deep: a set is 3 puzzles then a summary', () => {
+  app.state = defaultState(); startDeep('rot');
+  for (let k = 0; k < 3; k++) { app.phase = 'answer'; app.locked = false; answer(String(app.item.answer)); nextDeepItem(); }
+  assert(document.querySelector('#deep .summary'), 'summary shown');
+  assert(app.state.history.filter(h => h[2] === 'D').length === 3, '3 records');
+});
+test('deep: items use the deep level', () => {
+  app.state = defaultState(); startDeep('rot');
+  assert(app.item.target.vox.length === CONFIG.rot.cubes(6), '10 cubes at skill 1');
+});
+
+test('deep tracking: answer screen keeps piece and start square visible', () => {
+  const el = document.createElement('div'), item = makeDeepTracking(1, makeRng(11));
+  renderTracking(item, el, 'answer');
+  const t = el.querySelector('.q').textContent;
+  assert(t.includes('♞') && t.includes(squareName(item.start)), 'start shown: ' + t);
+  assert(!el.querySelector('.board').textContent.includes('♞'), 'piece not on board');
+});
+
+test('backgrounding drops the item unrecorded and shows start', () => {
+  app.state = defaultState(); startLight();
+  app.item = makeLightRotation(1, makeRng(12)); app.phase = 'answer'; app.locked = false;
+  setTimer(() => { throw new Error('timer survived'); }, 1);
+  dropToStart();
+  assert(app.timers.length === 0 && app.locked && app.item === null, 'cleared');
+  assert(document.getElementById('start').classList.contains('active'), 'start shown');
+  answer('same');
+  assert(app.state.history.length === 0, 'nothing recorded');
+});
+test('start screen refreshes the progress line each time it is shown', () => {
+  const day = 864e5, now = Date.now();
+  app.state = defaultState(); showStart();
+  assert(document.getElementById('progress').hidden, 'hidden with no data');
+  for (let i = 0; i < 12; i++) {
+    app.state.history.push([now - 10 * day, 'rot', 'L', 1, 1, 2000]);
+    app.state.history.push([now - 2 * day, 'rot', 'L', 1, 1, 1760]);
+  }
+  showStart();
+  const box = document.getElementById('progress');
+  assert(!box.hidden && box.textContent === 'rotation: 12% faster than last week', box.textContent);
+});
+test('guarded: one retry after a throw, then the start screen', () => {
+  let calls = 0;
+  guarded(() => { if (!calls++) throw new Error('once'); });
+  assert(calls === 2, 'retried once');
+  showScreen('light');
+  guarded(() => { throw new Error('always'); });
+  assert(document.getElementById('start').classList.contains('active'), 'fell back to start');
+});
+
+// ===== BOOT =====
+function installIcon() {
+  const c = document.createElement('canvas'), g = c.getContext('2d');
+  c.width = c.height = 180;
+  g.fillStyle = '#e8f3ff'; g.fillRect(0, 0, 180, 90);
+  g.fillStyle = '#1d2333'; g.fillRect(0, 90, 180, 90);
+  const icon = c.toDataURL('image/png'), link = (rel, href) => Object.assign(document.head.appendChild(document.createElement('link')), { rel, href });
+  link('apple-touch-icon', icon);
+  link('icon', icon);
+  const manifest = { name: 'Brain', short_name: 'Brain', display: 'standalone', background_color: '#1d2333', theme_color: '#1d2333',
+    start_url: location.href.split('#')[0], scope: location.href.replace(/[^/]*$/, ''), icons: [{ src: icon, sizes: '180x180', type: 'image/png' }] };
+  link('manifest', 'data:application/manifest+json,' + encodeURIComponent(JSON.stringify(manifest)));
+}
+installIcon();
+if (location.hash === '#test') runSelfTest(); else init();
+</script>
+</body>
+</html>
