@@ -212,6 +212,8 @@ section.active { display: flex; flex-direction: column; }
 .qzSol { margin: 4px 0 auto; width: 100%; box-sizing: border-box; padding: 10px 16px; font-size: 15px; line-height: 1.4; overflow-y: auto; }
 .qzSol div { margin: 3px 0; } .qzSol .qzTap { margin-top: 14px; font-size: 13px; opacity: .55; text-align: center; } .qzSol .ans { font-size: 20px; font-weight: 800; color: #2ea043; margin-bottom: 6px; }
 .oddL .qzSol, .evL .qzSol, .oddD .qzSol, .evD .qzSol { margin-top: auto; }
+.kp4 { grid-template-columns: repeat(4, 1fr); } .kp4 button[data-key="ok"] { grid-column: span 4; }
+.rgBounds { font-size: 16px; font-weight: 700; opacity: .8; padding-top: 4px; }
 .qz.dark { overflow: hidden; } .qz.dark .kpGrid button { min-height: 40px; } .qz.dark .kpShow { font-size: 26px; min-height: 34px; } /* Deep: Next sits under the keypad at 320x568 */
 </style>
 </head>
@@ -284,7 +286,7 @@ function makeRng(seed) {
 // ===== DRILLS =====
 // DRILLS[id] = {
 //   op: 'transform'|'rules'|'odds'|'memory'|'backward'|'quant',
-//   skill: 'rotation'|'arith'|'odds'|'value'|'market'|'rules'|'memory'|'backward',  // Light mix and Deep skill menu group by it
+//   skill: 'rotation'|'arith'|'odds'|'value'|'market'|'calib'|'rules'|'memory'|'backward',  // Light mix and Deep skill menu group by it
 //   hidden: true,                            // optional: kept in code and state, left out of Light, menus and the progress line
 //   name: 'Rotation',                       // menu label; progress line uses name.toLowerCase()
 //   light(level, rng) -> item,  deep(level, rng) -> item,
@@ -304,7 +306,7 @@ const OPERATIONS = [
   { id: 'odds', name: 'Odds', drills: ['odd', 'ev'] },
   { id: 'memory', name: 'Memory', drills: ['seq', 'crd'] },
   { id: 'backward', name: 'Backward', drills: ['nim', 'rch'] },
-  { id: 'quant', name: 'Quant', drills: ['mul', 'pct', 'est', 'nsq', 'cnd', 'gam', 'mkt'] }
+  { id: 'quant', name: 'Quant', drills: ['mul', 'pct', 'est', 'nsq', 'cnd', 'gam', 'mkt', 'fer', 'rng'] }
 ];
 const ALL_DRILL_IDS = OPERATIONS.flatMap(o => o.drills);
 
@@ -313,7 +315,7 @@ function registerDrill(id, def) { DRILLS[id] = def; }
 // Ruling CC: hidden drills keep their old operation as skill, so un-hiding is flipping the flag.
 // v4: all spatial scenes share Rotation; four quant skills fill the rest of the Light mix.
 const SKILLS = [{ id: 'rotation', name: 'Rotation' }, { id: 'arith', name: 'Mental math' }, { id: 'odds', name: 'Odds' },
-  { id: 'value', name: 'Value' }, { id: 'market', name: 'Market' },
+  { id: 'value', name: 'Value' }, { id: 'market', name: 'Market' }, { id: 'calib', name: 'Estimation' },
   { id: 'rules', name: 'Rules' }, { id: 'memory', name: 'Memory' }, { id: 'backward', name: 'Backward' }];
 
 // Registered, not hidden, with a skill; in OPERATIONS order. Ids not registered yet are simply absent.
@@ -3539,20 +3541,39 @@ function quantChoices(item, el) {
 }
 
 const KEYPAD_KEYS = ['7', '8', '9', '4', '5', '6', '1', '2', '3', '-', '0', '.', 'del', 'ok'];
+// Estimation amounts: four columns with K, M, B, T suffixes (thousand to trillion), no minus.
+const AMOUNT_KEYS = ['7', '8', '9', 'K', '4', '5', '6', 'M', '1', '2', '3', 'B', '.', '0', 'del', 'T', 'ok'];
+const SUFFIX = { K: 1e3, M: 1e6, B: 1e9, T: 1e12 };
+
+// The entry after one key (not OK). One dot; a suffix needs a digit before it and ends the number.
+function nextEntry(entry, k) {
+  if (k === 'del') return entry.slice(0, -1);
+  if (k === '-') return entry.startsWith('-') ? entry.slice(1) : '-' + entry;
+  if (k in SUFFIX) return /\d/.test(entry) ? entry.replace(/[KMBT]$/, '') + k : entry;
+  if (/[KMBT]$/.test(entry) || entry.length >= 9 || (k === '.' && entry.includes('.'))) return entry;
+  return entry + k;
+}
+
+// '2.9B' -> 2.9e9; NaN for an entry that is no number ('', '.', '-').
+function entryValue(entry) {
+  const m = /^(-?[\d.]*\d[\d.]*)([KMBT]?)$/.exec(entry);
+  return m ? Number(m[1]) * (SUFFIX[m[2]] || 1) : NaN;
+}
 
 // Typed answer. The keys carry data-key, not data-answer, so a tap on them never answers by itself.
 // OK hands the entry as numText to send (default answer()); answer() locks, so a second OK does nothing.
-function keypad(el, send = v => answer(v)) {
-  const show = makeDiv('kpShow', ''), grid = makeDiv('kpGrid', '');
+// send may return 'next' to clear the entry for a second number (Range: low, then high).
+function keypad(el, send = v => answer(v), keys = KEYPAD_KEYS) {
+  const show = makeDiv('kpShow', ''), grid = makeDiv(keys === AMOUNT_KEYS ? 'kpGrid kp4' : 'kpGrid', '');
   let entry = '';
   const press = k => {
-    if (k === 'ok') return entry && Number.isFinite(Number(entry)) && send(numText(Number(entry), 6));
-    if (k === 'del') entry = entry.slice(0, -1);
-    else if (k === '-') entry = entry.startsWith('-') ? entry.slice(1) : '-' + entry;
-    else if (entry.length < 9 && !(k === '.' && entry.includes('.'))) entry += k;
+    if (k === 'ok') {
+      const v = entryValue(entry);
+      if (Number.isFinite(v) && send(numText(v, 6)) === 'next') entry = '';
+    } else entry = nextEntry(entry, k);
     show.textContent = entry;
   };
-  KEYPAD_KEYS.forEach(k => {
+  keys.forEach(k => {
     const b = document.createElement('button');
     b.dataset.key = k; b.textContent = k === 'del' ? '⌫' : k === 'ok' ? 'OK' : k;
     b.addEventListener('click', () => press(k));
@@ -4052,6 +4073,208 @@ registerDrill('mkt', {
   solve: solveMarket
 });
 
+// ===== ESTIMATION =====
+// Fermi (fer): one typed amount; it passes within a factor of the truth. Range (rng): a 90% range low..high;
+// it passes when it holds the truth and high/low stays under the level's limit. Every range adds a hit or miss
+// to state.cal (last calMax), shown as the running calibration.
+// FACTS: [question, answer, unit, route]. Chosen to stay true for years: physics, geography, the body, units, maths.
+// Gold, births and people-ever-born were checked against WGC, UN WPP 2024 and PRB (2026-11).
+const FACTS = [
+  ['Seconds in a 365-day year', 31536000, 's', '365 × 24 × 3,600 ≈ 31.5 million'],
+  ['Seconds in a day', 86400, 's', '24 × 3,600 = 86,400'],
+  ['Hours in a 365-day year', 8760, 'h', '365 × 24 = 8,760'],
+  ['Minutes in a week', 10080, 'min', '7 × 24 × 60 = 10,080'],
+  ['Days in 80 years', 29220, 'days', '80 × 365.25 = 29,220'],
+  ['Heartbeats in 80 years at 70 a minute', 2.95e9, 'beats', '70 × 60 × 24 × 365 × 80 ≈ 2.9 billion'],
+  ['Breaths in a day at 15 a minute', 21600, 'breaths', '15 × 60 × 24 = 21,600'],
+  ['Litres of blood the heart pumps in a day at 5 L a minute', 7200, 'L', '5 × 1,440 min = 7,200'],
+  ['Litres of water in a 50 × 25 × 2 m pool', 2.5e6, 'L', '2,500 m³ × 1,000 L per m³ = 2.5 million'],
+  ['Distance around the Earth at the equator', 40075, 'km', 'Pole to equator was set at 10,000 km; × 4 ≈ 40,000'],
+  ['Radius of the Earth', 6371, 'km', '40,000 km ÷ 2π ≈ 6,370'],
+  ['Surface area of the Earth', 5.1e8, 'km²', '4π × 6,371² ≈ 510 million'],
+  ["Share of the Earth's surface covered by ocean", 71, '%', 'About 7 in 10'],
+  ['Distance from the Earth to the Moon', 384400, 'km', 'About 30 Earth diameters: 30 × 12,742 ≈ 382,000'],
+  ['Distance from the Earth to the Sun', 1.496e8, 'km', 'Light takes about 500 s: 500 × 300,000 km/s = 150 million'],
+  ['Time for sunlight to reach the Earth', 499, 's', '150 million km ÷ 300,000 km/s = 500 s'],
+  ['Speed of light', 299792, 'km/s', 'About 300,000: 7.5 times around the Earth each second'],
+  ['One light-year', 9.46e12, 'km', '300,000 km/s × 31.6 million s ≈ 9.5 trillion'],
+  ['Speed of sound in air at 20 °C', 343, 'm/s', 'Thunder takes 3 s per km: about 340 m/s'],
+  ['Speed of the Earth around the Sun', 29.8, 'km/s', '2π × 150 million km ÷ 31.6 million s ≈ 30'],
+  ['Speed of the ground at the equator as the Earth turns', 1670, 'km/h', '40,075 km ÷ 24 h ≈ 1,670'],
+  ['Minutes for the ISS to orbit the Earth once', 93, 'min', 'About 15.5 orbits a day: 1,440 ÷ 15.5 ≈ 93'],
+  ['Height of the ISS above the ground', 420, 'km', 'Low orbit: a few hundred km, about 1/15 of the Earth radius'],
+  ['Diameter of the Sun', 1.39e6, 'km', '109 Earth diameters: 109 × 12,742 ≈ 1.4 million'],
+  ['Earths that fit inside the Sun by volume', 1.3e6, 'Earths', '109³ ≈ 1.3 million'],
+  ['Surface temperature of the Sun', 5772, 'K', 'About 5,500 °C; its light peaks in the visible range'],
+  ['Age of the universe', 13.8, 'billion years', 'About 3 times the age of the Earth (4.5)'],
+  ['Age of the Earth', 4.54, 'billion years', 'About 1/3 of the age of the universe'],
+  ["Earth's axial tilt", 23.4, 'degrees', 'It sets the tropics at about 23.4° N and S'],
+  ['Height of Mount Everest', 8849, 'm', 'Jets cruise near 10–11 km; Everest is a bit lower'],
+  ['Depth of the Challenger Deep, the deepest point of the ocean', 10935, 'm', 'Deeper than Everest is high: about 11 km'],
+  ['Mean depth of the oceans', 3700, 'm', 'Most of the sea floor lies 3–6 km down'],
+  ['Volume of all the oceans', 1.335e9, 'km³', '361 million km² × 3.7 km ≈ 1.3 billion'],
+  ["Share of the Earth's water that is fresh", 2.5, '%', 'Oceans hold 97.5%; most fresh water is ice'],
+  ['Area of the Pacific Ocean', 1.65e8, 'km²', 'About a third of the Earth’s surface'],
+  ['Area of Africa', 30.4e6, 'km²', 'About 20% of the land on Earth'],
+  ['Area of Russia', 17.1e6, 'km²', 'About 11% of the land on Earth'],
+  ['Area of the United Kingdom', 242500, 'km²', 'About 1,000 km long × 250 km wide'],
+  ['Area of Sweden', 450000, 'km²', 'About 1,570 km long × 290 km average width'],
+  ['Population density of the UK', 285, 'people/km²', '69 million ÷ 242,500 km² ≈ 285'],
+  ['Population of Sweden in 2024', 10.5e6, 'people', 'About 10 million'],
+  ['Population of India in 2024', 1.44e9, 'people', 'It passed China in 2023: about 1.4 billion'],
+  ['Islands in Sweden', 267570, 'islands', 'Over a quarter of a million; most are tiny'],
+  ['Height of Kebnekaise, the highest peak in Sweden', 2097, 'm', 'About a quarter of Everest'],
+  ['Member states of the United Nations', 193, 'states', 'Nearly every country: about 195 exist'],
+  ['Length of the Nile', 6650, 'km', 'The longest river: about 6,600 km'],
+  ['Length of the Amazon', 6400, 'km', 'A close second to the Nile'],
+  ['Length of the River Thames', 346, 'km', 'Cotswolds to the North Sea'],
+  ['Great-circle distance from London to New York', 5570, 'km', 'A 7-hour flight at about 800 km/h'],
+  ['Milliseconds for light to cross 5,570 km (London to New York)', 18.6, 'ms', '5,570 ÷ 300,000 s ≈ 0.0186 s'],
+  ['Cruising speed of a jet airliner', 900, 'km/h', 'About Mach 0.85 at 11 km: 0.85 × 1,060 km/h'],
+  ['Days to drive to the Moon at 100 km/h, non-stop', 160, 'days', '384,400 ÷ 100 ÷ 24 ≈ 160'],
+  ['Height of the Eiffel Tower, with antennas', 330, 'm', 'About 100 storeys at 3.3 m'],
+  ['Height of the Burj Khalifa', 828, 'm', 'About 2.5 Eiffel Towers'],
+  ['Height of the Elizabeth Tower (Big Ben)', 96, 'm', 'About 30 storeys'],
+  ['Height of the tallest known tree', 116, 'm', 'A coast redwood: about a 35-storey building'],
+  ['Trees on Earth', 3.04e12, 'trees', '2015 estimate: about 3 trillion, ~400 per person'],
+  ['Bones in an adult human', 206, 'bones', 'About 200; hands and feet hold over half'],
+  ['Bones in one human hand, wrist included', 27, 'bones', '14 finger bones + 5 palm + 8 wrist'],
+  ['Teeth in an adult mouth, wisdom teeth included', 32, 'teeth', '4 quarters × 8'],
+  ['Hairs on a human head', 100000, 'hairs', '~600 cm² of scalp × ~170 per cm² ≈ 100,000'],
+  ['Blood in an adult body', 5, 'L', 'About 7% of body weight: 0.07 × 70 kg ≈ 5 L'],
+  ['Cells in a human body', 3.7e13, 'cells', 'About 37 trillion; most are red blood cells'],
+  ['Neurons in a human brain', 86e9, 'neurons', 'About 86 billion; most are in the cerebellum'],
+  ['Length of DNA in one human cell, stretched out', 2, 'm', '6.4 billion base pairs × 0.34 nm ≈ 2 m'],
+  ['Resting power output of a human body', 100, 'W', '2,000 kcal × 4,184 J ÷ 86,400 s ≈ 97 W'],
+  ['Walking speed of an adult', 5, 'km/h', '1.4 m/s × 3.6 = 5'],
+  ['Steps to walk 1 km with a 0.75 m stride', 1333, 'steps', '1,000 ÷ 0.75 = 1,333'],
+  ['Boiling point of water at the top of Everest', 71, '°C', 'Air pressure there is about 1/3; water boils near 70 °C'],
+  ['Mass of an adult African elephant', 6, 't', 'About 6 t; big males reach ~7 t'],
+  ['Mass of the air in a 4 × 5 × 2.5 m room', 60, 'kg', '50 m³ × 1.2 kg per m³ = 60 kg'],
+  ['Density of gold', 19.3, 'g/cm³', 'About 19 times water; much more than lead (11.3)'],
+  ['Mass of a standard 400-ounce gold bar', 12.4, 'kg', '400 × 31.1 g = 12.4 kg'],
+  ['Gold above ground: all ever mined', 220000, 't', 'About 3,600 t a year now; most was mined since 1950'],
+  ['Edge of a cube holding all gold ever mined', 22.5, 'm', '220,000 t ÷ 19.3 t per m³ ≈ 11,400 m³; cube root ≈ 22.5'],
+  ['Mass of 1 m³ of steel', 7.85, 't', 'About 8 times water'],
+  ['Energy in 1 litre of petrol', 34, 'MJ', 'About 0.75 kg × 46 MJ per kg'],
+  ['Seconds for a 2 kW kettle to heat 1 L of water from 20 to 100 °C', 167, 's', '4,186 J per kg·K × 80 K ÷ 2,000 W ≈ 167'],
+  ['Calories a 70 kg runner burns in a marathon (about 1 kcal per kg per km)', 2950, 'kcal', '70 × 42.2 ≈ 2,950'],
+  ['Length of a marathon', 42.195, 'km', '26.2 miles × 1.609'],
+  ['Average speed of the 2:00:35 marathon world record', 21, 'km/h', '42.195 km ÷ 2.01 h ≈ 21'],
+  ['Average speed of the 9.58 s 100 m world record', 37.6, 'km/h', '100 ÷ 9.58 = 10.44 m/s; × 3.6 = 37.6'],
+  ['Distance a car at 100 km/h covers in one second', 27.8, 'm', '100,000 m ÷ 3,600 s = 27.8'],
+  ['Area of a 105 × 68 m football pitch', 7140, 'm²', '105 × 68 = 7,140'],
+  ['Football pitches (105 × 68 m) in 1 km²', 140, 'pitches', '1,000,000 ÷ 7,140 ≈ 140'],
+  ['Glasses of 250 ml in a 150 L bath', 600, 'glasses', '150,000 ml ÷ 250 = 600'],
+  ['Keys on a standard piano', 88, 'keys', '7 octaves × 12 + 4'],
+  ['Squares of every size on a chessboard', 204, 'squares', '1² + 2² + … + 8² = 204'],
+  ['Grains on square 32, if square 1 has 1 and each square doubles', 2147483648, 'grains', '2^31 = 2^10 · 2^10 · 2^10 · 2 ≈ 2.1 billion'],
+  ['Ways to pick 6 numbers from 49', 13983816, 'ways', '49·48·47·46·45·44 ÷ 720 ≈ 14 million'],
+  ['Doublings to turn 1p into £10,000', 20, 'doublings', '1,000,000p ≈ 2^20 (1,048,576)'],
+  ['Thickness of 0.1 mm paper folded in half 30 times', 107, 'km', '0.1 mm × 2^30 ≈ 0.1 mm × 1.07 billion = 107 km'],
+  ['Days to count to 1 million at one number a second', 11.6, 'days', '1,000,000 ÷ 86,400 ≈ 11.6'],
+  ['Years to count to 1 billion at one number a second', 31.7, 'years', '1 billion ÷ 31.5 million ≈ 32'],
+  ['£1,000 after 30 years at 7% a year', 7612, '£', 'Rule of 72: doubles every ~10 years, 3 times ≈ £8,000'],
+  ['Years for money to double at 3% a year', 23.4, 'years', '72 ÷ 3 = 24; exact ln 2 ÷ ln 1.03 = 23.4'],
+  ['Days for money to double at 1% a day', 69.7, 'days', '72 ÷ 1 ≈ 70; exact ln 2 ÷ ln 1.01 = 69.7'],
+  ['Value today of £100 paid in 10 years, at 5% a year', 61.4, '£', '100 ÷ 1.05^10 = 100 ÷ 1.63 = 61.4'],
+  ['Songs of 4 MB that fit on a 1 TB disk', 250000, 'songs', '1,000,000 MB ÷ 4 = 250,000'],
+  ['Seconds to download 1 GB at 100 Mbit/s', 80, 's', '8,000 Mbit ÷ 100 = 80'],
+  ['Words in the King James Bible', 783137, 'words', 'About 1,200 pages × 650 words'],
+  ['People who have ever been born', 117e9, 'people', "PRB estimate; today's 8 billion are about 7%"],
+  ['Babies born worldwide each year', 132e6, 'births', '8 billion × ~16.5 births per 1,000'],
+  ['Population of the world in 2024', 8.1e9, 'people', 'About 8 billion; it passed 8 billion in 2022']
+];
+
+CONFIG.fer = { factor: (mode, lvl) => mode === 'L' ? (lvl < 4 ? 3 : lvl < 8 ? 2 : 1.5) : (lvl < 10 ? 2 : 1.5) };
+CONFIG.rng = { maxRatio: (mode, lvl) => mode === 'L' ? (lvl < 3 ? 100 : lvl < 5 ? 30 : lvl < 7 ? 10 : lvl < 9 ? 5 : 3) : (lvl < 10 ? 10 : 4), calMax: 50 };
+
+function factItem(kind, rng) {
+  const [q, a, unit, route] = pick(FACTS, rng);
+  return { kind, q, a, unit, route };
+}
+
+// 2.95 billion, 31,536,000 or 23.4: words above a million, separators above 10,000.
+function amountText(x) {
+  const big = [[1e12, ' trillion'], [1e9, ' billion'], [1e6, ' million']].find(([s]) => x >= s);
+  if (big) return numText(x / big[0], 2) + big[1];
+  return x >= 1e4 ? Math.round(x).toLocaleString('en-US') : String(Number(x.toPrecision(4)));
+}
+
+function factAnswer(item) { return 'Answer: ' + amountText(item.a) + ' ' + item.unit; }
+function factBody(item) { return item.q + ' (' + item.unit + ')'; }
+
+function ferItem(mode, level, rng) { return { ...factItem('fer' + mode, rng), factor: CONFIG.fer.factor(mode, level) }; }
+function ferHolds(item, v) { return Number(v) > 0 && Math.abs(Math.log(Number(v) / item.a)) <= Math.log(item.factor) + 1e-9; }
+
+function solveFermi(item, choice) {
+  const v = Number(choice), r = v > item.a ? v / item.a : item.a / v;
+  const off = v > 0 ? 'Your ' + amountText(v) + ' is ' + amountText(Number(r.toPrecision(2))) + ' times too ' + (v > item.a ? 'high' : 'low') + '.' : 'An estimate must be above 0.';
+  return [factAnswer(item), off + ' Pass: within ×' + item.factor + '.', item.route];
+}
+
+registerDrill('fer', {
+  skill: 'calib', op: 'quant', name: 'Fermi',
+  light: (level, rng) => ferItem('L', level, rng),
+  deep: (level, rng) => ferItem('D', level, rng),
+  timeline: () => [],
+  render: (item, el) => { quantShell(item, el, 'Estimate · within ×' + item.factor, factBody(item)); keypad(el, v => answer(ferHolds(item, v) ? 'in' : v), AMOUNT_KEYS); },
+  answer: () => 'in',
+  options: () => null,
+  solve: solveFermi
+});
+
+function rngItem(mode, level, rng) { return { ...factItem('rng' + mode, rng), maxRatio: CONFIG.rng.maxRatio(mode, level) }; }
+
+function rangeResult(item, lo, hi) {
+  const hit = lo <= item.a && item.a <= hi;
+  return { hit, pass: hit && lo > 0 && hi / lo <= item.maxRatio + 1e-9 };
+}
+
+function recordCal(state, hit) {
+  state.cal.push(hit ? 1 : 0);
+  if (state.cal.length > CONFIG.rng.calMax) state.cal.shift();
+}
+
+function calLine(state) {
+  const n = state.cal.length, h = sum(state.cal);
+  return n ? 'Your 90% ranges: ' + h + ' of ' + n + ' hit (' + Math.round(100 * h / n) + '%). Aim: 90%.' : null;
+}
+
+// Low first, then high; the second OK records the hit and answers. A swapped pair counts as low..high.
+function renderRange(item, el) {
+  const cal = app.state.cal, head = '90% range · max ×' + item.maxRatio + (cal.length ? ' · hits ' + sum(cal) + '/' + cal.length : '');
+  quantShell(item, el, head, factBody(item));
+  const bounds = makeDiv('rgBounds', 'Low ▸ ? · High ?');
+  el.appendChild(bounds);
+  let lo = null;
+  keypad(el, v => {
+    if (lo === null) { lo = Number(v); bounds.textContent = 'Low ' + amountText(lo) + ' · High ▸ ?'; return 'next'; }
+    const [a, b] = [lo, Number(v)].sort((x, y) => x - y);
+    if (canAnswer()) recordCal(app.state, rangeResult(item, a, b).hit);
+    answer(rangeResult(item, a, b).pass ? 'in' : a + ',' + b);
+  }, AMOUNT_KEYS);
+}
+
+function solveRange(item, choice) {
+  const [lo, hi] = choice.split(',').map(Number), span = amountText(lo) + '–' + amountText(hi);
+  const why = !rangeResult(item, lo, hi).hit ? 'Your range ' + span + ' missed: too ' + (hi < item.a ? 'low' : 'high') + '.'
+    : lo > 0 ? 'Your range ' + span + ' held it, but it is ×' + numText(hi / lo, 1) + ' wide; the limit is ×' + item.maxRatio + '.'
+    : 'A range must start above 0.';
+  return [factAnswer(item), why, calLine(app.state), item.route];
+}
+
+registerDrill('rng', {
+  skill: 'calib', op: 'quant', name: 'Range',
+  light: (level, rng) => rngItem('L', level, rng),
+  deep: (level, rng) => rngItem('D', level, rng),
+  timeline: () => [],
+  render: renderRange,
+  answer: () => 'in',
+  options: () => null,
+  solve: solveRange
+});
+
 // ===== STATE =====
 // Progress and the staircase use Light answers only: Deep runs at skill + 5 and takes ~10x longer.
 const STORAGE_KEY = 'brain-game-v1';
@@ -4062,7 +4285,7 @@ const DAY_MS = 864e5;
 function defaultState() {
   const skill = {}, run = {}, recent = {};
   ALL_DRILL_IDS.forEach(id => { skill[id] = 1; run[id] = 0; recent[id] = []; });
-  return { v: 1, skill, run, streak: 0, recent, history: [] };
+  return { v: 1, skill, run, streak: 0, recent, history: [], cal: [] };
 }
 
 function isObject(o) { return !!o && typeof o === 'object' && !Array.isArray(o); }
@@ -4079,6 +4302,7 @@ function fillDrills(s) {
   }
   if (!isObject(s.recent)) s.recent = {};
   ALL_DRILL_IDS.forEach(id => { if (!Array.isArray(s.recent[id])) s.recent[id] = []; });
+  if (!Array.isArray(s.cal)) s.cal = [];
   return s;
 }
 
@@ -4414,9 +4638,13 @@ function lightTap(target) {
 // A tap within TAP_GUARD_MS of an item becoming answerable (startedAt) is ignored: it was meant for the screen before.
 const TAP_GUARD_MS = 300;
 
+// True when a tap now would count as an answer.
+function canAnswer() {
+  return !app.locked && app.phase === 'answer' && performance.now() - app.startedAt >= TAP_GUARD_MS;
+}
+
 function answer(choice) {
-  if (app.locked || app.phase !== 'answer') return;
-  if (performance.now() - app.startedAt < TAP_GUARD_MS) return;
+  if (!canAnswer()) return;
   app.locked = true; app.choice = choice;
   const correct = choice === correctAnswer(app.item), drill = drillOf(app.item);
   const ms = Math.round(performance.now() - app.startedAt);
@@ -4916,7 +5144,7 @@ test('deep: a set is 3 puzzles then a summary', () => {
   assert(document.querySelector('#deep .summary'), 'summary shown');
   assert(app.state.history.filter(h => h[2] === 'D').length === 3, '3 records');
   document.getElementById('deepDone').click();
-  const skillMenuOpen = () => document.getElementById('deepPick').classList.contains('active') && document.querySelectorAll('#deepPick [data-skill]').length === 5;
+  const skillMenuOpen = () => document.getElementById('deepPick').classList.contains('active') && document.querySelectorAll('#deepPick [data-skill]').length === 6;
   assert(skillMenuOpen(), 'Done opens the skill menu');
   startDeep('market');
   exitDeep(); // what #deepExit runs (listeners are not wired in test mode)
@@ -5470,7 +5698,7 @@ test('start halves say only LIGHT and DEEP', () => {
 test('deep menu: five skills, all open; a skill starts a set of its scenes', () => {
   app.state = defaultState(); showDeepSkills();
   const btns = [...document.querySelectorAll('#deepPick [data-skill]')];
-  assert(btns.map(b => b.textContent).join() === 'Rotation,Mental math,Odds,Value,Market', btns.map(b => b.textContent).join());
+  assert(btns.map(b => b.textContent).join() === 'Rotation,Mental math,Odds,Value,Market,Estimation', btns.map(b => b.textContent).join());
   assert(btns.every(b => !b.disabled), 'every skill has a visible scene');
   startDeep('arith');
   assert(DRILLS[drillOf(app.item)].skill === 'arith' && app.deepSet.skill === 'arith', 'arith set');
@@ -5496,7 +5724,7 @@ test('v3: a save with all ten old drills keeps every level, run, recent and hist
 });
 test('v3: deep skill menu and scene picking', () => {
   showDeepSkills();
-  assert(document.querySelectorAll('#deepPick [data-skill]').length === 5, 'five skills');
+  assert(document.querySelectorAll('#deepPick [data-skill]').length === 6, 'six skills');
   const r = makeRng(5); let prev = null;
   for (let i = 0; i < 50; i++) { const s = pickDeepScene('rotation', prev, r); assert(DRILLS[s].skill === 'rotation', 'skill'); prev = s; }
   assert(pickDeepScene('market', 'mkt', r) === 'mkt', 'single scene repeats');
@@ -6699,7 +6927,7 @@ test('mpt: explain shows the sums, fits 60 / 36, no-break spaces in tuples', () 
 
 // ===== QUANT TESTS =====
 test('quant: every scene fuzzes clean in both modes, levels 1-15', () => {
-  ['mul', 'pct', 'est', 'nsq', 'cnd', 'gam', 'mkt', 'odd', 'ev'].forEach(id => fuzzDrill(id, 300));
+  ['mul', 'pct', 'est', 'nsq', 'cnd', 'gam', 'mkt', 'odd', 'ev', 'fer', 'rng'].forEach(id => fuzzDrill(id, 300));
 });
 test('quant: numText is the canonical answer text', () => {
   [[37.5, '37.5'], [1702, '1702'], [4.666666, '4.67'], [-0.001, '0'], [0.1 + 0.2, '0.3']].forEach(([x, want]) => assert(numText(x) === want, x + ' -> ' + numText(x)));
@@ -6771,11 +6999,11 @@ test('quant: a typed Light answer is recorded right, and a miss shows the right 
   clearTimers(); exitLight();
 });
 test('solutions: every quant scene gives 2-9 lines, line 1 the answer, for right and wrong choices', () => {
-  ['mul', 'pct', 'est', 'nsq', 'cnd', 'gam', 'mkt', 'odd', 'ev'].forEach(id => {
+  ['mul', 'pct', 'est', 'nsq', 'cnd', 'gam', 'mkt', 'odd', 'ev', 'fer', 'rng'].forEach(id => {
     const d = DRILLS[id], r = makeRng(61 + id.length);
     for (let i = 0; i < 200; i++) {
       const item = d[i % 2 ? 'deep' : 'light'](1 + i % 15, r), opts = d.options(item);
-      const wrong = opts ? opts.find(o => o !== d.answer(item)) : (id === 'mkt' ? String(item.fair + 50) : '0');
+      const wrong = opts ? opts.find(o => o !== d.answer(item)) : id === 'mkt' ? String(item.fair + 50) : id === 'rng' ? '1,2' : '0';
       const lines = d.solve(item, wrong).filter(Boolean);
       assert(lines.length >= 2 && lines.length <= 9 && lines.every(l => typeof l === 'string' && l.length && !/undefined|NaN/.test(l)), id + ' ' + lines.join(' | '));
       assert(/^(Answer|Fair value): /.test(lines[0]), id + ' line 1 ' + lines[0]);
@@ -6805,10 +7033,53 @@ test('solutions: Given names the slip and lists small cases', () => {
   function eq2(got, want) { assert(got.filter(Boolean).join(' | ') === want, got.filter(Boolean).join(' | ')); }
 });
 
-test('quant: Light gives quant about four fifths of play', () => {
+test('estimation: facts are well formed and typeable', () => {
+  assert(FACTS.length >= 100, 'count ' + FACTS.length);
+  assert(new Set(FACTS.map(f => f[0])).size === FACTS.length, 'unique questions');
+  FACTS.forEach(([q, a, unit, route]) => assert(q.length <= 90 && route.length <= 90 && unit && Number.isFinite(a) && a > 0 && a < 1e15, q));
+});
+test('estimation: amount keys and entries', () => {
+  const typed = keys => keys.reduce(nextEntry, '');
+  assert(entryValue(typed(['2', '.', '9', 'B'])) === 2.9e9, '2.9B');
+  assert(typed(['K']) === '' && typed(['4', 'K', 'M']) === '4M' && typed(['4', 'M', '5']) === '4M', 'suffix rules');
+  assert(Number.isNaN(entryValue('.')) && Number.isNaN(entryValue('')), 'not numbers');
+  assert(amountText(2.95e9) === '2.95 billion' && amountText(31536000) === '31.54 million' && amountText(10080) === '10,080' && amountText(23.4) === '23.4', 'amount text');
+});
+test('estimation: Fermi miss line', () => {
+  const lines = solveFermi({ a: 1.44e9, unit: 'people', route: 'R', factor: 2 }, '9');
+  assert(lines[1] === 'Your 9 is 160 million times too low. Pass: within ×2.', lines[1]);
+});
+test('estimation: Fermi factor and Range limit', () => {
+  const f = { a: 100, factor: 2 };
+  assert(ferHolds(f, '50') && ferHolds(f, '200') && !ferHolds(f, '49') && !ferHolds(f, '201') && !ferHolds(f, '0'), 'factor 2');
+  const r = { a: 100, maxRatio: 10 };
+  assert(rangeResult(r, 20, 200).pass && !rangeResult(r, 10, 200).pass && rangeResult(r, 10, 200).hit, 'width limit');
+  assert(!rangeResult(r, 101, 200).hit && !rangeResult(r, 0, 200).pass, 'miss and zero');
+});
+test('estimation: a Range answer records calibration and explains the miss', () => {
+  app.state = defaultState(); startLight(); clearTimers();
+  const el = document.getElementById('lightItem'), press = ks => ks.forEach(k => el.querySelector('[data-key="' + k + '"]').click());
+  app.item = { kind: 'rngL', q: 'Q', a: 330, unit: 'm', route: 'R', maxRatio: 100 }; DRILLS.rng.render(app.item, el, 'answer'); readyToAnswer();
+  press(['1', '0', '0', 'ok']);
+  assert(el.querySelector('.rgBounds').textContent === 'Low 100 · High ▸ ?' && app.state.history.length === 0, 'low taken');
+  press(['5', '0', '0', 'ok']);
+  assert(app.state.cal.join() === '1' && app.state.history.at(-1)[4] === 1, 'hit and pass');
+  clearTimers(); nextLightItem(); clearTimers();
+  app.item = { kind: 'rngL', q: 'Q', a: 330, unit: 'm', route: 'R', maxRatio: 100 }; DRILLS.rng.render(app.item, el, 'answer'); readyToAnswer();
+  press(['1', 'K', 'ok', '2', 'K', 'ok']);
+  const lines = [...el.querySelectorAll('.qzSol div')].map(d => d.textContent);
+  assert(app.state.cal.join() === '1,0', 'miss recorded ' + app.state.cal);
+  assert(lines.slice(0, 4).join('|') === 'Answer: 330 m|Your range 1000–2000 missed: too high.|Your 90% ranges: 1 of 2 hit (50%). Aim: 90%.|R', lines.join('|'));
+  clearTimers(); exitLight();
+});
+test('estimation: old saves gain an empty calibration list', () => {
+  const old = { v: 1, skill: { rot: 2 }, run: { rot: 0 }, streak: 0, history: [] };
+  assert(Array.isArray(loadState({ getItem: () => JSON.stringify(old), setItem() {} }).cal), 'cal');
+});
+test('quant: Light gives quant about five sixths of play', () => {
   const r = makeRng(53); let rot = 0;
   for (let i = 0; i < 1000; i++) if (DRILLS[pickLightDrill(r)].skill === 'rotation') rot++;
-  assert(rot > 150 && rot < 250, 'rotation share ' + rot);
+  assert(rot > 120 && rot < 220, 'rotation share ' + rot);
 });
 
 // ===== BOOT =====
