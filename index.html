@@ -214,6 +214,15 @@ section.active { display: flex; flex-direction: column; }
 .oddL .qzSol, .evL .qzSol, .oddD .qzSol, .evD .qzSol { margin-top: auto; }
 .kp4 { grid-template-columns: repeat(4, 1fr); } .kp4 button[data-key="ok"] { grid-column: span 4; }
 .rgBounds { font-size: 16px; font-weight: 700; opacity: .8; padding-top: 4px; }
+.tgtBox { width: 100%; box-sizing: border-box; padding: 0 12px 6px; display: flex; flex-direction: column; gap: 8px; }
+.tgtLog { min-height: 20px; font-size: 14px; opacity: .7; text-align: center; }
+.tgtChips { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; min-height: 64px; }
+.tgtChip { min-width: 64px; height: 64px; padding: 0 10px; border: 0; border-radius: 14px; background: var(--tile); color: inherit; font: inherit; font-size: 24px; font-weight: 800; }
+.tgtChip.on, .tgtOp.on { outline: 3px solid #3d5bd9; outline-offset: -3px; }
+.tgtMsg { min-height: 20px; font-size: 14px; text-align: center; color: #b05a00; }
+.tgtOps { display: flex; gap: 8px; }
+.tgtOp { flex: 1; min-height: 52px; border: 0; border-radius: 12px; background: var(--tile); color: inherit; font: inherit; font-size: 24px; font-weight: 700; }
+.tgtOps:last-child .tgtOp { font-size: 17px; min-height: 46px; }
 .qz.dark { overflow: hidden; } .qz.dark .kpGrid button { min-height: 40px; } .qz.dark .kpShow { font-size: 26px; min-height: 34px; } /* Deep: Next sits under the keypad at 320x568 */
 </style>
 </head>
@@ -306,7 +315,7 @@ const OPERATIONS = [
   { id: 'odds', name: 'Odds', drills: ['odd', 'ev'] },
   { id: 'memory', name: 'Memory', drills: ['seq', 'crd'] },
   { id: 'backward', name: 'Backward', drills: ['nim', 'rch'] },
-  { id: 'quant', name: 'Quant', drills: ['mul', 'pct', 'est', 'nsq', 'cnd', 'gam', 'mkt', 'fer', 'rng'] }
+  { id: 'quant', name: 'Quant', drills: ['mul', 'pct', 'est', 'nsq', 'tgt', 'cnd', 'gam', 'mkt', 'fer', 'rng'] }
 ];
 const ALL_DRILL_IDS = OPERATIONS.flatMap(o => o.drills);
 
@@ -3584,7 +3593,7 @@ function keypad(el, send = v => answer(v), keys = KEYPAD_KEYS) {
 
 // The answer area gives way to the solution lines; the problem stays in view. Line 1 is the answer.
 function showSolution(el, item, choice) {
-  el.querySelectorAll('.kpShow, .kpGrid, .matOpts, .oddOpts, .evHint').forEach(n => n.remove());
+  el.querySelectorAll('.kpShow, .kpGrid, .matOpts, .oddOpts, .evHint, .tgtBox').forEach(n => n.remove());
   const box = makeDiv('qzSol', '');
   DRILLS[drillOf(item)].solve(item, choice).filter(Boolean).forEach((line, i) => {
     const p = document.createElement('div');
@@ -3782,6 +3791,160 @@ registerDrill('nsq', {
   answer: item => item.answer,
   options: () => null,
   solve: item => ['Answer: ' + item.answer, ...item.lines]
+});
+
+// ===== TARGET =====
+// Make the target from the given numbers with + − × ÷, each number at most once (24, Krypto, Countdown).
+// Light: 24 from four numbers, then five numbers to a target up to 30, all used (Krypto).
+// Deep: Krypto, then Countdown: six numbers to a 3-digit target, any subset, whole numbers only.
+// Values are exact fractions [n, d]; every step must stay above 0. A step is [a, op, b, result].
+CONFIG.tgt = { kryptoFrom: { L: 5, D: 6 }, countdownFrom: 10, bigs: [25, 50, 75, 100], kryptoMax: 30 };
+
+function vText(v) { return v[1] === 1 ? String(v[0]) : v[0] + '/' + v[1]; }
+function vEq(a, b) { return a[0] === b[0] && a[1] === b[1]; }
+function stepText(s) { return vText(s[0]) + ' ' + s[1] + ' ' + vText(s[2]) + ' = ' + vText(s[3]); }
+
+function pairs(n) {
+  const out = [];
+  for (let i = 0; i < n; i++) for (let j = i + 1; j < n; j++) out.push([i, j]);
+  return out;
+}
+
+// a op b, or null when the result is not above 0 or (whole) not a whole number.
+function applyOp(a, op, b, whole) {
+  const n = { '+': a[0] * b[1] + b[0] * a[1], '−': a[0] * b[1] - b[0] * a[1], '×': a[0] * b[0], '÷': a[0] * b[1] }[op];
+  const d = { '+': a[1] * b[1], '−': a[1] * b[1], '×': a[1] * b[1], '÷': a[1] * b[0] }[op];
+  if (n <= 0) return null;
+  const v = frac(n, d);
+  return whole && v[1] !== 1 ? null : v;
+}
+
+// Every allowed step on a and b, both orders for − and ÷.
+function stepResults(a, b, whole) {
+  return [[a, '+', b], [a, '×', b], [a, '−', b], [b, '−', a], [a, '÷', b], [b, '÷', a]]
+    .map(([x, op, y]) => [x, op, y, applyOp(x, op, y, whole)]).filter(s => s[3]);
+}
+
+function stateKey(nums) { return nums.map(vText).sort().join(','); }
+function without(nums, i, j) { return nums.filter((_, k) => k !== i && k !== j); }
+
+// Steps that reach the target within budget steps, or null. useAll: the last number left must be the target;
+// otherwise any number on the way may be. dead holds states already shown to fail at this budget.
+function findSteps(nums, target, rules, budget, dead = new Set()) {
+  if (nums.some(v => vEq(v, target)) && (!rules.useAll || nums.length === 1)) return [];
+  if (budget === 0 || nums.length === 1 || dead.has(stateKey(nums))) return null;
+  for (const [i, j] of pairs(nums.length)) {
+    for (const s of stepResults(nums[i], nums[j], rules.whole)) {
+      const more = findSteps([...without(nums, i, j), s[3]], target, rules, budget - 1, dead);
+      if (more) return [s, ...more];
+    }
+  }
+  dead.add(stateKey(nums));
+  return null;
+}
+
+// Fewest steps first, so the solution shown after a miss is a short one.
+function shortestSteps(nums, target, rules) {
+  for (let b = rules.useAll ? nums.length - 1 : 1; b < nums.length; b++) {
+    const s = findSteps(nums, target, rules, b);
+    if (s) return s;
+  }
+  return null;
+}
+
+// Every whole value reachable: as the last number (useAll) or anywhere on the way. seen skips repeated states.
+function reachable(nums, rules, out = new Set(), seen = new Set()) {
+  const key = stateKey(nums);
+  if (seen.has(key)) return out;
+  seen.add(key);
+  if (!rules.useAll || nums.length === 1) nums.forEach(v => { if (v[1] === 1) out.add(v[0]); });
+  for (const [i, j] of pairs(nums.length)) {
+    stepResults(nums[i], nums[j], rules.whole).forEach(s => reachable([...without(nums, i, j), s[3]], rules, out, seen));
+  }
+  return out;
+}
+
+function tgtRules(mode, level) {
+  if (mode === 'D' && level >= CONFIG.tgt.countdownFrom) return { size: 6, useAll: false, whole: true, range: [101, 999] };
+  if (level >= CONFIG.tgt.kryptoFrom[mode]) return { size: 5, useAll: true, whole: false, range: [1, CONFIG.tgt.kryptoMax] };
+  return { size: 4, useAll: true, whole: false, fixed: 24 };
+}
+
+function tgtNumbers(rules, level, rng) {
+  if (rules.size === 6) {
+    const big = randInt(1, 2, rng);
+    return [...shuffle([...CONFIG.tgt.bigs], rng).slice(0, big), ...Array.from({ length: 6 - big }, () => randInt(1, 10, rng))];
+  }
+  const top = rules.size === 4 && level < 3 ? 9 : 13;
+  return Array.from({ length: rules.size }, () => randInt(1, top, rng));
+}
+
+function tgtItem(mode, level, rng) {
+  const rules = tgtRules(mode, level);
+  for (let tries = 0; tries < 50; tries++) {
+    const nums = tgtNumbers(rules, level, rng), vals = nums.map(n => [n, 1]);
+    const pool = rules.fixed ? [rules.fixed] : [...reachable(vals, rules)].filter(v => v >= rules.range[0] && v <= rules.range[1]);
+    const target = pool.length ? pick(pool, rng) : null, steps = target && shortestSteps(vals, [target, 1], rules);
+    if (steps) return { kind: 'tgt' + mode, nums, target, useAll: rules.useAll, whole: rules.whole, steps };
+  }
+  throw new Error('tgt: no solvable draw');
+}
+
+// Play state: chips (values left), sel (chip index), op, undo (earlier chip lists), log (steps done), msg.
+function tapChip(item, play, i) {
+  if (play.sel === null || play.op === null || play.sel === i) { play.sel = play.sel === i ? null : i; play.op = null; return; }
+  const a = play.chips[play.sel], b = play.chips[i], v = applyOp(a, play.op, b, item.whole);
+  if (!v) { play.msg = item.whole ? 'Steps must give whole numbers above 0.' : 'Steps must stay above 0.'; return; }
+  play.undo.push({ chips: play.chips, log: play.log });
+  play.log = [...play.log, [a, play.op, b, v]];
+  play.chips = [...without(play.chips, play.sel, i), v];
+  play.sel = null; play.op = null; play.msg = '';
+}
+
+function tgtDone(item, play) {
+  const hit = play.chips.some(v => v[0] === item.target && v[1] === 1);
+  if (hit && (!item.useAll || play.chips.length === 1)) return 'in';
+  if (play.chips.length === 1) play.msg = 'That makes ' + vText(play.chips[0]) + '. Undo, or give up.';
+  return null;
+}
+
+function tgtButton(label, cls, on) {
+  const b = document.createElement('button');
+  b.className = cls; b.textContent = label;
+  b.addEventListener('click', on);
+  return b;
+}
+
+function drawTarget(item, box, play) {
+  const redraw = f => () => { f(); if (tgtDone(item, play)) return answer('in'); drawTarget(item, box, play); };
+  const chips = makeDiv('tgtChips', ''), ops = makeDiv('tgtOps', ''), tools = makeDiv('tgtOps', '');
+  play.chips.forEach((v, i) => chips.appendChild(tgtButton(vText(v), 'tgtChip' + (play.sel === i ? ' on' : ''), redraw(() => tapChip(item, play, i)))));
+  ['+', '−', '×', '÷'].forEach(op => ops.appendChild(tgtButton(op, 'tgtOp' + (play.op === op ? ' on' : ''), redraw(() => { if (play.sel !== null) play.op = op; }))));
+  tools.append(tgtButton('Undo', 'tgtOp', redraw(() => { const u = play.undo.pop(); if (u) Object.assign(play, u, { sel: null, op: null, msg: '' }); })),
+    tgtButton('Give up', 'tgtOp', () => answer('give up')));
+  const log = makeDiv('tgtLog', ''), msg = makeDiv('tgtMsg', '');
+  log.textContent = play.log.map(stepText).join('   ');
+  msg.textContent = play.msg;
+  box.replaceChildren(log, chips, msg, ops, tools);
+}
+
+function renderTarget(item, el) {
+  quantShell(item, el, item.useAll ? 'Use every number once' : 'Use each number at most once', 'Make ' + item.target);
+  const box = makeDiv('tgtBox', '');
+  el.appendChild(box);
+  drawTarget(item, box, { chips: item.nums.map(n => [n, 1]), sel: null, op: null, undo: [], log: [], msg: '' });
+}
+
+registerDrill('tgt', {
+  skill: 'arith', op: 'quant', name: 'Target',
+  light: (level, rng) => tgtItem('L', level, rng),
+  deep: (level, rng) => tgtItem('D', level, rng),
+  timeline: () => [],
+  render: renderTarget,
+  answer: () => 'in',
+  options: () => null,
+  solve: item => ['Answer: one way, in ' + item.steps.length + (item.steps.length > 1 ? ' steps' : ' step'),
+    'Numbers: ' + item.nums.join(', ') + '.', ...item.steps.map(stepText)]
 });
 
 // ===== GIVEN =====
@@ -6928,6 +7091,7 @@ test('mpt: explain shows the sums, fits 60 / 36, no-break spaces in tuples', () 
 // ===== QUANT TESTS =====
 test('quant: every scene fuzzes clean in both modes, levels 1-15', () => {
   ['mul', 'pct', 'est', 'nsq', 'cnd', 'gam', 'mkt', 'odd', 'ev', 'fer', 'rng'].forEach(id => fuzzDrill(id, 300));
+  fuzzDrill('tgt', 60);
 });
 test('quant: numText is the canonical answer text', () => {
   [[37.5, '37.5'], [1702, '1702'], [4.666666, '4.67'], [-0.001, '0'], [0.1 + 0.2, '0.3']].forEach(([x, want]) => assert(numText(x) === want, x + ' -> ' + numText(x)));
@@ -7075,6 +7239,67 @@ test('estimation: a Range answer records calibration and explains the miss', () 
 test('estimation: old saves gain an empty calibration list', () => {
   const old = { v: 1, skill: { rot: 2 }, run: { rot: 0 }, streak: 0, history: [] };
   assert(Array.isArray(loadState({ getItem: () => JSON.stringify(old), setItem() {} }).cal), 'cal');
+});
+// Replays steps on the numbers: each operand must be on the table, each result exact.
+function replaySteps(nums, steps, whole) {
+  let table = nums.map(n => [n, 1]);
+  for (const [a, op, b, v] of steps) {
+    const i = table.findIndex(x => vEq(x, a)), j = table.findIndex((x, k) => k !== i && vEq(x, b));
+    assert(i >= 0 && j >= 0, 'operands on the table: ' + stepText([a, op, b, v]));
+    assert(vEq(applyOp(a, op, b, whole), v), 'step value ' + stepText([a, op, b, v]));
+    table = [...without(table, i, j), v];
+  }
+  return table;
+}
+test('target: solver finds 8 ÷ (3 − 8/3) and knows 1,1,1,1 has no 24', () => {
+  const r = { useAll: true, whole: false }, s = shortestSteps([[3, 1], [3, 1], [8, 1], [8, 1]], [24, 1], r);
+  const end = replaySteps([3, 3, 8, 8], s, false);
+  assert(end.length === 1 && vEq(end[0], [24, 1]), 'reaches 24');
+  assert(shortestSteps([[1, 1], [1, 1], [1, 1], [1, 1]], [24, 1], r) === null, 'no 24 from four 1s');
+  assert(applyOp([3, 1], '−', [8, 1], false) === null && applyOp([7, 1], '÷', [2, 1], true) === null, 'above 0, whole');
+});
+test('target: generated items are solvable by their own steps, both modes', () => {
+  const r = makeRng(83);
+  for (let i = 0; i < 40; i++) {
+    const mode = i % 2 ? 'D' : 'L', item = tgtItem(mode, 1 + (i * 7) % 15, r), end = replaySteps(item.nums, item.steps, item.whole);
+    assert(end.some(v => vEq(v, [item.target, 1])) && (!item.useAll || end.length === 1), 'solves ' + item.nums + ' -> ' + item.target);
+  }
+});
+test('target: Deep Countdown items generate fast enough for a phone', () => {
+  const r = makeRng(89), t0 = performance.now();
+  for (let i = 0; i < 10; i++) { const it = tgtItem('D', 12, r); assert(it.nums.length === 6 && it.target > 100, 'countdown'); }
+  const ms = (performance.now() - t0) / 10;
+  assert(ms < 400, 'average ' + Math.round(ms) + ' ms per item');
+});
+test('target: tapping 8 ÷ 3, 3 − 8/3, 8 ÷ 1/3 makes 24 and counts as right', () => {
+  app.state = defaultState(); startLight(); clearTimers();
+  const el = document.getElementById('lightItem');
+  app.item = { kind: 'tgtL', nums: [3, 3, 8, 8], target: 24, useAll: true, whole: false, steps: [] };
+  DRILLS.tgt.render(app.item, el, 'answer'); readyToAnswer();
+  const chip = i => el.querySelectorAll('.tgtChip')[i].click(), op = o => [...el.querySelectorAll('.tgtOp')].find(b => b.textContent === o).click();
+  chip(2); op('÷'); chip(0);
+  assert([...el.querySelectorAll('.tgtChip')].map(b => b.textContent).join() === '3,8,8/3', 'after 8 ÷ 3');
+  chip(0); op('−'); chip(1);
+  assert(el.querySelector('.tgtMsg').textContent === 'Steps must stay above 0.', '3 − 8 refused');
+  chip(2); // the refused step keeps 3 and − picked, so 3 − 8/3 needs one more tap
+  chip(0); op('÷'); chip(1);
+  assert(app.state.history.at(-1)[4] === 1, 'right');
+  clearTimers(); exitLight();
+});
+test('target: undo restores, a wrong last number asks to undo, give up shows the steps', () => {
+  app.state = defaultState(); startLight(); clearTimers();
+  const el = document.getElementById('lightItem');
+  app.item = { kind: 'tgtL', nums: [1, 2, 3, 4], target: 24, useAll: true, whole: false, steps: [[[1, 1], '×', [2, 1], [2, 1]]] };
+  DRILLS.tgt.render(app.item, el, 'answer'); readyToAnswer();
+  const chip = i => el.querySelectorAll('.tgtChip')[i].click(), tool = t => [...el.querySelectorAll('.tgtOp')].find(b => b.textContent === t).click();
+  chip(0); tool('+'); chip(1); chip(0); tool('+'); chip(1); chip(0); tool('+'); chip(1);
+  assert(el.querySelector('.tgtMsg').textContent === 'That makes 10. Undo, or give up.' && app.state.history.length === 0, 'wrong end waits');
+  tool('Undo');
+  assert(el.querySelectorAll('.tgtChip').length === 2, 'undo one step');
+  tool('Give up');
+  const lines = [...el.querySelectorAll('.qzSol div')].map(d => d.textContent);
+  assert(app.state.history.at(-1)[4] === 0 && lines[0] === 'Answer: one way, in 1 step' && lines[1] === 'Numbers: 1, 2, 3, 4.' && lines[2] === '1 × 2 = 2', lines.join('|'));
+  clearTimers(); exitLight();
 });
 test('quant: Light gives quant about five sixths of play', () => {
   const r = makeRng(53); let rot = 0;
