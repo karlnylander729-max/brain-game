@@ -200,6 +200,16 @@ section.active { display: flex; flex-direction: column; }
 .mtx::before { left: 0; border-right: 0; } .mtx::after { right: 0; border-left: 0; }
 .mtx .c0 { color: #15803d; } .mtx .c1 { color: #a21caf; } .mtx .c2 { color: #0e7490; }
 #deepItem .mtx .c0 { color: #4ade80; } #deepItem .mtx .c1 { color: #e879f9; } #deepItem .mtx .c2 { color: #22d3ee; }
+.qz { height: 100%; box-sizing: border-box; display: flex; flex-direction: column; align-items: center; padding-bottom: var(--bottom); background: #f5f9ff; color: #1a3050; --tile: #dfe8f7; }
+.qz.dark { background: #1d2333; color: #e6e9f2; --tile: #2a3247; }
+.qzBody { font-size: 22px; font-weight: 700; text-align: center; padding: 8px 18px; margin: auto 0; line-height: 1.35; }
+.cndL .qzBody, .cndD .qzBody, .gamL .qzBody, .gamD .qzBody, .mktL .qzBody, .mktD .qzBody { font-size: 18px; }
+.kpShow { font-size: 30px; font-weight: 800; min-height: 40px; text-align: center; padding: 4px 0; }
+.kpShow.right { color: #2ea043; } .kpShow s { opacity: .5; font-weight: 600; }
+.kpGrid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; width: 100%; box-sizing: border-box; padding: 6px 12px; }
+.kpGrid button { min-height: 48px; border: 0; border-radius: 10px; background: var(--tile); color: inherit; font: inherit; font-size: 22px; font-weight: 700; }
+.kpGrid button[data-key="ok"] { grid-column: span 2; background: #3d5bd9; color: #fff; }
+.qz.dark { overflow: hidden; } .qz.dark .kpGrid button { min-height: 40px; } .qz.dark .kpShow { font-size: 26px; min-height: 34px; } /* Deep: Next sits under the keypad at 320x568 */
 </style>
 </head>
 <body>
@@ -270,8 +280,8 @@ function makeRng(seed) {
 
 // ===== DRILLS =====
 // DRILLS[id] = {
-//   op: 'transform'|'rules'|'odds'|'memory'|'backward',
-//   skill: 'rotation'|'tracking'|'matrices'|'rules'|'odds'|'memory'|'backward',  // Light mix and Deep skill menu group by it
+//   op: 'transform'|'rules'|'odds'|'memory'|'backward'|'quant',
+//   skill: 'rotation'|'arith'|'odds'|'value'|'market'|'rules'|'memory'|'backward',  // Light mix and Deep skill menu group by it
 //   hidden: true,                            // optional: kept in code and state, left out of Light, menus and the progress line
 //   name: 'Rotation',                       // menu label; progress line uses name.toLowerCase()
 //   light(level, rng) -> item,  deep(level, rng) -> item,
@@ -289,15 +299,18 @@ const OPERATIONS = [
   { id: 'rules', name: 'Rules', drills: ['mat', 'ser'] },
   { id: 'odds', name: 'Odds', drills: ['odd', 'ev'] },
   { id: 'memory', name: 'Memory', drills: ['seq', 'crd'] },
-  { id: 'backward', name: 'Backward', drills: ['nim', 'rch'] }
+  { id: 'backward', name: 'Backward', drills: ['nim', 'rch'] },
+  { id: 'quant', name: 'Quant', drills: ['mul', 'pct', 'est', 'nsq', 'cnd', 'gam', 'mkt'] }
 ];
 const ALL_DRILL_IDS = OPERATIONS.flatMap(o => o.drills);
 
 function registerDrill(id, def) { DRILLS[id] = def; }
 
 // Ruling CC: hidden drills keep their old operation as skill, so un-hiding is flipping the flag.
-const SKILLS = [{ id: 'rotation', name: 'Rotation' }, { id: 'tracking', name: 'Tracking' }, { id: 'matrices', name: 'Matrices' },
-  { id: 'rules', name: 'Rules' }, { id: 'odds', name: 'Odds' }, { id: 'memory', name: 'Memory' }, { id: 'backward', name: 'Backward' }];
+// v4: all spatial scenes share Rotation; four quant skills fill the rest of the Light mix.
+const SKILLS = [{ id: 'rotation', name: 'Rotation' }, { id: 'arith', name: 'Mental math' }, { id: 'odds', name: 'Odds' },
+  { id: 'value', name: 'Value' }, { id: 'market', name: 'Market' },
+  { id: 'rules', name: 'Rules' }, { id: 'memory', name: 'Memory' }, { id: 'backward', name: 'Backward' }];
 
 // Registered, not hidden, with a skill; in OPERATIONS order. Ids not registered yet are simply absent.
 function visibleDrills() {
@@ -823,7 +836,7 @@ function boardSquares(n) {
 function explainTracking(item) { return 'It ended on ' + squareName(item.end) + '.'; }
 
 registerDrill('trk', {
-  op: 'transform', skill: 'tracking', name: 'Dot',
+  op: 'transform', skill: 'rotation', name: 'Dot',
   light: makeLightTracking, deep: makeDeepTracking,
   timeline: trackingTimeline,
   render: renderTracking,
@@ -1331,7 +1344,7 @@ function explainOdds(item) {
 }
 
 registerDrill('odd', {
-  hidden: true, skill: 'odds', op: 'odds', name: 'Odds',
+  skill: 'odds', op: 'odds', name: 'Odds',
   light: makeOddsLight,
   deep: makeOddsDeep,
   timeline: () => [],
@@ -1407,7 +1420,7 @@ function explainValue(item) {
 }
 
 registerDrill('ev', {
-  hidden: true, skill: 'odds', op: 'odds', name: 'Value',
+  skill: 'value', op: 'odds', name: 'Value',
   light: makeEvLight,
   deep: makeEvDeep,
   timeline: () => [],
@@ -2457,7 +2470,7 @@ function chessName(item) { const t = item.types[item.ask]; return t[0].toUpperCa
 function explainChess(item) { return chessName(item) + ' ended on ' + squareName(item.end) + '.'; }
 
 registerDrill('chs', {
-  op: 'transform', skill: 'tracking', name: 'Chess',
+  op: 'transform', skill: 'rotation', name: 'Chess',
   light: makeLightChess, deep: makeDeepChess,
   timeline: chessTimeline,
   render: renderChess,
@@ -2647,7 +2660,7 @@ function explainCube(item) {
 }
 
 registerDrill('cub', {
-  op: 'transform', skill: 'tracking', name: 'Cube',
+  op: 'transform', skill: 'rotation', name: 'Cube',
   light: makeLightCube, deep: makeDeepCube,
   timeline: cubeTimeline,
   render: renderCube,
@@ -3157,7 +3170,7 @@ function explainMfw(item) {
 }
 
 registerDrill('mfw', {
-  op: 'transform', skill: 'matrices', name: 'Matrix forward',
+  op: 'transform', skill: 'rotation', name: 'Matrix forward',
   light: (level, rng) => makeMfw('mfwL', level, rng),
   deep: (level, rng) => makeMfw('mfwD', level, rng),
   timeline: () => [],
@@ -3231,7 +3244,7 @@ function explainMbw(item) {
 }
 
 registerDrill('mbw', {
-  op: 'transform', skill: 'matrices', name: 'Matrix backward',
+  op: 'transform', skill: 'rotation', name: 'Matrix backward',
   light: (level, rng) => makeMbw('mbwL', level, rng),
   deep: (level, rng) => makeMbw('mbwD', level, rng),
   timeline: () => [],
@@ -3356,7 +3369,7 @@ function markMpt(el, item) {
 }
 
 registerDrill('mpt', {
-  op: 'transform', skill: 'matrices', name: 'Matrix point',
+  op: 'transform', skill: 'rotation', name: 'Matrix point',
   light: (level, rng) => makeMpt('mptL', level, rng),
   deep: (level, rng) => makeMpt('mptD', level, rng),
   timeline: () => [],
@@ -3482,7 +3495,7 @@ function explainMco(item) {
 }
 
 registerDrill('mco', {
-  op: 'transform', skill: 'matrices', name: 'Matrix compose',
+  op: 'transform', skill: 'rotation', name: 'Matrix compose',
   light: (level, rng) => makeMco('mcoL', level, rng),
   deep: (level, rng) => makeMco('mcoD', level, rng),
   timeline: () => [],
@@ -3491,6 +3504,405 @@ registerDrill('mco', {
   options: item => item.options,
   explain: explainMco
 });
+
+// ===== QUANT KIT =====
+// Shared by the quant scenes (Mental math, Odds 'Given', Value 'Fair price', Market): number text, layout, keypad.
+function randInt(lo, hi, rng) { return lo + Math.floor(rng() * (hi - lo + 1)); }
+
+// Canonical answer text: at most dp decimals, no trailing zeros ('37.50' -> '37.5', '-0' -> '0').
+function numText(x, dp = 2) {
+  const v = Number(x.toFixed(dp));
+  return String(Object.is(v, -0) ? 0 : v);
+}
+
+// Header line (.q: Deep puts the reason there), then the problem text in its own block.
+function quantShell(item, el, head, body) {
+  el.innerHTML = '';
+  el.className = 'qz ' + item.kind + (item.kind.endsWith('D') ? ' dark' : '');
+  const q = makeDiv('q', ''), b = makeDiv('qzBody', '');
+  q.textContent = head; b.textContent = body;
+  el.append(q, b);
+}
+
+function quantChoices(item, el) {
+  const opts = makeDiv('matOpts', '');
+  item.options.forEach(o => opts.appendChild(makeAnswerButton(o, o, 'matOpt oddOpt')));
+  el.appendChild(opts);
+}
+
+const KEYPAD_KEYS = ['7', '8', '9', '4', '5', '6', '1', '2', '3', '-', '0', '.', 'del', 'ok'];
+
+// Typed answer. The keys carry data-key, not data-answer, so a tap on them never answers by itself.
+// OK hands the entry as numText to send (default answer()); answer() locks, so a second OK does nothing.
+function keypad(el, send = v => answer(v)) {
+  const show = makeDiv('kpShow', ''), grid = makeDiv('kpGrid', '');
+  let entry = '';
+  const press = k => {
+    if (k === 'ok') return entry && Number.isFinite(Number(entry)) && send(numText(Number(entry), 6));
+    if (k === 'del') entry = entry.slice(0, -1);
+    else if (k === '-') entry = entry.startsWith('-') ? entry.slice(1) : '-' + entry;
+    else if (entry.length < 9 && !(k === '.' && entry.includes('.'))) entry += k;
+    show.textContent = entry;
+  };
+  KEYPAD_KEYS.forEach(k => {
+    const b = document.createElement('button');
+    b.dataset.key = k; b.textContent = k === 'del' ? '⌫' : k === 'ok' ? 'OK' : k;
+    b.addEventListener('click', () => press(k));
+    grid.appendChild(b);
+  });
+  el.append(show, grid);
+}
+
+// After a miss: the typed entry struck through, then the right value.
+function keypadMiss(el, right) {
+  const show = el.querySelector('.kpShow'), typed = document.createElement('s');
+  typed.textContent = show.textContent;
+  show.textContent = ' ' + right;
+  show.prepend(typed);
+  show.classList.add('right');
+}
+
+// ===== MENTAL MATH =====
+// Arithmetic: times and divide, typed. Level sets the operand ranges; from decFrom one operand may carry a decimal.
+CONFIG.mul = {
+  ranges: lvl => lvl < 3 ? [[3, 9], [12, 99]] : lvl < 6 ? [[12, 30], [12, 99]] : lvl < 10 ? [[12, 99], [12, 99]] : [[101, 999], [12, 99]],
+  decFrom: 8,
+  divShare: 0.35
+};
+
+function mulItem(mode, level, rng) {
+  const [ra, rb] = CONFIG.mul.ranges(level), a = randInt(...ra, rng), b = randInt(...rb, rng);
+  const dp = level >= CONFIG.mul.decFrom && rng() < 0.5 ? 1 : 0, scale = 10 ** dp;
+  if (rng() < CONFIG.mul.divShare) {
+    return { kind: 'mul' + mode, text: numText(a * b / scale) + ' ÷ ' + numText(a / scale), answer: String(b) };
+  }
+  return { kind: 'mul' + mode, text: numText(a / scale) + ' × ' + b, answer: numText(a * b / scale) };
+}
+
+registerDrill('mul', {
+  skill: 'arith', op: 'quant', name: 'Arithmetic',
+  light: (level, rng) => mulItem('L', level, rng),
+  deep: (level, rng) => mulItem('D', level, rng),
+  timeline: () => [],
+  render: (item, el) => { quantShell(item, el, 'Type the answer', item.text); keypad(el); },
+  answer: item => item.answer,
+  options: () => null,
+  markMiss: (el, item) => keypadMiss(el, item.answer),
+  explain: item => item.text + ' = ' + item.answer
+});
+
+// Percent: a fraction as a percent (1 decimal), or a percent of a number. Harder denominators with level.
+CONFIG.pct = {
+  dens: lvl => lvl < 3 ? [2, 4, 5, 8, 10, 20, 25] : lvl < 6 ? [3, 6, 8, 12, 16, 40] : [7, 9, 11, 12, 15, 16, 24],
+  ofFrom: 3,
+  ofShare: 0.4,
+  ofPcts: [2.5, 5, 12.5, 15, 17.5, 35, 45, 62.5, 85],
+  ofBases: [40, 80, 120, 160, 240, 360, 480, 640]
+};
+
+function pctItem(mode, level, rng) {
+  const c = CONFIG.pct, kind = 'pct' + mode;
+  if (level >= c.ofFrom && rng() < c.ofShare) {
+    const p = pick(c.ofPcts, rng), base = pick(c.ofBases, rng);
+    return { kind, text: p + '% of ' + base, answer: numText(p * base / 100) };
+  }
+  const d = pick(c.dens(level), rng);
+  let n = randInt(1, d - 1, rng);
+  while (gcd(n, d) !== 1) n = randInt(1, d - 1, rng);
+  return { kind, text: n + '/' + d + ' as a percent', answer: numText(100 * n / d, 1) };
+}
+
+registerDrill('pct', {
+  skill: 'arith', op: 'quant', name: 'Percent',
+  light: (level, rng) => pctItem('L', level, rng),
+  deep: (level, rng) => pctItem('D', level, rng),
+  timeline: () => [],
+  render: (item, el) => { quantShell(item, el, 'Type the answer · 1 decimal', item.text); keypad(el); },
+  answer: item => item.answer,
+  options: () => null,
+  markMiss: (el, item) => keypadMiss(el, item.answer),
+  explain: item => item.text + ' = ' + item.answer
+});
+
+// Estimate: pick the closest of four values, each a factor `step` from the next. Deep steps are finer.
+CONFIG.est = { step: { L: 1.35, D: 1.15 }, rootFrom: 4, growFrom: 7 };
+
+// A number with two significant figures, from 0.11 to 990.
+function estNumber(rng) { return Number((randInt(11, 99, rng) * 10 ** randInt(-2, 1, rng)).toPrecision(2)); }
+
+function estExpr(level, rng) {
+  const a = estNumber(rng), b = estNumber(rng), c = estNumber(rng), r = rng();
+  if (level >= CONFIG.est.growFrom && r < 0.25) {
+    const pct = randInt(3, 12, rng), n = randInt(5, 20, rng);
+    return { text: '£100 grows ' + pct + '% a year for ' + n + ' years', value: 100 * (1 + pct / 100) ** n };
+  }
+  if (level >= CONFIG.est.rootFrom && r < 0.45) {
+    const x = randInt(20, 9999, rng);
+    return { text: '√' + x + ' × ' + a, value: Math.sqrt(x) * a };
+  }
+  if (r < 0.7) return { text: a + ' × ' + b, value: a * b };
+  return { text: a + ' × ' + b + ' ÷ ' + c, value: a * b / c };
+}
+
+function sig3(x) { return String(Number(x.toPrecision(3))); }
+
+function estItem(mode, level, rng) {
+  const e = estExpr(level, rng), step = CONFIG.est.step[mode], k = randInt(0, 3, rng);
+  const options = [0, 1, 2, 3].map(i => sig3(e.value * step ** (i - k)));
+  return { kind: 'est' + mode, text: e.text, value: e.value, options, answer: options[k] };
+}
+
+registerDrill('est', {
+  skill: 'arith', op: 'quant', name: 'Estimate',
+  light: (level, rng) => estItem('L', level, rng),
+  deep: (level, rng) => estItem('D', level, rng),
+  timeline: () => [],
+  render: (item, el) => { quantShell(item, el, 'Closest value?', item.text); quantChoices(item, el); },
+  answer: item => item.answer,
+  options: item => item.options,
+  explain: item => 'Exact: ' + sig3(item.value)
+});
+
+// Number series: five terms, type the sixth. Each rule draws its own numbers; level opens more rules.
+const NSQ_RULES = [
+  { from: 1, make: rng => { const a = randInt(1, 60, rng), d = randInt(3, 19, rng) * (rng() < 0.3 ? -1 : 1);
+    return { at: i => a + d * i, why: 'Add ' + d + ' each time.' }; } },
+  { from: 1, make: rng => { const a = randInt(1, 6, rng), r = randInt(2, 3, rng);
+    return { at: i => a * r ** i, why: 'Times ' + r + ' each time.' }; } },
+  { from: 4, make: rng => { const a = randInt(1, 30, rng), d = randInt(1, 9, rng), e = randInt(2, 5, rng);
+    return { at: i => a + d * i + e * i * (i - 1) / 2, why: 'The gap grows by ' + e + ' each time.' }; } },
+  { from: 4, make: rng => { const a = randInt(1, 20, rng), b = randInt(40, 90, rng), d = randInt(2, 9, rng), e = -randInt(2, 9, rng);
+    return { at: i => i % 2 ? b + e * (i >> 1) : a + d * (i >> 1), why: 'Two series take turns.' }; } },
+  { from: 7, make: rng => { const f = [randInt(1, 9, rng), randInt(1, 9, rng)];
+    for (let i = 2; i < 6; i++) f.push(f[i - 1] + f[i - 2]);
+    return { at: i => f[i], why: 'Each term is the sum of the two before.' }; } },
+  { from: 7, make: rng => { const r = randInt(2, 3, rng), c = randInt(1, 5, rng) * (rng() < 0.5 ? -1 : 1), f = [randInt(2, 9, rng)];
+    for (let i = 1; i < 6; i++) f.push(f[i - 1] * r + c);
+    return { at: i => f[i], why: 'Times ' + r + ', then ' + (c < 0 ? 'minus ' + -c : 'plus ' + c) + '.' }; } }
+];
+
+function nsqItem(mode, level, rng) {
+  const rule = pick(NSQ_RULES.filter(r => r.from <= level), rng).make(rng), terms = [0, 1, 2, 3, 4, 5].map(rule.at);
+  return { kind: 'nsq' + mode, terms: terms.slice(0, 5), answer: String(terms[5]), why: rule.why };
+}
+
+registerDrill('nsq', {
+  skill: 'arith', op: 'quant', name: 'Number series',
+  light: (level, rng) => nsqItem('L', level, rng),
+  deep: (level, rng) => nsqItem('D', level, rng),
+  timeline: () => [],
+  render: (item, el) => { quantShell(item, el, 'What comes next?', item.terms.join(', ') + ', ?'); keypad(el); },
+  answer: item => item.answer,
+  options: () => null,
+  markMiss: (el, item) => keypadMiss(el, item.answer),
+  explain: item => item.why
+});
+
+// ===== GIVEN =====
+// Conditional chance, four choices. The wrong choices are the classic slips: ignore the condition (P(E)),
+// take the joint chance (P(E and C)), or flip it (P(C | E)). Bayes items (from bayesFrom) use percents.
+CONFIG.cnd = { bayesFrom: 4, bayesShare: 0.4 };
+
+const CND_SPACES = [
+  { intro: 'Two dice are rolled.', outcomes: () => diceRolls(2),
+    given: [
+      ...[1, 2, 3, 4, 5, 6].map(f => ['at least one is a ' + f, r => r.includes(f)]),
+      ...[4, 5, 6, 7, 8, 9, 10].map(k => ['the sum is ' + k, r => r[0] + r[1] === k]),
+      ...[7, 8, 9, 10].map(k => ['the sum is at least ' + k, r => r[0] + r[1] >= k]),
+      ['the dice differ', r => r[0] !== r[1]], ['the sum is even', r => (r[0] + r[1]) % 2 === 0]],
+    events: [
+      ...[1, 6].map(f => ['both are ' + f + 's', r => r[0] === f && r[1] === f]),
+      ['they show a double', r => r[0] === r[1]],
+      ...[6, 8, 10].map(k => ['the sum is at least ' + k, r => r[0] + r[1] >= k]),
+      ...[2, 6].map(f => ['at least one is a ' + f, r => r.includes(f)]),
+      ...[4, 5].map(m => ['the larger is at least ' + m, r => Math.max(...r) >= m])] },
+  { intro: 'Four fair coins are flipped.', outcomes: () => coinFlips(4),
+    given: [
+      ...[1, 2, 3].map(k => ['at least ' + k + ' are heads', f => f.filter(Boolean).length >= k]),
+      ['the first is heads', f => f[0]], ['exactly 2 are heads', f => f.filter(Boolean).length === 2]],
+    events: [
+      ['all are heads', f => f.every(Boolean)], ['the last is heads', f => f[3]],
+      ...[2, 3].map(j => ['at least ' + j + ' are heads', f => f.filter(Boolean).length >= j]),
+      ['the first two match', f => f[0] === f[1]]] }
+];
+
+const fracText = p => p[0] + '/' + p[1];
+
+// Fills up to four distinct choices with near neighbours of the answer (same denominator), when slips coincide.
+function fourFracs(answer, slips) {
+  const out = [fracText(answer)];
+  const add = p => { if (p[0] > 0 && p[0] < p[1] && !out.includes(fracText(p)) && out.length < 4) out.push(fracText(p)); };
+  slips.forEach(add);
+  for (let d = 1; out.length < 4; d++) { add(frac(answer[0] * 12 + d, answer[1] * 12)); add(frac(answer[0] * 12 - d, answer[1] * 12)); }
+  return out;
+}
+
+function cndCountItem(mode, rng) {
+  for (let tries = 0; tries < 500; tries++) {
+    const s = pick(CND_SPACES, rng), [gText, g] = pick(s.given, rng), [eText, e] = pick(s.events, rng), all = s.outcomes();
+    const inG = all.filter(g), both = inG.filter(e), inE = all.filter(e);
+    if (!both.length || both.length === inG.length || both.length * all.length === inE.length * inG.length) continue;
+    const p = frac(both.length, inG.length);
+    const slips = [frac(inE.length, all.length), frac(both.length, all.length), frac(both.length, inE.length)];
+    return { kind: 'cnd' + mode, text: s.intro + ' Given ' + gText + ', what is the chance ' + eText + '?',
+      options: shuffle(fourFracs(p, slips), rng), answer: fracText(p), why: 'Of the ' + inG.length + ' outcomes allowed, ' + both.length + ' fit.' };
+  }
+  throw new Error('cnd: no dependent pair found');
+}
+
+function cndBayesItem(mode, rng) {
+  for (let tries = 0; tries < 200; tries++) {
+    const prev = pick([1, 2, 5, 10, 20], rng) / 100, sens = pick([80, 90, 95, 99], rng) / 100, fpr = pick([1, 5, 10, 20], rng) / 100;
+    const tp = prev * sens, fp = (1 - prev) * fpr, post = tp / (tp + fp);
+    const vals = [post, sens, tp + fp, tp].map(v => Math.round(100 * v) + '%');
+    if (new Set(vals).size < 4) continue;
+    return { kind: 'cnd' + mode, options: shuffle([...vals], rng), answer: vals[0],
+      text: numText(100 * prev) + '% of people have a disease. The test finds ' + numText(100 * sens) + '% of cases. It wrongly flags ' +
+        numText(100 * fpr) + '% of healthy people. You test positive. What is the chance you have it?',
+      why: 'Per 10,000: ' + Math.round(1e4 * tp) + ' true vs ' + Math.round(1e4 * fp) + ' false positives.' };
+  }
+  throw new Error('cnd: no distinct Bayes item');
+}
+
+function cndItem(mode, level, rng) {
+  return level >= CONFIG.cnd.bayesFrom && rng() < CONFIG.cnd.bayesShare ? cndBayesItem(mode, rng) : cndCountItem(mode, rng);
+}
+
+registerDrill('cnd', {
+  skill: 'odds', op: 'quant', name: 'Given',
+  light: (level, rng) => cndItem('L', level, rng),
+  deep: (level, rng) => cndItem('D', level, rng),
+  timeline: () => [],
+  render: (item, el) => { quantShell(item, el, 'Conditional chance', item.text); quantChoices(item, el); },
+  answer: item => item.answer,
+  options: item => item.options,
+  explain: item => item.why
+});
+
+// ===== FAIR PRICE =====
+// Game values with exact formulas. Each game gives { text, value, slips, why, pct? }; slips are tempting wrong values.
+function dieMean(s) { return (s + 1) / 2; }
+
+// Value of a die game with n re-rolls: re-roll whenever the roll is below the value of the game left.
+function rerollValue(s, n) {
+  let v = dieMean(s);
+  for (let k = 0; k < n; k++) {
+    let t = 0;
+    for (let i = 1; i <= s; i++) t += Math.max(i, v);
+    v = t / s;
+  }
+  return v;
+}
+
+// E[max of k s-sided dice] = sum over m of P(max >= m); E[min] likewise with P(min >= m).
+function maxValue(s, k) { let t = 0; for (let m = 1; m <= s; m++) t += 1 - ((m - 1) / s) ** k; return t; }
+function minValue(s, k) { let t = 0; for (let m = 1; m <= s; m++) t += ((s - m + 1) / s) ** k; return t; }
+function harmonic(n) { let t = 0; for (let i = 1; i <= n; i++) t += 1 / i; return t; }
+
+// Chance to reach N before 0 from i, betting 1 a time with win chance p.
+function ruinWin(i, N, p) {
+  if (p === 0.5) return i / N;
+  const r = (1 - p) / p;
+  return (1 - r ** i) / (1 - r ** N);
+}
+
+const GAMES = [
+  { from: 1, make: rng => { const s = pick([6, 6, 4, 8, 10], rng), n = randInt(1, 3, rng);
+    return { text: 'Roll a ' + s + '-sided die and get its number in £. You may re-roll up to ' + n + (n > 1 ? ' times' : ' time') + '. The last roll counts. Fair price?',
+      value: rerollValue(s, n), slips: [rerollValue(s, n - 1), rerollValue(s, n + 1), s - 0.5], why: 'Re-roll when below ' + numText(rerollValue(s, n - 1)) + ', the value of the rest.' }; } },
+  { from: 1, make: rng => { const s = pick([4, 6, 8], rng), k = randInt(2, 3, rng);
+    return { text: 'Roll ' + k + ' ' + s + '-sided dice. You get the highest number in £. Fair price?',
+      value: maxValue(s, k), slips: [minValue(s, k), dieMean(s), maxValue(s, k + 1)], why: 'E[max] is the sum of P(max ≥ m).' }; } },
+  { from: 1, make: rng => { const s = pick([4, 6, 8, 10], rng);
+    return { text: 'Roll a ' + s + '-sided die. You get its number squared in £. Fair price?',
+      value: (s + 1) * (2 * s + 1) / 6, slips: [dieMean(s) ** 2, s * s / 2, s * (s + 1) / 3], why: 'E[X²] = (s+1)(2s+1)/6, more than (E[X])².' }; } },
+  { from: 3, make: rng => { const k = randInt(2, 5, rng);
+    return { text: 'Flip a fair coin until you get ' + k + ' heads in a row. Average number of flips?',
+      value: 2 ** (k + 1) - 2, slips: [2 ** k, 2 ** (k + 1), 2 ** (k + 1) - 1], why: '2^' + (k + 1) + ' − 2 = ' + (2 ** (k + 1) - 2) + ' flips.' }; } },
+  { from: 5, make: rng => { const s = pick([4, 6, 8, 10], rng);
+    return { text: 'Roll a ' + s + '-sided die until every face has shown. Average number of rolls?',
+      value: s * harmonic(s), slips: [s * Math.log(s), 2 * s, s * harmonic(s - 1)], why: 'Each new face takes s/(faces left) rolls.' }; } },
+  { from: 7, make: rng => { const N = randInt(5, 10, rng), i = randInt(2, N - 2, rng), p = pick([0.4, 0.45, 0.55, 0.6], rng);
+    return { text: 'You have £' + i + '. Each bet wins £1 with chance ' + p + ', else loses £1. You stop at £0 or £' + N + '. Chance to reach £' + N + '?',
+      value: 100 * ruinWin(i, N, p), slips: [100 * i / N, 100 * ruinWin(i, N, 1 - p), 100 * p], pct: true, why: 'r = q/p; P = (1 − r^' + i + ')/(1 − r^' + N + ').' }; } },
+  { from: 7, make: rng => { const N = randInt(6, 12, rng), i = randInt(2, N - 2, rng);
+    return { text: 'You have £' + i + '. Each bet wins or loses £1 at even odds. You stop at £0 or £' + N + '. Average number of bets?',
+      value: i * (N - i), slips: [N, i * N, (N - i) * N / 2], why: 'A fair game lasts ' + i + '·' + (N - i) + ' = ' + i * (N - i) + ' bets on average.' }; } }
+];
+
+function gameText(v, pct) { return pct ? numText(v, 1) + '%' : numText(v); }
+
+function gamItem(mode, level, rng) {
+  for (let tries = 0; tries < 200; tries++) {
+    const g = pick(GAMES.filter(x => x.from <= level), rng).make(rng);
+    const vals = [g.value, ...g.slips].map(v => gameText(v, g.pct));
+    if (new Set(vals).size < 4) continue;
+    return { kind: 'gam' + mode, text: g.text, options: shuffle(vals, rng).slice(), answer: gameText(g.value, g.pct), why: g.why };
+  }
+  throw new Error('gam: no game with distinct choices');
+}
+
+registerDrill('gam', {
+  skill: 'value', op: 'quant', name: 'Fair price',
+  light: (level, rng) => gamItem('L', level, rng),
+  deep: (level, rng) => gamItem('D', level, rng),
+  timeline: () => [],
+  render: (item, el) => { quantShell(item, el, 'Fair value', item.text); quantChoices(item, el); },
+  answer: item => item.answer,
+  options: item => item.options,
+  explain: item => item.why
+});
+
+// ===== MARKET =====
+// Quote a bid; the ask is bid + width. The quote passes when it holds the fair value (bid <= fair <= ask).
+// The keypad sends 'in' for a passing quote, else the bid itself, so answer() keeps its plain string check.
+CONFIG.mkt = { width: (mode, lvl) => mode === 'L' ? (lvl < 4 ? 4 : lvl < 8 ? 2 : 1) : (lvl < 10 ? 1 : 0.5), revealFrom: 3 };
+
+function sum(xs) { return xs.reduce((a, b) => a + b, 0); }
+
+const MARKETS = [
+  { from: 1, make: (rng, reveal) => { const n = randInt(3, 10, rng), shown = reveal ? Array.from({ length: randInt(1, n - 1, rng) }, () => randInt(1, 6, rng)) : [];
+    return { text: 'The sum of ' + n + ' dice.' + (shown.length ? ' Shown so far: ' + shown.join(', ') + '.' : ''),
+      fair: sum(shown) + 3.5 * (n - shown.length), why: 'Each hidden die adds 3.5.' }; } },
+  { from: 1, make: (rng, reveal) => { const N = pick([10, 13, 20], rng), k = randInt(3, 6, rng), deck = shuffle(Array.from({ length: N }, (_, i) => i + 1), rng);
+    const seen = reveal ? deck.slice(0, randInt(1, k - 1, rng)) : [];
+    return { text: 'The sum of ' + k + ' cards drawn from cards 1–' + N + ', no repeats.' + (seen.length ? ' Seen so far: ' + seen.join(', ') + '.' : ''),
+      fair: sum(seen) + (k - seen.length) * (N * (N + 1) / 2 - sum(seen)) / (N - seen.length), why: 'Each hidden card averages the cards left.' }; } },
+  { from: 4, make: rng => { const n = randInt(2, 3, rng);
+    return { text: 'The product of ' + n + ' dice.', fair: 3.5 ** n, why: 'Independent: E[XY] = E[X]·E[Y].' }; } },
+  { from: 6, make: rng => { const k = randInt(2, 3, rng);
+    return { text: 'The highest of ' + k + ' dice.', fair: maxValue(6, k), why: 'E[max] is the sum of P(max ≥ m).' }; } },
+  { from: 8, make: rng => { const n = randInt(4, 10, rng);
+    return { text: 'Flip ' + n + ' coins. Heads times tails.', fair: n * (n - 1) / 4, why: 'E[H·T] = n(n − 1)/4.' }; } }
+];
+
+function mktItem(mode, level, rng) {
+  const m = pick(MARKETS.filter(x => x.from <= level), rng).make(rng, level >= CONFIG.mkt.revealFrom && rng() < 0.6);
+  return { kind: 'mkt' + mode, text: m.text, fair: m.fair, width: CONFIG.mkt.width(mode, level), why: m.why };
+}
+
+function quoteHolds(item, bid) { return Number(bid) <= item.fair + 1e-9 && item.fair <= Number(bid) + item.width + 1e-9; }
+
+function renderMarket(item, el) {
+  quantShell(item, el, 'Make a market · width ' + item.width, item.text);
+  const hint = makeDiv('evHint', '');
+  hint.textContent = 'Type your bid. Your ask is bid + ' + item.width + '. The quote must hold the fair value.';
+  el.appendChild(hint);
+  keypad(el, v => answer(quoteHolds(item, v) ? 'in' : v));
+}
+
+registerDrill('mkt', {
+  skill: 'market', op: 'quant', name: 'Market',
+  light: (level, rng) => mktItem('L', level, rng),
+  deep: (level, rng) => mktItem('D', level, rng),
+  timeline: () => [],
+  render: renderMarket,
+  answer: () => 'in',
+  options: () => null,
+  markMiss: (el, item) => keypadMiss(el, 'fair ' + numText(item.fair, 3)),
+  explain: item => 'Fair ' + numText(item.fair, 3) + '. ' + item.why
+});
+
 
 // ===== STATE =====
 // Progress and the staircase use Light answers only: Deep runs at skill + 5 and takes ~10x longer.
@@ -4343,13 +4755,14 @@ test('light: tracking answer screen has a button per square', () => {
 
 test('deep: a set is 3 puzzles then a summary', () => {
   app.state = defaultState(); startDeep('rotation');
-  for (let k = 0; k < 3; k++) { readyToAnswer(); answer(String(app.item.answer)); nextDeepItem(); }
+  // Rotation now holds the timed scenes too (trk, chs, cub): skip their flash, render the answer screen, then answer.
+  for (let k = 0; k < 3; k++) { clearTimers(); becomeAnswerable(app.item, deepEl()); readyToAnswer(); answer(correctAnswer(app.item)); nextDeepItem(); }
   assert(document.querySelector('#deep .summary'), 'summary shown');
   assert(app.state.history.filter(h => h[2] === 'D').length === 3, '3 records');
   document.getElementById('deepDone').click();
-  const skillMenuOpen = () => document.getElementById('deepPick').classList.contains('active') && document.querySelectorAll('#deepPick [data-skill]').length === 3;
+  const skillMenuOpen = () => document.getElementById('deepPick').classList.contains('active') && document.querySelectorAll('#deepPick [data-skill]').length === 5;
   assert(skillMenuOpen(), 'Done opens the skill menu');
-  startDeep('tracking');
+  startDeep('market');
   exitDeep(); // what #deepExit runs (listeners are not wired in test mode)
   assert(skillMenuOpen() && !app.deepSet, '✕ opens the skill menu');
 });
@@ -4419,7 +4832,7 @@ function fuzzDrill(id, draws) {
 }
 
 test('registry: transform drills registered, five operations', () => {
-  assert(OPERATIONS.map(o => o.name).join() === 'Transform,Rules,Odds,Memory,Backward', 'ops');
+  assert(OPERATIONS.map(o => o.name).join() === 'Transform,Rules,Odds,Memory,Backward,Quant', 'ops');
   assert(DRILLS.rot && DRILLS.trk && DRILLS.rot.op === 'transform', 'rot/trk');
   fuzzDrill('rot', 40); fuzzDrill('trk', 200);
 });
@@ -4898,18 +5311,19 @@ test('start halves say only LIGHT and DEEP', () => {
   assert(document.getElementById('goLight').textContent.trim() === 'LIGHT', 'light');
   assert(document.getElementById('goDeep').textContent.trim() === 'DEEP', 'deep');
 });
-test('deep menu: three skills, all open; a skill starts a set of its scenes', () => {
+test('deep menu: five skills, all open; a skill starts a set of its scenes', () => {
   app.state = defaultState(); showDeepSkills();
   const btns = [...document.querySelectorAll('#deepPick [data-skill]')];
-  assert(btns.map(b => b.textContent).join() === 'Rotation,Tracking,Matrices', btns.map(b => b.textContent).join());
-  assert(btns.map(b => b.disabled).join() === 'false,false,false', 'every skill has a visible scene');
-  startDeep('tracking');
-  assert(DRILLS[drillOf(app.item)].skill === 'tracking' && app.deepSet.skill === 'tracking', 'tracking set');
+  assert(btns.map(b => b.textContent).join() === 'Rotation,Mental math,Odds,Value,Market', btns.map(b => b.textContent).join());
+  assert(btns.every(b => !b.disabled), 'every skill has a visible scene');
+  startDeep('arith');
+  assert(DRILLS[drillOf(app.item)].skill === 'arith' && app.deepSet.skill === 'arith', 'arith set');
   exitDeep();
 });
-test('v3: only transform scenes are visible', () => {
+test('v4: rotation and quant scenes are visible', () => {
   assert(visibleDrills().every(id => !DRILLS[id].hidden && DRILLS[id].skill), 'visible');
-  ['mat','ser','odd','ev','seq','crd','nim','rch'].forEach(id => assert(DRILLS[id].hidden, id + ' hidden'));
+  assert(!DRILLS.odd.hidden && !DRILLS.ev.hidden, 'odds and value back');
+  ['mat','ser','seq','crd','nim','rch'].forEach(id => assert(DRILLS[id].hidden, id + ' hidden'));
 });
 test('v3: old save keeps levels for all drills', () => {
   const old = { v:1, skill:{ rot:4, trk:3, mat:5 }, run:{ rot:0, trk:0, mat:0 }, streak:0, history:[[1,'mat','L',5,1,900]] };
@@ -4926,10 +5340,10 @@ test('v3: a save with all ten old drills keeps every level, run, recent and hist
 });
 test('v3: deep skill menu and scene picking', () => {
   showDeepSkills();
-  assert(document.querySelectorAll('#deepPick [data-skill]').length === 3, 'three skills');
+  assert(document.querySelectorAll('#deepPick [data-skill]').length === 5, 'five skills');
   const r = makeRng(5); let prev = null;
   for (let i = 0; i < 50; i++) { const s = pickDeepScene('rotation', prev, r); assert(DRILLS[s].skill === 'rotation', 'skill'); prev = s; }
-  assert(pickDeepScene('tracking', 'trk', r) === 'trk' || scenesOf('tracking').length > 1, 'single scene repeats');
+  assert(pickDeepScene('market', 'mkt', r) === 'mkt', 'single scene repeats');
 });
 test('v3: progress line ignores hidden drills', () => {
   const day = 864e5, now = 30 * day, s = defaultState();
@@ -5072,7 +5486,8 @@ test('explain: 50 items per drill and mode give a non-empty line of at most 60 c
     for (let i = 0; i < 100; i++) {
       const mode = i % 2 ? 'deep' : 'light', s = d.explain(d[mode](1 + (i >> 1) % 15, rng));
       assert(typeof s === 'string' && s.length > 0 && s.length <= 60, id + ' ' + mode + ': "' + s + '"');
-      assert(mode === 'light' || s.length <= 36, 'deep line fits one line at 320 px: ' + id + ' "' + s + '"');
+      // Quant scenes leave room above the answer area, so their Deep reason may wrap to a second line.
+      assert(mode === 'light' || d.op === 'quant' || s.length <= 36, 'deep line fits one line at 320 px: ' + id + ' "' + s + '"');
     }
   });
 });
@@ -6127,6 +6542,78 @@ test('mpt: explain shows the sums, fits 60 / 36, no-break spaces in tuples', () 
   let full = 0;
   for (let i = 0; i < 300; i++) full += /·/.test(DRILLS.mpt.explain(DRILLS.mpt.deep(6 + i % 10, rng)));
   assert(full / 300 > 0.9, 'most Deep explains keep the computation ' + full / 300);
+});
+
+// ===== QUANT TESTS =====
+test('quant: every scene fuzzes clean in both modes, levels 1-15', () => {
+  ['mul', 'pct', 'est', 'nsq', 'cnd', 'gam', 'mkt', 'odd', 'ev'].forEach(id => fuzzDrill(id, 300));
+});
+test('quant: numText is the canonical answer text', () => {
+  [[37.5, '37.5'], [1702, '1702'], [4.666666, '4.67'], [-0.001, '0'], [0.1 + 0.2, '0.3']].forEach(([x, want]) => assert(numText(x) === want, x + ' -> ' + numText(x)));
+});
+test('quant: keypad types, deletes, signs, and sends numText once per OK', () => {
+  const el = document.createElement('div'), sent = [];
+  keypad(el, v => sent.push(v));
+  const tap = k => el.querySelector('[data-key="' + k + '"]').click();
+  ['ok', '1', '2', '.', '.', '5', '0', 'ok'].forEach(tap);
+  assert(sent.join() === '12.5', 'empty OK ignored, one dot, trailing zero dropped: ' + sent);
+  ['del', 'del', 'del', 'del', 'del', '-', '7', 'ok'].forEach(tap);
+  assert(sent.join() === '12.5,-7', 'delete and minus: ' + sent);
+  assert(el.querySelectorAll('[data-answer]').length === 0, 'keys never carry data-answer');
+});
+test('quant: arithmetic, percent and series answers are right', () => {
+  const r = makeRng(41);
+  for (let i = 0; i < 400; i++) {
+    const lvl = 1 + i % 15, m = mulItem('L', lvl, r), [x, op, y] = m.text.split(' ');
+    assert(numText(op === '×' ? x * y : x / y) === m.answer, m.text + ' = ' + m.answer);
+    const p = pctItem('L', lvl, r);
+    const want = p.text.includes('% of') ? numText(parseFloat(p.text) * Number(p.text.split(' of ')[1]) / 100) : numText(100 * eval(p.text.split(' ')[0]), 1);
+    assert(want === p.answer, p.text + ' = ' + p.answer);
+    const n = nsqItem('D', lvl, r);
+    assert(n.terms.length === 5 && Number.isInteger(+n.answer), 'series ' + n.terms);
+  }
+});
+test('quant: estimate answer is the option nearest the true value', () => {
+  const r = makeRng(43);
+  for (let i = 0; i < 400; i++) {
+    const e = estItem(i % 2 ? 'D' : 'L', 1 + i % 15, r), dist = o => Math.abs(Math.log(Number(o) / e.value));
+    assert(e.options.every(o => dist(o) >= dist(e.answer)), e.text + ' ' + e.options);
+  }
+});
+test('quant: known game values', () => {
+  assert(numText(rerollValue(6, 1)) === '4.25' && numText(rerollValue(6, 2)) === '4.67', 'reroll');
+  assert(Math.abs(maxValue(6, 2) - 161 / 36) < 1e-12 && Math.abs(minValue(6, 2) - 91 / 36) < 1e-12, 'max/min');
+  assert(numText(6 * harmonic(6)) === '14.7', 'coupon');
+  assert(ruinWin(3, 6, 0.5) === 0.5 && Math.abs(ruinWin(1, 2, 0.6) - 0.6) < 1e-12, 'ruin');
+});
+test('quant: given - classic case and distinct slips', () => {
+  const all = diceRolls(2), six = all.filter(r => r.includes(6));
+  assert(fracText(frac(six.filter(r => r[0] === 6 && r[1] === 6).length, six.length)) === '1/11', 'both six given one six');
+  assert(fourFracs([1, 2], [[1, 2], [1, 2]]).length === 4, 'fills from neighbours without looping');
+});
+test('quant: market quote holds the fair value at both edges only', () => {
+  const item = { fair: 17.5, width: 2 };
+  assert(quoteHolds(item, '15.5') && quoteHolds(item, '17.5') && quoteHolds(item, '16'), 'inside');
+  assert(!quoteHolds(item, '15.4') && !quoteHolds(item, '17.6'), 'outside');
+  const r = makeRng(47);
+  for (let i = 0; i < 200; i++) { const m = mktItem('D', 1 + i % 15, r); assert(Number.isFinite(m.fair) && m.fair > 0, m.text); }
+});
+test('quant: a typed Light answer is recorded right, and a miss shows the right value', () => {
+  app.state = defaultState(); startLight(); clearTimers();
+  const el = document.getElementById('lightItem');
+  app.item = { kind: 'mulL', text: '7 × 12', answer: '84' }; DRILLS.mul.render(app.item, el, 'answer'); readyToAnswer();
+  ['8', '4', 'ok'].forEach(k => el.querySelector('[data-key="' + k + '"]').click());
+  assert(app.state.history.at(-1)[4] === 1, 'right');
+  clearTimers();
+  app.item = { kind: 'mktL', text: 'x', fair: 7, width: 2, why: 'w' }; DRILLS.mkt.render(app.item, el, 'answer'); readyToAnswer();
+  ['9', 'ok'].forEach(k => el.querySelector('[data-key="' + k + '"]').click());
+  assert(app.state.history.at(-1)[4] === 0 && el.querySelector('.kpShow').textContent === '9 fair 7', 'miss: ' + el.querySelector('.kpShow').textContent);
+  clearTimers(); exitLight();
+});
+test('quant: Light gives quant about four fifths of play', () => {
+  const r = makeRng(53); let rot = 0;
+  for (let i = 0; i < 1000; i++) if (DRILLS[pickLightDrill(r)].skill === 'rotation') rot++;
+  assert(rot > 150 && rot < 250, 'rotation share ' + rot);
 });
 
 // ===== BOOT =====
