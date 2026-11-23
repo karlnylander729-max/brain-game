@@ -209,6 +209,9 @@ section.active { display: flex; flex-direction: column; }
 .kpGrid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; width: 100%; box-sizing: border-box; padding: 6px 12px; }
 .kpGrid button { min-height: 48px; border: 0; border-radius: 10px; background: var(--tile); color: inherit; font: inherit; font-size: 22px; font-weight: 700; }
 .kpGrid button[data-key="ok"] { grid-column: span 2; background: #3d5bd9; color: #fff; }
+.qzSol { margin: 4px 0 auto; width: 100%; box-sizing: border-box; padding: 10px 16px; font-size: 15px; line-height: 1.4; overflow-y: auto; }
+.qzSol div { margin: 3px 0; } .qzSol .qzTap { margin-top: 14px; font-size: 13px; opacity: .55; text-align: center; } .qzSol .ans { font-size: 20px; font-weight: 800; color: #2ea043; margin-bottom: 6px; }
+.oddL .qzSol, .evL .qzSol, .oddD .qzSol, .evD .qzSol { margin-top: auto; }
 .qz.dark { overflow: hidden; } .qz.dark .kpGrid button { min-height: 40px; } .qz.dark .kpShow { font-size: 26px; min-height: 34px; } /* Deep: Next sits under the keypad at 320x568 */
 </style>
 </head>
@@ -291,6 +294,7 @@ function makeRng(seed) {
 //   options(item) -> string[] | null,        // all answer values offered (null = multi-tap answer built by render)
 //   markMiss(el, item),                      // optional: show the right answer after a miss
 //   explain(item) -> string                  // optional: one plain line (<= 60 chars) saying why, shown after a miss
+//   solve(item, choice) -> (string|null)[]  // optional, quant scenes: worked solution lines (line 1 = answer) replacing the answer area after a miss
 // }
 // Item kind is '<id>L' or '<id>D'. Drill sections call registerDrill; they must come after this section.
 const DRILLS = {};
@@ -1329,18 +1333,10 @@ function renderOdds(item, el) {
   el.append(q, opts);
 }
 
-// Two chances as fractions over one denominator when it stays small, else as percentages.
-function chanceVs(p, q) {
-  const den = p[1] * q[1] / gcd(p[1], q[1]);
-  if (den <= 100) return (p[0] * den / p[1]) + '/' + den + ' beats ' + (q[0] * den / q[1]) + '/' + den + '.';
-  const pct = x => (100 * x[0] / x[1]).toFixed(1) + '%';
-  return pct(p) + ' beats ' + pct(q) + '.';
-}
-
-// Light: the two chances. Deep: best against second best.
-function explainOdds(item) {
-  const [best, second] = sortedByP(item.events);
-  return chanceVs(best.p, second.p);
+// Worked solution: every event with its exact chance, most likely first.
+function solveOdds(item) {
+  const sorted = sortedByP(item.events);
+  return ['Answer: ' + sorted[0].text, ...sorted.map(e => e.text + ': ' + fracText(e.p) + ' = ' + pctOf(e.p))];
 }
 
 registerDrill('odd', {
@@ -1351,7 +1347,7 @@ registerDrill('odd', {
   render: renderOdds,
   answer: item => item.answer,
   options: item => item.options,
-  explain: explainOdds
+  solve: solveOdds
 });
 
 // ===== VALUE =====
@@ -1413,10 +1409,16 @@ function renderValue(item, el) {
 
 function signedMoney(v) { return (v < 0 ? '-' : '+') + Math.abs(v).toFixed(2); }
 
-function explainValue(item) {
-  if (item.kind === 'evL') return 'Average result: ' + signedMoney(evValue(item.bets[0])) + ' per bet.';
-  const [best, second] = item.bets.map(evValue).sort((a, b) => b - a);
-  return 'Best: ' + signedMoney(best) + ' per bet, next: ' + signedMoney(second) + '.';
+function evLine(b) { return b.win + ' × ' + fracText(b.event.p) + ' − ' + b.cost + ' = ' + signedMoney(evValue(b)); }
+
+// Worked solution: win × chance − cost for the bet (Light) or for each bet (Deep).
+function solveValue(item) {
+  if (item.kind === 'evL') {
+    const b = item.bets[0];
+    return ['Answer: ' + (item.answer === 'yes' ? 'yes, take it' : 'no, skip it'), betText(b) + '.',
+      'Chance ' + fracText(b.event.p) + ' = ' + pctOf(b.event.p) + '.', 'Average: ' + evLine(b) + ' per bet.'];
+  }
+  return ['Answer: ' + betText(item.bets[+item.answer]), ...item.bets.map(b => betText(b) + ': ' + evLine(b))];
 }
 
 registerDrill('ev', {
@@ -1427,7 +1429,7 @@ registerDrill('ev', {
   render: renderValue,
   answer: item => item.answer,
   options: item => item.options,
-  explain: explainValue
+  solve: solveValue
 });
 
 // ===== SEQUENCE =====
@@ -3506,7 +3508,9 @@ registerDrill('mco', {
 });
 
 // ===== QUANT KIT =====
-// Shared by the quant scenes (Mental math, Odds 'Given', Value 'Fair price', Market): number text, layout, keypad.
+// Shared by the quant scenes (Mental math, Odds, Value, Market): number text, layout, keypad, worked solutions.
+// Quant drills give solve(item, choice) -> lines instead of explain: after a miss the answer area becomes the
+// worked solution, and Light waits for a tap instead of moving on at 3 s.
 function randInt(lo, hi, rng) { return lo + Math.floor(rng() * (hi - lo + 1)); }
 
 // Canonical answer text: at most dp decimals, no trailing zeros ('37.50' -> '37.5', '-0' -> '0').
@@ -3515,7 +3519,11 @@ function numText(x, dp = 2) {
   return String(Object.is(v, -0) ? 0 : v);
 }
 
-// Header line (.q: Deep puts the reason there), then the problem text in its own block.
+function fracText(p) { return p[0] + '/' + p[1]; }
+function pctOf(p) { return numText(100 * p[0] / p[1], 1) + '%'; }
+function plusText(x) { return x < 0 ? ' − ' + -x : ' + ' + x; }
+
+// Header line (.q), then the problem text in its own block.
 function quantShell(item, el, head, body) {
   el.innerHTML = '';
   el.className = 'qz ' + item.kind + (item.kind.endsWith('D') ? ' dark' : '');
@@ -3553,13 +3561,30 @@ function keypad(el, send = v => answer(v)) {
   el.append(show, grid);
 }
 
-// After a miss: the typed entry struck through, then the right value.
-function keypadMiss(el, right) {
-  const show = el.querySelector('.kpShow'), typed = document.createElement('s');
-  typed.textContent = show.textContent;
-  show.textContent = ' ' + right;
-  show.prepend(typed);
-  show.classList.add('right');
+// The answer area gives way to the solution lines; the problem stays in view. Line 1 is the answer.
+function showSolution(el, item, choice) {
+  el.querySelectorAll('.kpShow, .kpGrid, .matOpts, .oddOpts, .evHint').forEach(n => n.remove());
+  const box = makeDiv('qzSol', '');
+  DRILLS[drillOf(item)].solve(item, choice).filter(Boolean).forEach((line, i) => {
+    const p = document.createElement('div');
+    p.textContent = line;
+    if (i === 0) p.className = 'ans';
+    box.appendChild(p);
+  });
+  el.appendChild(box);
+}
+
+// item.slips maps a wrong choice to what it really is ('ignores the condition'); null when the choice is no known slip.
+function slipLine(item, choice) {
+  const note = item.slips && item.slips[choice];
+  return note ? 'Your ' + choice + ' ' + note + '.' : null;
+}
+
+// { choice text: note } for slips that differ from the answer and from each other; the first note wins.
+function slipMap(answerText, pairs) {
+  const out = {};
+  pairs.forEach(([text, note]) => { if (note && text !== answerText && !(text in out)) out[text] = note; });
+  return out;
 }
 
 // ===== MENTAL MATH =====
@@ -3572,11 +3597,25 @@ CONFIG.mul = {
 
 function mulItem(mode, level, rng) {
   const [ra, rb] = CONFIG.mul.ranges(level), a = randInt(...ra, rng), b = randInt(...rb, rng);
-  const dp = level >= CONFIG.mul.decFrom && rng() < 0.5 ? 1 : 0, scale = 10 ** dp;
-  if (rng() < CONFIG.mul.divShare) {
-    return { kind: 'mul' + mode, text: numText(a * b / scale) + ' ÷ ' + numText(a / scale), answer: String(b) };
-  }
-  return { kind: 'mul' + mode, text: numText(a / scale) + ' × ' + b, answer: numText(a * b / scale) };
+  const dp = level >= CONFIG.mul.decFrom && rng() < 0.5 ? 1 : 0, scale = 10 ** dp, div = rng() < CONFIG.mul.divShare;
+  const text = div ? numText(a * b / scale) + ' ÷ ' + numText(a / scale) : numText(a / scale) + ' × ' + b;
+  return { kind: 'mul' + mode, a, b, dp, div, text, answer: div ? String(b) : numText(a * b / scale) };
+}
+
+// A mental route for a × b: round b up to the next ten when it ends in 7-9, else split it into tens and ones.
+function mulRoute(a, b) {
+  const ones = b % 10, tens = b - ones, up = 10 - ones;
+  if (ones === 0) return [a + ' × ' + b + ' = ' + a * b];
+  if (ones >= 7) return [a + ' × ' + b + ' = ' + a + ' × ' + (tens + 10) + ' − ' + a + ' × ' + up, '= ' + a * (tens + 10) + ' − ' + a * up + ' = ' + a * b];
+  return [a + ' × ' + b + ' = ' + a + ' × ' + tens + ' + ' + a + ' × ' + ones, '= ' + a * tens + ' + ' + a * ones + ' = ' + a * b];
+}
+
+function solveMul(item) {
+  const { a, b, dp, div } = item, lines = ['Answer: ' + item.answer];
+  if (dp && div) lines.push('Shift both 1 place: ' + a * b + ' ÷ ' + a + '.');
+  if (dp && !div) lines.push('Work with ' + a + ' × ' + b + ', then shift 1 place.');
+  if (div) lines.push('Ask: ' + a + ' × ? = ' + a * b + '. Try ' + b + ':');
+  return [...lines, ...mulRoute(a, b)];
 }
 
 registerDrill('mul', {
@@ -3587,8 +3626,7 @@ registerDrill('mul', {
   render: (item, el) => { quantShell(item, el, 'Type the answer', item.text); keypad(el); },
   answer: item => item.answer,
   options: () => null,
-  markMiss: (el, item) => keypadMiss(el, item.answer),
-  explain: item => item.text + ' = ' + item.answer
+  solve: solveMul
 });
 
 // Percent: a fraction as a percent (1 decimal), or a percent of a number. Harder denominators with level.
@@ -3604,12 +3642,31 @@ function pctItem(mode, level, rng) {
   const c = CONFIG.pct, kind = 'pct' + mode;
   if (level >= c.ofFrom && rng() < c.ofShare) {
     const p = pick(c.ofPcts, rng), base = pick(c.ofBases, rng);
-    return { kind, text: p + '% of ' + base, answer: numText(p * base / 100) };
+    return { kind, p, base, text: p + '% of ' + base, answer: numText(p * base / 100) };
   }
   const d = pick(c.dens(level), rng);
   let n = randInt(1, d - 1, rng);
   while (gcd(n, d) !== 1) n = randInt(1, d - 1, rng);
-  return { kind, text: n + '/' + d + ' as a percent', answer: numText(100 * n / d, 1) };
+  return { kind, n, d, text: n + '/' + d + ' as a percent', answer: numText(100 * n / d, 1) };
+}
+
+// Every percent in ofPcts splits exactly into these easy parts (45 = 25 + 10 + 10).
+const PCT_PARTS = [50, 25, 10, 5, 2.5, 1];
+function pctParts(p) {
+  const out = [];
+  for (const c of PCT_PARTS) while (p >= c - 1e-9) { out.push(c); p -= c; }
+  return out;
+}
+
+function solvePct(item) {
+  const head = 'Answer: ' + item.answer;
+  if (item.base) {
+    const parts = pctParts(item.p), val = c => numText(c * item.base / 100);
+    return [head, parts.map(c => c + '% = ' + val(c)).join(', '), parts.length > 1 ? 'Add: ' + parts.map(val).join(' + ') + ' = ' + item.answer : null];
+  }
+  const unit = numText(100 / item.d, 4), full = numText(100 * item.n / item.d, 3);
+  return [head, '1/' + item.d + ' = ' + unit + '%', item.n > 1 ? item.n + ' × ' + unit + ' = ' + full + '%' : null,
+    full !== item.answer ? 'To 1 decimal: ' + item.answer + '%' : null];
 }
 
 registerDrill('pct', {
@@ -3620,8 +3677,7 @@ registerDrill('pct', {
   render: (item, el) => { quantShell(item, el, 'Type the answer · 1 decimal', item.text); keypad(el); },
   answer: item => item.answer,
   options: () => null,
-  markMiss: (el, item) => keypadMiss(el, item.answer),
-  explain: item => item.text + ' = ' + item.answer
+  solve: solvePct
 });
 
 // Estimate: pick the closest of four values, each a factor `step` from the next. Deep steps are finer.
@@ -3629,27 +3685,35 @@ CONFIG.est = { step: { L: 1.35, D: 1.15 }, rootFrom: 4, growFrom: 7 };
 
 // A number with two significant figures, from 0.11 to 990.
 function estNumber(rng) { return Number((randInt(11, 99, rng) * 10 ** randInt(-2, 1, rng)).toPrecision(2)); }
+function sig1(x) { return Number(x.toPrecision(1)); }
+function sig3(x) { return String(Number(x.toPrecision(3))); }
+
+function estGrowth(rng) {
+  const pct = randInt(3, 12, rng), n = randInt(5, 20, rng), t = 72 / pct;
+  return { text: '£100 grows ' + pct + '% a year for ' + n + ' years', value: 100 * (1 + pct / 100) ** n,
+    rough: ['Rule of 72: it doubles every 72/' + pct + ' = ' + numText(t, 1) + ' years.',
+      n + ' years = ' + numText(n / t, 2) + ' doublings: £' + sig3(100 * 2 ** (n / t)) + '.'] };
+}
+
+function estRoot(a, rng) {
+  const x = randInt(20, 9999, rng), s = Math.round(Math.sqrt(x));
+  return { text: '√' + x + ' × ' + a, value: Math.sqrt(x) * a,
+    rough: ['√' + x + ' ≈ ' + s + ' (' + s + '² = ' + s * s + ').', s + ' × ' + a + ' ≈ ' + sig3(s * a) + '.'] };
+}
 
 function estExpr(level, rng) {
   const a = estNumber(rng), b = estNumber(rng), c = estNumber(rng), r = rng();
-  if (level >= CONFIG.est.growFrom && r < 0.25) {
-    const pct = randInt(3, 12, rng), n = randInt(5, 20, rng);
-    return { text: '£100 grows ' + pct + '% a year for ' + n + ' years', value: 100 * (1 + pct / 100) ** n };
-  }
-  if (level >= CONFIG.est.rootFrom && r < 0.45) {
-    const x = randInt(20, 9999, rng);
-    return { text: '√' + x + ' × ' + a, value: Math.sqrt(x) * a };
-  }
-  if (r < 0.7) return { text: a + ' × ' + b, value: a * b };
-  return { text: a + ' × ' + b + ' ÷ ' + c, value: a * b / c };
+  if (level >= CONFIG.est.growFrom && r < 0.25) return estGrowth(rng);
+  if (level >= CONFIG.est.rootFrom && r < 0.45) return estRoot(a, rng);
+  if (r < 0.7) return { text: a + ' × ' + b, value: a * b, rough: ['Round: ' + sig1(a) + ' × ' + sig1(b) + ' ≈ ' + sig3(sig1(a) * sig1(b)) + '.'] };
+  return { text: a + ' × ' + b + ' ÷ ' + c, value: a * b / c,
+    rough: ['Round: ' + sig1(a) + ' × ' + sig1(b) + ' ÷ ' + sig1(c) + ' ≈ ' + sig3(sig1(a) * sig1(b) / sig1(c)) + '.'] };
 }
-
-function sig3(x) { return String(Number(x.toPrecision(3))); }
 
 function estItem(mode, level, rng) {
   const e = estExpr(level, rng), step = CONFIG.est.step[mode], k = randInt(0, 3, rng);
   const options = [0, 1, 2, 3].map(i => sig3(e.value * step ** (i - k)));
-  return { kind: 'est' + mode, text: e.text, value: e.value, options, answer: options[k] };
+  return { kind: 'est' + mode, text: e.text, value: e.value, rough: e.rough, options, answer: options[k] };
 }
 
 registerDrill('est', {
@@ -3660,30 +3724,32 @@ registerDrill('est', {
   render: (item, el) => { quantShell(item, el, 'Closest value?', item.text); quantChoices(item, el); },
   answer: item => item.answer,
   options: item => item.options,
-  explain: item => 'Exact: ' + sig3(item.value)
+  solve: item => ['Answer: ' + item.answer, ...item.rough, 'Exact: ' + sig3(item.value) + ', so ' + item.answer + ' is closest.']
 });
 
-// Number series: five terms, type the sixth. Each rule draws its own numbers; level opens more rules.
+// Number series: five terms, type the sixth. Each rule draws its own numbers and explains itself from the six terms t.
 const NSQ_RULES = [
   { from: 1, make: rng => { const a = randInt(1, 60, rng), d = randInt(3, 19, rng) * (rng() < 0.3 ? -1 : 1);
-    return { at: i => a + d * i, why: 'Add ' + d + ' each time.' }; } },
+    return { at: i => a + d * i, lines: t => ['Each gap is ' + d + '.', t[4] + plusText(d) + ' = ' + t[5]] }; } },
   { from: 1, make: rng => { const a = randInt(1, 6, rng), r = randInt(2, 3, rng);
-    return { at: i => a * r ** i, why: 'Times ' + r + ' each time.' }; } },
+    return { at: i => a * r ** i, lines: t => ['Each term is ' + r + ' times the last.', t[4] + ' × ' + r + ' = ' + t[5]] }; } },
   { from: 4, make: rng => { const a = randInt(1, 30, rng), d = randInt(1, 9, rng), e = randInt(2, 5, rng);
-    return { at: i => a + d * i + e * i * (i - 1) / 2, why: 'The gap grows by ' + e + ' each time.' }; } },
+    return { at: i => a + d * i + e * i * (i - 1) / 2, lines: t => ['Gaps: ' + [0, 1, 2, 3].map(j => t[j + 1] - t[j]).join(', ') + '. Each gap is ' + e + ' more.',
+      'Next gap ' + (t[5] - t[4]) + ': ' + t[4] + ' + ' + (t[5] - t[4]) + ' = ' + t[5]] }; } },
   { from: 4, make: rng => { const a = randInt(1, 20, rng), b = randInt(40, 90, rng), d = randInt(2, 9, rng), e = -randInt(2, 9, rng);
-    return { at: i => i % 2 ? b + e * (i >> 1) : a + d * (i >> 1), why: 'Two series take turns.' }; } },
+    return { at: i => i % 2 ? b + e * (i >> 1) : a + d * (i >> 1), lines: t => ['Two series take turns.',
+      'Terms 2, 4, 6: ' + t[1] + ', ' + t[3] + ', ?', t[3] + plusText(e) + ' = ' + t[5]] }; } },
   { from: 7, make: rng => { const f = [randInt(1, 9, rng), randInt(1, 9, rng)];
     for (let i = 2; i < 6; i++) f.push(f[i - 1] + f[i - 2]);
-    return { at: i => f[i], why: 'Each term is the sum of the two before.' }; } },
+    return { at: i => f[i], lines: t => ['Each term is the sum of the two before.', t[3] + ' + ' + t[4] + ' = ' + t[5]] }; } },
   { from: 7, make: rng => { const r = randInt(2, 3, rng), c = randInt(1, 5, rng) * (rng() < 0.5 ? -1 : 1), f = [randInt(2, 9, rng)];
     for (let i = 1; i < 6; i++) f.push(f[i - 1] * r + c);
-    return { at: i => f[i], why: 'Times ' + r + ', then ' + (c < 0 ? 'minus ' + -c : 'plus ' + c) + '.' }; } }
+    return { at: i => f[i], lines: t => ['Each term: × ' + r + ', then' + plusText(c) + '.', t[4] + ' × ' + r + plusText(c) + ' = ' + t[5]] }; } }
 ];
 
 function nsqItem(mode, level, rng) {
-  const rule = pick(NSQ_RULES.filter(r => r.from <= level), rng).make(rng), terms = [0, 1, 2, 3, 4, 5].map(rule.at);
-  return { kind: 'nsq' + mode, terms: terms.slice(0, 5), answer: String(terms[5]), why: rule.why };
+  const rule = pick(NSQ_RULES.filter(r => r.from <= level), rng).make(rng), t = [0, 1, 2, 3, 4, 5].map(rule.at);
+  return { kind: 'nsq' + mode, terms: t.slice(0, 5), answer: String(t[5]), lines: rule.lines(t) };
 }
 
 registerDrill('nsq', {
@@ -3694,17 +3760,16 @@ registerDrill('nsq', {
   render: (item, el) => { quantShell(item, el, 'What comes next?', item.terms.join(', ') + ', ?'); keypad(el); },
   answer: item => item.answer,
   options: () => null,
-  markMiss: (el, item) => keypadMiss(el, item.answer),
-  explain: item => item.why
+  solve: item => ['Answer: ' + item.answer, ...item.lines]
 });
 
 // ===== GIVEN =====
 // Conditional chance, four choices. The wrong choices are the classic slips: ignore the condition (P(E)),
 // take the joint chance (P(E and C)), or flip it (P(C | E)). Bayes items (from bayesFrom) use percents.
-CONFIG.cnd = { bayesFrom: 4, bayesShare: 0.4 };
+CONFIG.cnd = { bayesFrom: 4, bayesShare: 0.4, listMax: 6 };
 
 const CND_SPACES = [
-  { intro: 'Two dice are rolled.', outcomes: () => diceRolls(2),
+  { intro: 'Two dice are rolled.', outcomes: () => diceRolls(2), fmt: r => '(' + r.join(',') + ')',
     given: [
       ...[1, 2, 3, 4, 5, 6].map(f => ['at least one is a ' + f, r => r.includes(f)]),
       ...[4, 5, 6, 7, 8, 9, 10].map(k => ['the sum is ' + k, r => r[0] + r[1] === k]),
@@ -3716,7 +3781,7 @@ const CND_SPACES = [
       ...[6, 8, 10].map(k => ['the sum is at least ' + k, r => r[0] + r[1] >= k]),
       ...[2, 6].map(f => ['at least one is a ' + f, r => r.includes(f)]),
       ...[4, 5].map(m => ['the larger is at least ' + m, r => Math.max(...r) >= m])] },
-  { intro: 'Four fair coins are flipped.', outcomes: () => coinFlips(4),
+  { intro: 'Four fair coins are flipped.', outcomes: () => coinFlips(4), fmt: f => f.map(x => x ? 'H' : 'T').join(''),
     given: [
       ...[1, 2, 3].map(k => ['at least ' + k + ' are heads', f => f.filter(Boolean).length >= k]),
       ['the first is heads', f => f[0]], ['exactly 2 are heads', f => f.filter(Boolean).length === 2]],
@@ -3726,9 +3791,7 @@ const CND_SPACES = [
       ['the first two match', f => f[0] === f[1]]] }
 ];
 
-const fracText = p => p[0] + '/' + p[1];
-
-// Fills up to four distinct choices with near neighbours of the answer (same denominator), when slips coincide.
+// Fills up to four distinct choices with near neighbours of the answer, when slips coincide.
 function fourFracs(answer, slips) {
   const out = [fracText(answer)];
   const add = p => { if (p[0] > 0 && p[0] < p[1] && !out.includes(fracText(p)) && out.length < 4) out.push(fracText(p)); };
@@ -3737,31 +3800,58 @@ function fourFracs(answer, slips) {
   return out;
 }
 
+// One draw of space, condition and event, or null when the event is certain, impossible or independent of the condition.
+function cndDraw(rng) {
+  const s = pick(CND_SPACES, rng), [gText, g] = pick(s.given, rng), [eText, e] = pick(s.events, rng), all = s.outcomes();
+  const inG = all.filter(g), both = inG.filter(e), inE = all.filter(e);
+  if (!both.length || both.length === inG.length || both.length * all.length === inE.length * inG.length) return null;
+  return { s, gText, eText, nAll: all.length, inG, both, nE: inE.length };
+}
+
 function cndCountItem(mode, rng) {
   for (let tries = 0; tries < 500; tries++) {
-    const s = pick(CND_SPACES, rng), [gText, g] = pick(s.given, rng), [eText, e] = pick(s.events, rng), all = s.outcomes();
-    const inG = all.filter(g), both = inG.filter(e), inE = all.filter(e);
-    if (!both.length || both.length === inG.length || both.length * all.length === inE.length * inG.length) continue;
-    const p = frac(both.length, inG.length);
-    const slips = [frac(inE.length, all.length), frac(both.length, all.length), frac(both.length, inE.length)];
-    return { kind: 'cnd' + mode, text: s.intro + ' Given ' + gText + ', what is the chance ' + eText + '?',
-      options: shuffle(fourFracs(p, slips), rng), answer: fracText(p), why: 'Of the ' + inG.length + ' outcomes allowed, ' + both.length + ' fit.' };
+    const c = cndDraw(rng);
+    if (!c) continue;
+    const p = frac(c.both.length, c.inG.length), slips = [frac(c.nE, c.nAll), frac(c.both.length, c.nAll), frac(c.both.length, c.nE)];
+    const notes = ['ignores the condition', 'is the chance of both, not the chance given', 'flips it: the chance of the condition given the event'];
+    const options = shuffle(fourFracs(p, slips), rng), shown = slips.map((x, i) => [fracText(x), notes[i]]).filter(([t]) => options.includes(t));
+    return { kind: 'cnd' + mode, text: c.s.intro + ' Given ' + c.gText + ', what is the chance ' + c.eText + '?',
+      options, answer: fracText(p), slips: slipMap(fracText(p), shown),
+      gText: c.gText, eText: c.eText, nAll: c.nAll, nG: c.inG.length, nBoth: c.both.length,
+      listed: c.inG.length <= CONFIG.cnd.listMax ? c.inG.map(c.s.fmt) : null };
   }
   throw new Error('cnd: no dependent pair found');
 }
 
+function solveCount(item, choice) {
+  const raw = item.nBoth + '/' + item.nG;
+  return ['Answer: ' + item.answer, slipLine(item, choice),
+    'Given ' + item.gText + ': ' + item.nG + ' of ' + item.nAll + ' outcomes are left.',
+    item.listed ? item.listed.join(' ') : null,
+    'Of those, ' + item.nBoth + ' fit "' + item.eText + '". So ' + raw + (raw !== item.answer ? ' = ' + item.answer : '') + '.'];
+}
+
 function cndBayesItem(mode, rng) {
   for (let tries = 0; tries < 200; tries++) {
-    const prev = pick([1, 2, 5, 10, 20], rng) / 100, sens = pick([80, 90, 95, 99], rng) / 100, fpr = pick([1, 5, 10, 20], rng) / 100;
-    const tp = prev * sens, fp = (1 - prev) * fpr, post = tp / (tp + fp);
-    const vals = [post, sens, tp + fp, tp].map(v => Math.round(100 * v) + '%');
+    const prev = pick([1, 2, 5, 10, 20], rng), sens = pick([80, 90, 95, 99], rng), fpr = pick([1, 5, 10, 20], rng);
+    const sick = 100 * prev, tp = Math.round(sick * sens / 100), fp = Math.round((1e4 - sick) * fpr / 100);
+    const vals = [tp / (tp + fp), sens / 100, (tp + fp) / 1e4, tp / 1e4].map(v => Math.round(100 * v) + '%');
     if (new Set(vals).size < 4) continue;
-    return { kind: 'cnd' + mode, options: shuffle([...vals], rng), answer: vals[0],
-      text: numText(100 * prev) + '% of people have a disease. The test finds ' + numText(100 * sens) + '% of cases. It wrongly flags ' +
-        numText(100 * fpr) + '% of healthy people. You test positive. What is the chance you have it?',
-      why: 'Per 10,000: ' + Math.round(1e4 * tp) + ' true vs ' + Math.round(1e4 * fp) + ' false positives.' };
+    const notes = [null, "is the test's hit rate, not your chance", 'is the chance of testing positive', 'is the chance of being sick and positive'];
+    return { kind: 'cnd' + mode, options: shuffle([...vals], rng), answer: vals[0], bayes: true, sick, tp, fp,
+      slips: slipMap(vals[0], vals.map((v, i) => [v, notes[i]])),
+      text: prev + '% of people have a disease. The test finds ' + sens + '% of cases. It wrongly flags ' +
+        fpr + '% of healthy people. You test positive. What is the chance you have it?' };
   }
   throw new Error('cnd: no distinct Bayes item');
+}
+
+function solveBayes(item, choice) {
+  const n = x => x.toLocaleString('en-US');
+  return ['Answer: ' + item.answer, slipLine(item, choice),
+    'Of 10,000 people, ' + n(item.sick) + ' are sick. ' + n(item.tp) + ' of them test positive.',
+    n(1e4 - item.sick) + ' are healthy. ' + n(item.fp) + ' of them test positive.',
+    'You are one of the ' + n(item.tp + item.fp) + ' positives: ' + n(item.tp) + '/' + n(item.tp + item.fp) + ' = ' + item.answer + '.'];
 }
 
 function cndItem(mode, level, rng) {
@@ -3776,11 +3866,11 @@ registerDrill('cnd', {
   render: (item, el) => { quantShell(item, el, 'Conditional chance', item.text); quantChoices(item, el); },
   answer: item => item.answer,
   options: item => item.options,
-  explain: item => item.why
+  solve: (item, choice) => item.bayes ? solveBayes(item, choice) : solveCount(item, choice)
 });
 
 // ===== FAIR PRICE =====
-// Game values with exact formulas. Each game gives { text, value, slips, why, pct? }; slips are tempting wrong values.
+// Game values with exact formulas. Each game gives { text, value, slips: [[value, note | null]], lines, pct? }.
 function dieMean(s) { return (s + 1) / 2; }
 
 // Value of a die game with n re-rolls: re-roll whenever the roll is below the value of the game left.
@@ -3794,9 +3884,25 @@ function rerollValue(s, n) {
   return v;
 }
 
+// One line per re-roll left, working back from the last roll.
+function rerollLines(s, n) {
+  const out = ['Last roll: worth ' + numText(dieMean(s)) + '.'];
+  for (let k = 1; k <= n; k++) {
+    const prev = rerollValue(s, k - 1), lo = Math.floor(prev) + 1, keep = s - lo + 1, avg = numText((lo + s) / 2);
+    out.push(k + ' re-roll' + (k > 1 ? 's' : '') + ' left: keep ' + lo + '–' + s + ' (avg ' + avg + '), else re-roll (' + numText(prev) + '). ' +
+      keep + '/' + s + '·' + avg + ' + ' + (s - keep) + '/' + s + '·' + numText(prev) + ' = ' + numText(rerollValue(s, k)));
+  }
+  return out;
+}
+
 // E[max of k s-sided dice] = sum over m of P(max >= m); E[min] likewise with P(min >= m).
 function maxValue(s, k) { let t = 0; for (let m = 1; m <= s; m++) t += 1 - ((m - 1) / s) ** k; return t; }
 function minValue(s, k) { let t = 0; for (let m = 1; m <= s; m++) t += ((s - m + 1) / s) ** k; return t; }
+function maxLines(s, k) {
+  const terms = Array.from({ length: s }, (_, m) => s ** k - m ** k);
+  return ['P(max ≥ m) = 1 − ((m − 1)/' + s + ')^' + k + '. E[max] is the sum of these.',
+    '(' + terms.join(' + ') + ')/' + s ** k + ' = ' + numText(maxValue(s, k))];
+}
 function harmonic(n) { let t = 0; for (let i = 1; i <= n; i++) t += 1 / i; return t; }
 
 // Chance to reach N before 0 from i, betting 1 a time with win chance p.
@@ -3806,28 +3912,48 @@ function ruinWin(i, N, p) {
   return (1 - r ** i) / (1 - r ** N);
 }
 
+function runGame(rng) {
+  const k = randInt(2, 5, rng), runs = Array.from({ length: k }, (_, j) => 2 ** (j + 2) - 2);
+  return { text: 'Flip a fair coin until you get ' + k + ' heads in a row. Average number of flips?',
+    value: 2 ** (k + 1) - 2, slips: [[2 ** k, null], [2 ** (k + 1), null], [2 ** (k + 1) - 1, null]],
+    lines: ['Reach ' + (k - 1) + ' in a row, then flip once more. A tail starts you over.',
+      'So E(k) = 2·E(k − 1) + 2: ' + runs.map((v, j) => 'E(' + (j + 1) + ') = ' + v).join(', ') + '.'] };
+}
+
+function couponGame(rng) {
+  const s = pick([4, 6, 8, 10], rng), terms = Array.from({ length: s }, (_, j) => numText(s / (s - j)));
+  return { text: 'Roll a ' + s + '-sided die until every face has shown. Average number of rolls?',
+    value: s * harmonic(s), slips: [[s * Math.log(s), null], [2 * s, null], [s * harmonic(s - 1), null]],
+    lines: ['With j faces seen, a new face takes ' + s + '/(' + s + ' − j) rolls on average.', terms.join(' + ') + ' = ' + numText(s * harmonic(s))] };
+}
+
+function ruinGame(rng) {
+  const N = randInt(5, 10, rng), i = randInt(2, N - 2, rng), p = pick([0.4, 0.45, 0.55, 0.6], rng), q = numText(1 - p), r = (1 - p) / p;
+  return { text: 'You have £' + i + '. Each bet wins £1 with chance ' + p + ', else loses £1. You stop at £0 or £' + N + '. Chance to reach £' + N + '?',
+    value: 100 * ruinWin(i, N, p), pct: true,
+    slips: [[100 * i / N, 'is the even-odds answer; these odds are not even'], [100 * ruinWin(i, N, 1 - p), 'swaps the win and lose chances'], [100 * p, null]],
+    lines: ['r = q/p = ' + q + '/' + p + ' = ' + numText(r, 3) + '.',
+      'P = (1 − r^' + i + ')/(1 − r^' + N + ') = ' + numText(1 - r ** i, 3) + '/' + numText(1 - r ** N, 3) + ' = ' + numText(100 * ruinWin(i, N, p), 1) + '%'] };
+}
+
 const GAMES = [
   { from: 1, make: rng => { const s = pick([6, 6, 4, 8, 10], rng), n = randInt(1, 3, rng);
     return { text: 'Roll a ' + s + '-sided die and get its number in £. You may re-roll up to ' + n + (n > 1 ? ' times' : ' time') + '. The last roll counts. Fair price?',
-      value: rerollValue(s, n), slips: [rerollValue(s, n - 1), rerollValue(s, n + 1), s - 0.5], why: 'Re-roll when below ' + numText(rerollValue(s, n - 1)) + ', the value of the rest.' }; } },
+      value: rerollValue(s, n), slips: [[rerollValue(s, n - 1), 'is the value with one re-roll fewer'], [rerollValue(s, n + 1), null], [s - 0.5, null]], lines: rerollLines(s, n) }; } },
   { from: 1, make: rng => { const s = pick([4, 6, 8], rng), k = randInt(2, 3, rng);
     return { text: 'Roll ' + k + ' ' + s + '-sided dice. You get the highest number in £. Fair price?',
-      value: maxValue(s, k), slips: [minValue(s, k), dieMean(s), maxValue(s, k + 1)], why: 'E[max] is the sum of P(max ≥ m).' }; } },
-  { from: 1, make: rng => { const s = pick([4, 6, 8, 10], rng);
+      value: maxValue(s, k), slips: [[minValue(s, k), 'is the average lowest, not highest'], [dieMean(s), "is one die's average"], [maxValue(s, k + 1), null]], lines: maxLines(s, k) }; } },
+  { from: 1, make: rng => { const s = pick([4, 6, 8, 10], rng), sq = s * (s + 1) * (2 * s + 1) / 6;
     return { text: 'Roll a ' + s + '-sided die. You get its number squared in £. Fair price?',
-      value: (s + 1) * (2 * s + 1) / 6, slips: [dieMean(s) ** 2, s * s / 2, s * (s + 1) / 3], why: 'E[X²] = (s+1)(2s+1)/6, more than (E[X])².' }; } },
-  { from: 3, make: rng => { const k = randInt(2, 5, rng);
-    return { text: 'Flip a fair coin until you get ' + k + ' heads in a row. Average number of flips?',
-      value: 2 ** (k + 1) - 2, slips: [2 ** k, 2 ** (k + 1), 2 ** (k + 1) - 1], why: '2^' + (k + 1) + ' − 2 = ' + (2 ** (k + 1) - 2) + ' flips.' }; } },
-  { from: 5, make: rng => { const s = pick([4, 6, 8, 10], rng);
-    return { text: 'Roll a ' + s + '-sided die until every face has shown. Average number of rolls?',
-      value: s * harmonic(s), slips: [s * Math.log(s), 2 * s, s * harmonic(s - 1)], why: 'Each new face takes s/(faces left) rolls.' }; } },
-  { from: 7, make: rng => { const N = randInt(5, 10, rng), i = randInt(2, N - 2, rng), p = pick([0.4, 0.45, 0.55, 0.6], rng);
-    return { text: 'You have £' + i + '. Each bet wins £1 with chance ' + p + ', else loses £1. You stop at £0 or £' + N + '. Chance to reach £' + N + '?',
-      value: 100 * ruinWin(i, N, p), slips: [100 * i / N, 100 * ruinWin(i, N, 1 - p), 100 * p], pct: true, why: 'r = q/p; P = (1 − r^' + i + ')/(1 − r^' + N + ').' }; } },
+      value: sq / s, slips: [[dieMean(s) ** 2, 'is (E[X])², which is less than E[X²]'], [s * s / 2, null], [s * (s + 1) / 3, null]],
+      lines: ['E[X²] = (1² + 2² + … + ' + s + '²)/' + s + '.', '= ' + sq + '/' + s + ' = ' + numText(sq / s)] }; } },
+  { from: 3, make: runGame },
+  { from: 5, make: couponGame },
+  { from: 7, make: ruinGame },
   { from: 7, make: rng => { const N = randInt(6, 12, rng), i = randInt(2, N - 2, rng);
     return { text: 'You have £' + i + '. Each bet wins or loses £1 at even odds. You stop at £0 or £' + N + '. Average number of bets?',
-      value: i * (N - i), slips: [N, i * N, (N - i) * N / 2], why: 'A fair game lasts ' + i + '·' + (N - i) + ' = ' + i * (N - i) + ' bets on average.' }; } }
+      value: i * (N - i), slips: [[N, null], [i * N, null], [(N - i) * N / 2, null]],
+      lines: ['An even game from £i, stopping at £0 or £N, lasts i(N − i) bets on average.', i + ' × ' + (N - i) + ' = ' + i * (N - i)] }; } }
 ];
 
 function gameText(v, pct) { return pct ? numText(v, 1) + '%' : numText(v); }
@@ -3835,9 +3961,10 @@ function gameText(v, pct) { return pct ? numText(v, 1) + '%' : numText(v); }
 function gamItem(mode, level, rng) {
   for (let tries = 0; tries < 200; tries++) {
     const g = pick(GAMES.filter(x => x.from <= level), rng).make(rng);
-    const vals = [g.value, ...g.slips].map(v => gameText(v, g.pct));
+    const answer = gameText(g.value, g.pct), slips = g.slips.map(([v, note]) => [gameText(v, g.pct), note]);
+    const vals = [answer, ...slips.map(s => s[0])];
     if (new Set(vals).size < 4) continue;
-    return { kind: 'gam' + mode, text: g.text, options: shuffle(vals, rng).slice(), answer: gameText(g.value, g.pct), why: g.why };
+    return { kind: 'gam' + mode, text: g.text, options: shuffle(vals, rng), answer, slips: slipMap(answer, slips), lines: g.lines };
   }
   throw new Error('gam: no game with distinct choices');
 }
@@ -3850,7 +3977,7 @@ registerDrill('gam', {
   render: (item, el) => { quantShell(item, el, 'Fair value', item.text); quantChoices(item, el); },
   answer: item => item.answer,
   options: item => item.options,
-  explain: item => item.why
+  solve: (item, choice) => ['Answer: ' + item.answer, slipLine(item, choice), ...item.lines]
 });
 
 // ===== MARKET =====
@@ -3860,28 +3987,51 @@ CONFIG.mkt = { width: (mode, lvl) => mode === 'L' ? (lvl < 4 ? 4 : lvl < 8 ? 2 :
 
 function sum(xs) { return xs.reduce((a, b) => a + b, 0); }
 
+function diceMarket(rng, reveal) {
+  const n = randInt(3, 10, rng), shown = reveal ? Array.from({ length: randInt(1, n - 1, rng) }, () => randInt(1, 6, rng)) : [];
+  const h = n - shown.length, fair = sum(shown) + 3.5 * h;
+  return { text: 'The sum of ' + n + ' dice.' + (shown.length ? ' Shown so far: ' + shown.join(', ') + '.' : ''), fair,
+    lines: shown.length ? ['Shown: ' + shown.join(' + ') + ' = ' + sum(shown) + '.', h + ' hidden × 3.5 = ' + numText(3.5 * h) + '.', sum(shown) + ' + ' + numText(3.5 * h) + ' = ' + numText(fair)]
+      : ['Each die averages 3.5.', n + ' × 3.5 = ' + numText(fair)] };
+}
+
+function cardMarket(rng, reveal) {
+  const N = pick([10, 13, 20], rng), k = randInt(3, 6, rng), deck = shuffle(Array.from({ length: N }, (_, i) => i + 1), rng);
+  const seen = reveal ? deck.slice(0, randInt(1, k - 1, rng)) : [], left = N - seen.length, rest = N * (N + 1) / 2 - sum(seen);
+  const avg = rest / left, h = k - seen.length, fair = sum(seen) + h * avg;
+  return { text: 'The sum of ' + k + ' cards drawn from cards 1–' + N + ', no repeats.' + (seen.length ? ' Seen so far: ' + seen.join(', ') + '.' : ''), fair,
+    lines: [(seen.length ? 'Seen: ' + sum(seen) + '. ' : '') + 'The ' + left + ' cards left sum to ' + rest + ', average ' + numText(avg, 3) + '.',
+      (seen.length ? sum(seen) + ' + ' : '') + h + ' × ' + numText(avg, 3) + ' = ' + numText(fair, 3)] };
+}
+
+function headsTailsMarket(rng) {
+  const n = randInt(4, 10, rng), eh2 = n / 4 + n * n / 4, fair = n * (n - 1) / 4;
+  return { text: 'Flip ' + n + ' coins. Heads times tails.', fair,
+    lines: ['H × T = H(' + n + ' − H). E[H] = ' + numText(n / 2) + ', E[H²] = var + mean² = ' + numText(eh2) + '.',
+      n + ' × ' + numText(n / 2) + ' − ' + numText(eh2) + ' = ' + numText(fair)] };
+}
+
 const MARKETS = [
-  { from: 1, make: (rng, reveal) => { const n = randInt(3, 10, rng), shown = reveal ? Array.from({ length: randInt(1, n - 1, rng) }, () => randInt(1, 6, rng)) : [];
-    return { text: 'The sum of ' + n + ' dice.' + (shown.length ? ' Shown so far: ' + shown.join(', ') + '.' : ''),
-      fair: sum(shown) + 3.5 * (n - shown.length), why: 'Each hidden die adds 3.5.' }; } },
-  { from: 1, make: (rng, reveal) => { const N = pick([10, 13, 20], rng), k = randInt(3, 6, rng), deck = shuffle(Array.from({ length: N }, (_, i) => i + 1), rng);
-    const seen = reveal ? deck.slice(0, randInt(1, k - 1, rng)) : [];
-    return { text: 'The sum of ' + k + ' cards drawn from cards 1–' + N + ', no repeats.' + (seen.length ? ' Seen so far: ' + seen.join(', ') + '.' : ''),
-      fair: sum(seen) + (k - seen.length) * (N * (N + 1) / 2 - sum(seen)) / (N - seen.length), why: 'Each hidden card averages the cards left.' }; } },
+  { from: 1, make: diceMarket },
+  { from: 1, make: cardMarket },
   { from: 4, make: rng => { const n = randInt(2, 3, rng);
-    return { text: 'The product of ' + n + ' dice.', fair: 3.5 ** n, why: 'Independent: E[XY] = E[X]·E[Y].' }; } },
+    return { text: 'The product of ' + n + ' dice.', fair: 3.5 ** n, lines: ['The dice are independent, so E[product] = 3.5^' + n + '.', '= ' + numText(3.5 ** n, 3)] }; } },
   { from: 6, make: rng => { const k = randInt(2, 3, rng);
-    return { text: 'The highest of ' + k + ' dice.', fair: maxValue(6, k), why: 'E[max] is the sum of P(max ≥ m).' }; } },
-  { from: 8, make: rng => { const n = randInt(4, 10, rng);
-    return { text: 'Flip ' + n + ' coins. Heads times tails.', fair: n * (n - 1) / 4, why: 'E[H·T] = n(n − 1)/4.' }; } }
+    return { text: 'The highest of ' + k + ' dice.', fair: maxValue(6, k), lines: maxLines(6, k) }; } },
+  { from: 8, make: headsTailsMarket }
 ];
 
 function mktItem(mode, level, rng) {
   const m = pick(MARKETS.filter(x => x.from <= level), rng).make(rng, level >= CONFIG.mkt.revealFrom && rng() < 0.6);
-  return { kind: 'mkt' + mode, text: m.text, fair: m.fair, width: CONFIG.mkt.width(mode, level), why: m.why };
+  return { kind: 'mkt' + mode, text: m.text, fair: m.fair, width: CONFIG.mkt.width(mode, level), lines: m.lines };
 }
 
 function quoteHolds(item, bid) { return Number(bid) <= item.fair + 1e-9 && item.fair <= Number(bid) + item.width + 1e-9; }
+
+function solveMarket(item, bid) {
+  const b = Number(bid), side = b > item.fair ? 'high' : 'low';
+  return ['Fair value: ' + numText(item.fair, 3), 'Your quote ' + numText(b) + '–' + numText(b + item.width) + ' is too ' + side + '.', ...item.lines];
+}
 
 function renderMarket(item, el) {
   quantShell(item, el, 'Make a market · width ' + item.width, item.text);
@@ -3899,10 +4049,8 @@ registerDrill('mkt', {
   render: renderMarket,
   answer: () => 'in',
   options: () => null,
-  markMiss: (el, item) => keypadMiss(el, 'fair ' + numText(item.fair, 3)),
-  explain: item => 'Fair ' + numText(item.fair, 3) + '. ' + item.why
+  solve: solveMarket
 });
-
 
 // ===== STATE =====
 // Progress and the staircase use Light answers only: Deep runs at skill + 5 and takes ~10x longer.
@@ -4236,6 +4384,10 @@ function showFeedback(correct) {
   document.getElementById('lightFlash').className = correct ? 'ok' : 'miss';
   if (correct) return;
   const el = document.getElementById('lightItem');
+  if (DRILLS[drillOf(app.item)].solve) {
+    showSolution(el, app.item, app.choice);
+    return el.querySelector('.qzSol').appendChild(makeDiv('qzTap', 'Tap anywhere to go on'));
+  }
   markRight(el, app.item);
   showReason(el, app.item);
 }
@@ -4245,6 +4397,7 @@ const MISS_WAIT_MS = 3000;
 
 function waitAfterMiss() {
   app.phase = 'miss'; app.missAt = performance.now();
+  if (DRILLS[drillOf(app.item)].solve) return; // a worked solution waits for the tap
   setTimer(() => guarded(nextLightItem), MISS_WAIT_MS);
 }
 
@@ -4264,7 +4417,7 @@ const TAP_GUARD_MS = 300;
 function answer(choice) {
   if (app.locked || app.phase !== 'answer') return;
   if (performance.now() - app.startedAt < TAP_GUARD_MS) return;
-  app.locked = true;
+  app.locked = true; app.choice = choice;
   const correct = choice === correctAnswer(app.item), drill = drillOf(app.item);
   const ms = Math.round(performance.now() - app.startedAt);
   recordAnswer(app.state, { drill, mode: app.mode, level: itemLevel(app.state, drill, app.mode), correct, ms, t: Date.now() });
@@ -4282,8 +4435,11 @@ function deepEl() { return document.getElementById('deepItem'); }
 function showDeepFeedback(correct, ms) {
   app.deepSet.results.push({ correct, ms });
   document.getElementById('deepStatus').textContent = (correct ? '✓ ' : '✗ ') + (ms / 1000).toFixed(1) + ' s';
-  markRight(deepEl(), app.item);
-  if (!correct) showReason(deepEl(), app.item);
+  if (!correct && DRILLS[drillOf(app.item)].solve) showSolution(deepEl(), app.item, app.choice);
+  else {
+    markRight(deepEl(), app.item);
+    if (!correct) showReason(deepEl(), app.item);
+  }
   document.getElementById('deepNext').hidden = false;
 }
 
@@ -5481,13 +5637,12 @@ test('deep miss shows the reason and keeps Next', () => {
   exitDeep();
 });
 test('explain: 50 items per drill and mode give a non-empty line of at most 60 chars', () => {
-  ALL_DRILL_IDS.filter(id => DRILLS[id]).forEach(id => {
+  ALL_DRILL_IDS.filter(id => DRILLS[id] && DRILLS[id].explain).forEach(id => {
     const d = DRILLS[id], rng = makeRng(77 + id.length);
     for (let i = 0; i < 100; i++) {
       const mode = i % 2 ? 'deep' : 'light', s = d.explain(d[mode](1 + (i >> 1) % 15, rng));
       assert(typeof s === 'string' && s.length > 0 && s.length <= 60, id + ' ' + mode + ': "' + s + '"');
-      // Quant scenes leave room above the answer area, so their Deep reason may wrap to a second line.
-      assert(mode === 'light' || d.op === 'quant' || s.length <= 36, 'deep line fits one line at 320 px: ' + id + ' "' + s + '"');
+      assert(mode === 'light' || s.length <= 36, 'deep line fits one line at 320 px: ' + id + ' "' + s + '"');
     }
   });
 });
@@ -5504,8 +5659,6 @@ test('explain: exact lines for fixed items', () => {
   const t = a => ({ arrow: a, dot: 5, centre: 1 });
   eq(ex('ser', { kind: 'serL', terms: [t(0), t(2), t(4), t(6)] }), 'Arrow turns 2 steps each time.');
   eq(ex('ser', { kind: 'serD', terms: [t(3), t(2), t(1), t(0), t(7)] }), 'Arrow turns 1 step back each time.');
-  eq(ex('odd', { kind: 'oddL', answer: '1', events: [{ p: [5, 18] }, { p: [11, 36] }] }), '11/36 beats 10/36.');
-  eq(ex('ev', { kind: 'evL', bets: [{ cost: 2, win: 5, event: { p: [1, 2] } }] }), 'Average result: +0.50 per bet.');
   eq(ex('seq', { kind: 'seqL', seq: ['3', '4', '0', '1'], asked: 0 }), 'After the diamond came the star.');
   eq(ex('crd', { kind: 'crdL', answer: '♥', cards: ['2♥', '3♥', 'K♥', 'A♥', '2♠', '3♣', '4♦', '5♠'] }), 'Hearts came up 4 times.');
   eq(ex('crd', { kind: 'crdD', answer: '2', options: ['2♠', '3♠', '7♥', 'K♦'] }), 'The 7♥ was never played.');
@@ -6605,11 +6758,53 @@ test('quant: a typed Light answer is recorded right, and a miss shows the right 
   ['8', '4', 'ok'].forEach(k => el.querySelector('[data-key="' + k + '"]').click());
   assert(app.state.history.at(-1)[4] === 1, 'right');
   clearTimers();
-  app.item = { kind: 'mktL', text: 'x', fair: 7, width: 2, why: 'w' }; DRILLS.mkt.render(app.item, el, 'answer'); readyToAnswer();
-  ['9', 'ok'].forEach(k => el.querySelector('[data-key="' + k + '"]').click());
-  assert(app.state.history.at(-1)[4] === 0 && el.querySelector('.kpShow').textContent === '9 fair 7', 'miss: ' + el.querySelector('.kpShow').textContent);
+  app.item = { kind: 'mktL', text: 'x', fair: 7, width: 2, lines: ['why'] }; DRILLS.mkt.render(app.item, el, 'answer'); readyToAnswer();
+  const delays = [], real = window.setTimeout;
+  window.setTimeout = (fn, ms) => { delays.push(ms); return 0; };
+  try { ['9', 'ok'].forEach(k => el.querySelector('[data-key="' + k + '"]').click()); } finally { window.setTimeout = real; }
+  assert(app.state.history.at(-1)[4] === 0, 'miss recorded');
+  const lines = [...el.querySelectorAll('.qzSol div')].map(d => d.textContent);
+  assert(lines.join('|') === 'Fair value: 7|Your quote 9–11 is too high.|why|Tap anywhere to go on', lines.join('|'));
+  assert(!el.querySelector('.kpGrid') && !delays.includes(MISS_WAIT_MS), 'keypad gone, no 3 s auto-advance: ' + delays);
+  app.missAt -= 300; lightTap(el);
+  assert(app.item.kind !== 'mktL' || app.item.lines[0] !== 'why', 'a tap moves on');
   clearTimers(); exitLight();
 });
+test('solutions: every quant scene gives 2-9 lines, line 1 the answer, for right and wrong choices', () => {
+  ['mul', 'pct', 'est', 'nsq', 'cnd', 'gam', 'mkt', 'odd', 'ev'].forEach(id => {
+    const d = DRILLS[id], r = makeRng(61 + id.length);
+    for (let i = 0; i < 200; i++) {
+      const item = d[i % 2 ? 'deep' : 'light'](1 + i % 15, r), opts = d.options(item);
+      const wrong = opts ? opts.find(o => o !== d.answer(item)) : (id === 'mkt' ? String(item.fair + 50) : '0');
+      const lines = d.solve(item, wrong).filter(Boolean);
+      assert(lines.length >= 2 && lines.length <= 9 && lines.every(l => typeof l === 'string' && l.length && !/undefined|NaN/.test(l)), id + ' ' + lines.join(' | '));
+      assert(/^(Answer|Fair value): /.test(lines[0]), id + ' line 1 ' + lines[0]);
+    }
+  });
+});
+test('solutions: exact worked lines', () => {
+  const eq = (got, want) => assert(got.filter(Boolean).join(' | ') === want, 'got "' + got.filter(Boolean).join(' | ') + '"');
+  eq(solveMul({ a: 37, b: 46, dp: 0, div: false, answer: '1702' }), 'Answer: 1702 | 37 × 46 = 37 × 40 + 37 × 6 | = 1480 + 222 = 1702');
+  eq(solveMul({ a: 37, b: 48, dp: 0, div: true, answer: '48' }), 'Answer: 48 | Ask: 37 × ? = 1776. Try 48: | 37 × 48 = 37 × 50 − 37 × 2 | = 1850 − 74 = 1776');
+  eq(solvePct({ p: 17.5, base: 640, answer: '112' }), 'Answer: 112 | 10% = 64, 5% = 32, 2.5% = 16 | Add: 64 + 32 + 16 = 112');
+  eq(solvePct({ n: 3, d: 7, answer: '42.9' }), 'Answer: 42.9 | 1/7 = 14.2857% | 3 × 14.2857 = 42.857% | To 1 decimal: 42.9%');
+  eq(rerollLines(6, 1), 'Last roll: worth 3.5. | 1 re-roll left: keep 4–6 (avg 5), else re-roll (3.5). 3/6·5 + 3/6·3.5 = 4.25');
+  eq(maxLines(6, 2), 'P(max ≥ m) = 1 − ((m − 1)/6)^2. E[max] is the sum of these. | (36 + 35 + 32 + 27 + 20 + 11)/36 = 4.47');
+  const bay = { answer: '16%', slips: { '95%': "is the test's hit rate, not your chance" }, sick: 100, tp: 95, fp: 495 };
+  eq(solveBayes(bay, '95%'), "Answer: 16% | Your 95% is the test's hit rate, not your chance. | Of 10,000 people, 100 are sick. 95 of them test positive. | 9,900 are healthy. 495 of them test positive. | You are one of the 590 positives: 95/590 = 16%.");
+});
+test('solutions: Given names the slip and lists small cases', () => {
+  const r = makeRng(71);
+  for (let i = 0; i < 300; i++) {
+    const item = cndCountItem('L', r), wrong = item.options.filter(o => o !== item.answer);
+    Object.keys(item.slips).forEach(k => assert(wrong.includes(k), 'slip is a shown option ' + k));
+    if (item.text.includes('the sum is 8,') && item.text.includes('double')) {
+      eq2(solveCount(item, '1/6'), 'Answer: 1/5 | Your 1/6 ignores the condition. | Given the sum is 8: 5 of 36 outcomes are left. | (2,6) (3,5) (4,4) (5,3) (6,2) | Of those, 1 fit "they show a double". So 1/5.');
+    }
+  }
+  function eq2(got, want) { assert(got.filter(Boolean).join(' | ') === want, got.filter(Boolean).join(' | ')); }
+});
+
 test('quant: Light gives quant about four fifths of play', () => {
   const r = makeRng(53); let rot = 0;
   for (let i = 0; i < 1000; i++) if (DRILLS[pickLightDrill(r)].skill === 'rotation') rot++;
