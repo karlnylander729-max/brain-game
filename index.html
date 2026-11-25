@@ -17,7 +17,20 @@ section { display: none; height: 100%; height: 100dvh; }
 section.active { display: flex; flex-direction: column; }
 .half { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; font-weight: 700; font-size: 32px; border: 0; font-family: inherit; }
 #goLight { background: #e8f3ff; color: #1a5fb4; }
-#goDeep { background: #1d2333; color: #e6e9f2; padding-bottom: var(--bottom); }
+#goDeep { background: #1d2333; color: #e6e9f2; }
+#goThink { flex: .45; background: #f4ecdd; color: #7a5512; padding-bottom: var(--bottom); }
+#think { background: #faf6ee; color: #2b2620; }
+#think .xbtn { color: #7a5512; }
+#thinkCard { flex: 1; min-height: 0; overflow-y: auto; padding: 4px 22px 16px; }
+.thinkTitle { font-size: 13px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; opacity: .55; margin-bottom: 10px; }
+.thinkQ { font-size: 20px; line-height: 1.45; font-weight: 600; }
+.thinkA { font-size: 19px; line-height: 1.4; font-weight: 800; color: #1f7a35; margin: 22px 0 8px; }
+.thinkWhy { font-size: 16px; line-height: 1.45; margin: 6px 0; }
+.thinkIdea { font-size: 14px; opacity: .7; margin-top: 14px; }
+#thinkBtns { flex: none; display: flex; gap: 8px; padding: 8px 12px calc(8px + var(--bottom)); }
+#thinkBtns button { flex: 1; min-height: 56px; border: 0; border-radius: 14px; font: inherit; font-size: 18px; font-weight: 700; background: #e9dfcc; color: #2b2620; }
+#thinkBtns button[hidden] { display: none; }
+#thinkReveal { background: #7a5512 !important; color: #fff !important; }
 .lightRot { background: #f5f9ff; height: 100%; display: flex; flex-direction: column; }
 .deepRot { background: #1d2333; color: #e6e9f2; height: 100%; display: flex; flex-direction: column; }
 .q { text-align: center; padding: 14px 12px 6px; font-size: 18px; }
@@ -231,6 +244,7 @@ section.active { display: flex; flex-direction: column; }
   <div id="progress" hidden></div>
   <button class="half" id="goLight">LIGHT</button>
   <button class="half" id="goDeep">DEEP</button>
+  <button class="half" id="goThink">THINK</button>
 </section>
 <section id="light">
   <div id="lightBar"><button id="lightExit" aria-label="Back">✕</button><span id="lightCorner"></span></div>
@@ -245,6 +259,11 @@ section.active { display: flex; flex-direction: column; }
   <div class="bar"><button class="xbtn" id="deepExit" aria-label="Back">✕</button><span id="deepCount"></span><span id="deepStatus"></span></div>
   <div id="deepItem"></div>
   <button id="deepNext" hidden>Next</button>
+</section>
+<section id="think">
+  <div class="bar"><button class="xbtn" id="thinkExit" aria-label="Back">✕</button></div>
+  <div id="thinkCard"></div>
+  <div id="thinkBtns"><button id="thinkReveal">Reveal</button><button id="thinkVariant" hidden>Variant</button><button id="thinkNext">Next</button></div>
 </section>
 <pre id="selftest" style="display:none"></pre>
 <script>
@@ -4438,6 +4457,302 @@ registerDrill('rng', {
   solve: solveRange
 });
 
+// ===== THINK =====
+// A treasury of interview puzzles for exposure, not a drill: read, think, reveal when ready. No scoring.
+// PUZZLES[i] = { id, title, idea, make(rng) -> { q, a, why: [lines] } }. Puzzles that ignore rng are fixed classics;
+// the rest draw new numbers each time (Variant). Puzzles sharing an idea list each other under the answer.
+// Answers of the numeric families are computed here and checked by brute force in THINK TESTS.
+function eggDrops(n) { let k = 0; while (k * (k + 1) / 2 < n) k++; return k; }
+function bridgeBest([a, b, c, d]) { return Math.min(2 * a + b + c + d, a + 3 * b + d); }
+function powCeil(base, n) { let k = 0, c = 1; while (c < n) { c *= base; k++; } return k; }
+function josephus(n) { const p = 2 ** Math.floor(Math.log2(n)); return 2 * (n - p) + 1; }
+function factZeros(n) { let z = 0; for (let f = 5; f <= n; f *= 5) z += Math.floor(n / f); return z; }
+function clockAngle(h, m) { const x = Math.abs(30 * (h % 12) - 5.5 * m) % 360; return Math.min(x, 360 - x); }
+function patternWait(p) { let e = 0; for (let j = 1; j <= p.length; j++) if (p.slice(0, j) === p.slice(-j)) e += 2 ** j; return e; }
+function derangeP(n) { let s = 0, f = 1; for (let k = 0; k <= n; k++) { if (k) f *= k; s += (k % 2 ? -1 : 1) / f; } return s; }
+function birthdayP(k) { let q = 1; for (let i = 0; i < k; i++) q *= (365 - i) / 365; return 1 - q; }
+function boxesP(n) { let s = 0; for (let k = n / 2 + 1; k <= n; k++) s += 1 / k; return 1 - s; }
+function pctText(x, dp = 1) { return numText(100 * x, dp) + '%'; }
+
+// Fewest pours to get c litres in either jug, from empty jugs a and b (fill, empty, pour). -1 when impossible.
+function jugSteps(a, b, c) {
+  const seen = new Set(['0,0']);
+  let level = [[0, 0]];
+  for (let steps = 0; level.length; steps++) {
+    if (level.some(([x, y]) => x === c || y === c)) return steps;
+    const next = [];
+    for (const [x, y] of level) {
+      const t = Math.min(x, b - y), u = Math.min(y, a - x);
+      [[a, y], [x, b], [0, y], [x, 0], [x - t, y + t], [x + u, y - u]].forEach(s => { if (!seen.has(s + '')) { seen.add(s + ''); next.push(s); } });
+    }
+    level = next;
+  }
+  return -1;
+}
+
+const PUZZLES = [
+  { id: 'egg', title: 'Egg drop', idea: 'Balance the worst case', make: rng => { const n = randInt(10, 200, rng), k = eggDrops(n);
+    return { q: 'You have 2 identical eggs and a building with ' + n + ' floors. Some floor is the lowest from which an egg breaks (or none is). What is the fewest drops that always finds it?',
+      a: k + ' drops',
+      why: ['Drop egg one from floor k. If it breaks, egg two checks floors 1 to k − 1 one by one: k drops in all.',
+        'If not, go up k − 1 floors, then k − 2, and so on: each jump leaves one fewer drop for egg two.',
+        'So k drops cover k + (k − 1) + … + 1 = k(k + 1)/2 floors. The first k that reaches ' + n + ' is ' + k + '.'] }; } },
+  { id: 'bridge', title: 'Bridge at night', idea: 'Search the few real plans', make: rng => { const t = shuffle([1, 2, 3, 4, 5, 6, 7, 8, 10, 12, 15, 20, 25], rng).slice(0, 4).sort((x, y) => x - y), [a, b, c, d] = t;
+    return { q: 'Four people must cross a bridge at night with one torch. At most two cross at once, at the slower one\'s pace, and the torch must come back each time. They take ' + t.join(', ') + ' minutes. Fastest total?',
+      a: bridgeBest(t) + ' minutes',
+      why: ['Plan 1: the fastest walks everyone over: ' + d + ' + ' + a + ' + ' + c + ' + ' + a + ' + ' + b + ' = ' + (2 * a + b + c + d) + '.',
+        'Plan 2: the two slowest cross together: ' + b + ' + ' + a + ' + ' + d + ' + ' + b + ' + ' + b + ' = ' + (a + 3 * b + d) + '.',
+        'Plan 2 wins when 2 × ' + b + ' < ' + a + ' + ' + c + ': pairing the slow ones hides one slow crossing.'] }; } },
+  { id: 'coins', title: 'The heavy coin', idea: 'Count the outcomes', make: rng => { const n = randInt(4, 250, rng), k = powCeil(3, n);
+    return { q: n + ' coins look the same. One is heavier. With a balance scale, how many weighings always find it?', a: k + ' weighings',
+      why: ['A weighing has 3 results: left heavy, right heavy, or level.', 'Split the coins into 3 near-equal piles and weigh two: the result names the pile with the fake.',
+        'k weighings can tell 3^k coins apart. 3^' + (k - 1) + ' = ' + 3 ** (k - 1) + ' < ' + n + ' ≤ ' + 3 ** k + ', so ' + k + '.'] }; } },
+  { id: 'coins12', title: 'Heavy or light coin', idea: 'Count the outcomes', make: rng => { const k = randInt(2, 5, rng), n = (3 ** k - 3) / 2;
+    return { q: 'One coin is fake and may be heavier or lighter. With ' + k + ' weighings on a balance, how many coins can you handle at most, finding the fake and whether it is heavy or light?', a: n + ' coins',
+      why: ['k weighings give 3^k = ' + 3 ** k + ' outcome patterns; n coins give 2n cases (each coin heavy or light).',
+        '"Level every time" cannot name a fake, and a symmetry argument costs two more patterns: 2n ≤ 3^k − 3.',
+        'Dyson (1946) showed (3^k − 3)/2 is reached. For k = 3 that is the famous 12 coins.'] }; } },
+  { id: 'poison', title: 'Poisoned bottle', idea: 'Count the outcomes', make: rng => { const n = randInt(100, 5000, rng), d = randInt(1, 2, rng), t = powCeil(d + 1, n);
+    return { q: 'One of ' + n + ' bottles is poisoned. Poison kills within a day. You have ' + d + (d > 1 ? ' days' : ' day') + '. Fewest tasters to find the bottle for sure?', a: t + ' tasters',
+      why: ['Each taster ends in one of ' + (d + 1) + ' states: ' + (d > 1 ? 'dies on day 1, dies on day 2, or lives.' : 'dies or lives.'),
+        't tasters give ' + (d + 1) + '^t patterns. Number the bottles in base ' + (d + 1) + '; digit i says when taster i drinks from that bottle.',
+        (d + 1) + '^' + t + ' = ' + (d + 1) ** t + ' ≥ ' + n + ', and one taster fewer is not enough.'] }; } },
+  { id: 'lockers', title: '100 lockers', idea: 'Pair things up', make: rng => { const n = randInt(50, 1000, rng), s = Math.floor(Math.sqrt(n));
+    return { q: n + ' lockers are closed. Pass k toggles every k-th locker, for k = 1 to ' + n + '. How many are open at the end?', a: s + ' lockers',
+      why: ['Locker m is toggled once for each divisor of m.', 'Divisors pair up as d and m/d, except when d = m/d: an odd count means m is a perfect square.',
+        'The squares up to ' + n + ' are 1², …, ' + s + '²: ' + s + ' open.'] }; } },
+  { id: 'josephus', title: 'Josephus circle', idea: 'Recursion', make: rng => { const n = randInt(5, 120, rng), p = 2 ** Math.floor(Math.log2(n));
+    return { q: n + ' people stand in a circle. Going round, every second person leaves: 2, 4, 6, … Who is last?', a: 'Person ' + josephus(n),
+      why: ['With a power of 2 left and the count at person 1, person 1 survives: each lap halves the circle and starts again at the same person.',
+        n + ' = ' + p + ' + ' + (n - p) + '. After ' + (n - p) + ' people leave, ' + p + ' remain and person ' + josephus(n) + ' is next to count.',
+        'So the survivor is 2 × ' + (n - p) + ' + 1 = ' + josephus(n) + '.'] }; } },
+  { id: 'stamps', title: 'Stamps you cannot make', idea: 'Number theory', make: rng => { let a, b;
+    do { a = randInt(3, 12, rng); b = randInt(a + 1, 17, rng); } while (gcd(a, b) !== 1);
+    return { q: 'Stamps come only in ' + a + 'p and ' + b + 'p. What is the largest postage you cannot pay exactly?', a: (a * b - a - b) + 'p',
+      why: ['Every amount from ' + (a - 1) * (b - 1) + 'p up can be made; the gap below it ends at ab − a − b.',
+        a + ' × ' + b + ' − ' + a + ' − ' + b + ' = ' + (a * b - a - b) + '. (Frobenius, for two coprime sizes.)',
+        'Exactly half of the amounts below ' + (a - 1) * (b - 1) + ' can be made: ' + (a - 1) * (b - 1) / 2 + ' cannot.'] }; } },
+  { id: 'zeros', title: 'Zeros at the end of n!', idea: 'Number theory', make: rng => { const n = randInt(25, 1000, rng), parts = [];
+    for (let f = 5; f <= n; f *= 5) parts.push(Math.floor(n / f));
+    return { q: 'How many zeros does ' + n + '! end with?', a: String(factZeros(n)),
+      why: ['Each final zero needs a factor 10 = 2 × 5. Factors of 2 are plentiful, so count the 5s.',
+        'Multiples of 5 give one each, of 25 one more, of 125 one more, and so on.', parts.join(' + ') + ' = ' + factZeros(n) + '.'] }; } },
+  { id: 'lastdigit', title: 'Last digit of a power', idea: 'Number theory', make: rng => { const a = randInt(2, 9, rng), n = randInt(20, 999, rng), cyc = [];
+    let d = a % 10; do { cyc.push(d); d = d * a % 10; } while (d !== cyc[0]);
+    return { q: 'What is the last digit of ' + a + '^' + n + '?', a: String(cyc[(n - 1) % cyc.length]),
+      why: ['Last digits of powers repeat. For ' + a + ': ' + cyc.join(', ') + ', then again.', 'The cycle has length ' + cyc.length + '. Power ' + n + ' sits at place ' + ((n - 1) % cyc.length + 1) + ' of it.', 'So the last digit is ' + cyc[(n - 1) % cyc.length] + '.'] }; } },
+  { id: 'jugs', title: 'Water jugs', idea: 'Number theory', make: rng => { let a, b, c;
+    do { a = randInt(3, 9, rng); b = randInt(a + 1, 13, rng); c = randInt(1, b - 1, rng); } while (c === a || c % gcd(a, b) || jugSteps(a, b, c) < 3);
+    return { q: 'You have a ' + a + ' L jug and a ' + b + ' L jug, no marks, and a tap. Fewest fills, empties and pours to measure exactly ' + c + ' L?', a: jugSteps(a, b, c) + ' steps',
+      why: ['Every amount you can reach is a multiple of gcd(' + a + ', ' + b + ') = ' + gcd(a, b) + ', so ' + c + ' L is possible.',
+        'Two rhythms work: keep filling the small jug into the big one, or the big into the small. Take the shorter.',
+        'A search over all jug states gives ' + jugSteps(a, b, c) + ' steps.'] }; } },
+  { id: 'ants', title: 'Ants on a stick', idea: 'Invariants', make: rng => { const L = 100, n = randInt(3, 5, rng), ps = shuffle(Array.from({ length: 49 }, (_, i) => 2 * (i + 1)), rng).slice(0, n).sort((x, y) => x - y);
+    const ds = ps.map(() => (rng() < 0.5 ? 'L' : 'R')), t = Math.max(...ps.map((p, i) => (ds[i] === 'R' ? L - p : p)));
+    return { q: 'Ants walk at 1 cm/s on a ' + L + ' cm stick. They start at ' + ps.map((p, i) => p + ' cm going ' + (ds[i] === 'R' ? 'right' : 'left')).join(', ') + '. Meeting ants both turn round. When does the last one fall off?', a: t + ' s',
+      why: ['When two ants meet and turn, swap their names: it looks as if they walked through each other.', 'So the times at which ants fall are those of ghosts walking straight on.', 'The slowest ghost needs ' + t + ' s.'] }; } },
+  { id: 'clock', title: 'Clock angle', idea: 'Rates', make: rng => { const h = randInt(1, 12, rng), m = randInt(0, 59, rng);
+    return { q: 'What is the smaller angle between the hands of a clock at ' + h + ':' + String(m).padStart(2, '0') + '?', a: numText(clockAngle(h, m), 1) + '°',
+      why: ['The minute hand moves 6° a minute. The hour hand moves 30° an hour and 0.5° a minute.', 'Hour hand: ' + numText(30 * (h % 12) + 0.5 * m, 1) + '°. Minute hand: ' + 6 * m + '°.', 'Difference, taken below 180°: ' + numText(clockAngle(h, m), 1) + '°.'] }; } },
+  { id: 'overlap', title: 'Overlapping hands', idea: 'Rates', make: () => ({ q: 'How many times a day do the hour and minute hands of a clock lie on top of each other?', a: '22 times',
+    why: ['The minute hand gains 330° an hour on the hour hand, so it laps it every 12/11 hours.', 'In 24 hours that is 24 ÷ (12/11) = 22 overlaps.', 'Not 24: there is no overlap between 11:00 and 1:00 except at 12:00.'] }) },
+  { id: 'handshake', title: 'Handshakes', idea: 'Counting pairs', make: rng => { const n = randInt(5, 60, rng);
+    return { q: n + ' people meet and each shakes hands once with each other. How many handshakes?', a: String(n * (n - 1) / 2),
+      why: ['Each person shakes ' + (n - 1) + ' hands: ' + n + ' × ' + (n - 1) + ' counts each handshake twice.', 'So ' + n + ' × ' + (n - 1) + ' ÷ 2 = ' + n * (n - 1) / 2 + ', the number of pairs C(' + n + ', 2).'] }; } },
+  { id: 'diagonals', title: 'Diagonals of a polygon', idea: 'Counting pairs', make: rng => { const n = randInt(5, 30, rng);
+    return { q: 'How many diagonals does a polygon with ' + n + ' corners have?', a: String(n * (n - 3) / 2),
+      why: ['Each corner joins to ' + (n - 3) + ' others by a diagonal (not itself, not its two neighbours).', n + ' × ' + (n - 3) + ' counts each diagonal twice: ' + n * (n - 3) / 2 + '.'] }; } },
+  { id: 'knockout', title: 'Knockout tournament', idea: 'Invariants', make: rng => { const n = randInt(20, 300, rng);
+    return { q: n + ' players enter a knockout tournament, with byes where needed. How many matches decide the winner?', a: String(n - 1),
+      why: ['Every match knocks out exactly one player.', 'All but the winner must be knocked out: ' + (n - 1) + ' matches, whatever the bracket.'] }; } },
+  { id: 'chocolate', title: 'Breaking chocolate', idea: 'Invariants', make: rng => { const r = randInt(3, 12, rng), c = randInt(3, 12, rng);
+    return { q: 'A chocolate bar is ' + r + ' × ' + c + ' squares. One break splits one piece along a line. Fewest breaks to get all single squares?', a: String(r * c - 1),
+      why: ['Each break turns one piece into two: the piece count goes up by exactly 1.', 'You go from 1 piece to ' + r * c + ', so every plan takes ' + (r * c - 1) + ' breaks.'] }; } },
+  { id: 'gridpaths', title: 'Paths on a grid', idea: 'Counting pairs', make: rng => { const a = randInt(2, 9, rng), b = randInt(2, 9, rng);
+    return { q: 'Walking only right or up, how many shortest paths go from one corner of a ' + a + ' × ' + b + ' grid of blocks to the opposite corner?', a: String(choose(a + b, a)),
+      why: ['Every path is ' + (a + b) + ' steps: ' + a + ' rights and ' + b + ' ups in some order.', 'Choose which ' + a + ' steps are rights: C(' + (a + b) + ', ' + a + ') = ' + choose(a + b, a) + '.'] }; } },
+  { id: 'squares', title: 'Squares on a board', idea: 'Counting pairs', make: rng => { const n = randInt(3, 12, rng), rect = rng() < 0.5, c2 = n * (n + 1) / 2;
+    return rect ? { q: 'How many rectangles of every size are on a ' + n + ' × ' + n + ' board?', a: String(c2 * c2),
+      why: ['A rectangle is two of the ' + (n + 1) + ' vertical lines and two of the ' + (n + 1) + ' horizontal lines.', 'C(' + (n + 1) + ', 2)² = ' + c2 + '² = ' + c2 * c2 + '.'] }
+      : { q: 'How many squares of every size are on a ' + n + ' × ' + n + ' board?', a: String(n * (n + 1) * (2 * n + 1) / 6),
+        why: ['A k × k square fits in (' + n + ' − k + 1)² places.', 'Sum over k: ' + n + '² + ' + (n - 1) + '² + … + 1² = ' + n * (n + 1) * (2 * n + 1) / 6 + '.'] }; } },
+  { id: 'hanoi', title: 'Tower of Hanoi', idea: 'Recursion', make: rng => { const n = randInt(3, 20, rng);
+    return { q: 'Fewest moves to shift a Tower of Hanoi with ' + n + ' discs?', a: String(2 ** n - 1),
+      why: ['To move the biggest disc, the other ' + (n - 1) + ' must be out of the way and then come back on top.', 'So M(n) = 2 M(n − 1) + 1, which gives M(n) = 2^n − 1 = ' + (2 ** n - 1) + '.'] }; } },
+  { id: 'firstace', title: 'First ace', idea: 'Symmetry of gaps', make: rng => { const [N, k, what] = pick([[52, 4, 'ace'], [52, 13, 'heart'], [52, 26, 'red card'], [52, 12, 'face card'], [36, 4, 'ace']], rng);
+    return { q: 'Turn over a shuffled ' + N + '-card deck that has ' + k + ' ' + what + 's. On average, at which card does the first ' + what + ' appear?', a: 'Card ' + numText((N + 1) / (k + 1)),
+      why: ['The ' + k + ' ' + what + 's cut the other ' + (N - k) + ' cards into ' + (k + 1) + ' gaps, and by symmetry each gap has the same average size.',
+        'Average gap: ' + (N - k) + '/' + (k + 1) + '. The first ' + what + ' comes right after the first gap.', 'So ' + (N - k) + '/' + (k + 1) + ' + 1 = ' + (N + 1) + '/' + (k + 1) + ' = ' + numText((N + 1) / (k + 1)) + '.'] }; } },
+  { id: 'letters', title: 'Letters in envelopes', idea: 'Linearity of expectation', make: rng => { const n = randInt(3, 12, rng), none = rng() < 0.5;
+    return none ? { q: n + ' letters go into ' + n + ' addressed envelopes at random. What is the chance that no letter is in its own envelope?', a: pctText(derangeP(n), 2),
+      why: ['Inclusion–exclusion: 1 − 1/1! + 1/2! − 1/3! + … ± 1/' + n + '!.', 'This settles fast to 1/e = 36.79%; even ' + n + ' letters are close.'] }
+      : { q: n + ' letters go into ' + n + ' addressed envelopes at random. On average, how many land in their own envelope?', a: '1',
+        why: ['Each letter is right with chance 1/' + n + '. Expectations add even when events depend on each other.', n + ' × 1/' + n + ' = 1, for any number of letters.'] }; } },
+  { id: 'emptybins', title: 'Empty boxes', idea: 'Linearity of expectation', make: rng => { const n = randInt(5, 100, rng);
+    return { q: n + ' balls are thrown at random into ' + n + ' boxes. On average, how many boxes stay empty?', a: numText(n * (1 - 1 / n) ** n),
+      why: ['A box misses every ball with chance (1 − 1/' + n + ')^' + n + '.', 'Add over the boxes: ' + n + ' × ' + numText((1 - 1 / n) ** n, 4) + ' = ' + numText(n * (1 - 1 / n) ** n) + ', close to n/e.'] }; } },
+  { id: 'coupon', title: 'Collect every face', idea: 'Linearity of expectation', make: rng => { const s = pick([4, 6, 8, 10, 12, 20], rng);
+    return { q: 'You roll a ' + s + '-sided die until every face has shown. Average number of rolls?', a: numText(s * harmonic(s)),
+      why: ['With j faces seen, a new face takes ' + s + '/(' + s + ' − j) rolls on average.', 'Add the waits: ' + s + ' × (1 + 1/2 + … + 1/' + s + ') = ' + numText(s * harmonic(s)) + '.'] }; } },
+  { id: 'birthday', title: 'Birthday clash', idea: 'Use the complement', make: rng => { const k = randInt(10, 70, rng);
+    return { q: 'In a room of ' + k + ' people, what is the chance that two share a birthday (365 days, all equally likely)?', a: pctText(birthdayP(k)),
+      why: ['Easier: the chance that all differ is 365/365 × 364/365 × … × ' + (366 - k) + '/365.', 'It is pairs that clash, not people: ' + k + ' people make ' + k * (k - 1) / 2 + ' pairs.', '1 − ' + numText(1 - birthdayP(k), 4) + ' = ' + pctText(birthdayP(k)) + '. It passes 50% at 23 people.'] }; } },
+  { id: 'socks', title: 'Socks in the dark', idea: 'Pigeonholes', make: rng => { const k = randInt(2, 8, rng), r = randInt(2, 4, rng);
+    return { q: 'A drawer holds socks in ' + k + ' colours, many of each. In the dark, how many must you take to be sure of ' + r + ' of one colour?', a: String(k * (r - 1) + 1),
+      why: ['The worst case: ' + (r - 1) + ' of every colour, ' + k * (r - 1) + ' socks, and still no ' + r + ' alike.', 'One more sock must make ' + r + ' of some colour: ' + (k * (r - 1) + 1) + '.'] }; } },
+  { id: 'pattern', title: 'Waiting for a pattern', idea: 'Self-overlap', make: rng => { const p = pick(['HH', 'HT', 'HHH', 'HTH', 'HHT', 'HTT', 'HTHT', 'HHHH', 'HTTH', 'HHTT'], rng), parts = [];
+    for (let j = 1; j <= p.length; j++) if (p.slice(0, j) === p.slice(-j)) parts.push('2^' + j);
+    return { q: 'You flip a fair coin until ' + p + ' appears in a row. Average number of flips?', a: String(patternWait(p)),
+      why: ['Conway\'s rule: for each length j where the first j letters of the pattern equal its last j, add 2^j.', p + ': ' + parts.join(' + ') + ' = ' + patternWait(p) + '.', 'A pattern that overlaps itself is slower: a near-miss throws you further back. HH takes 6, HT only 4.'] }; } },
+  { id: 'bothfaces', title: 'Both sides of a coin', idea: 'Markov chains', make: rng => { const p = pick([0.5, 0.4, 0.3, 0.2, 0.1], rng), q = numText(1 - p);
+    return { q: 'A coin shows heads with chance ' + p + '. On average, how many flips until you have seen both heads and tails?', a: numText(1 / (p * (1 - p)) - 1),
+      why: ['After the first flip you wait for the other side: 1/' + q + ' flips after heads, 1/' + p + ' after tails.', '1 + ' + p + ' × 1/' + q + ' + ' + q + ' × 1/' + p + ' = ' + numText(1 / (p * (1 - p)) - 1) + '.'] }; } },
+  { id: 'antcube', title: 'Ant on a cube', idea: 'Markov chains', make: () => ({ q: 'An ant walks the edges of a cube, picking one of 3 edges at random at each corner. On average, how many edges until it reaches the opposite corner?', a: '10 edges',
+    why: ['Group corners by distance to the goal: 3, 2, 1, 0.', 'E3 = 1 + E2; E2 = 1 + (2/3)E1 + (1/3)E3; E1 = 1 + (2/3)E2.', 'Solving: E1 = 7, E2 = 9, E3 = 10.'] }) },
+  { id: 'ruin', title: 'Fair gambler\'s ruin', idea: 'Martingales', make: rng => { const N = randInt(6, 20, rng), i = randInt(1, N - 1, rng), dur = rng() < 0.5;
+    return dur ? { q: 'You have £' + i + ' and bet £1 at a time on fair coin flips. You stop at £0 or £' + N + '. Average number of bets?', a: String(i * (N - i)),
+      why: ['D(i) = 1 + (D(i − 1) + D(i + 1))/2 with D(0) = D(N) = 0 is solved by D(i) = i(N − i).', i + ' × ' + (N - i) + ' = ' + i * (N - i) + '.'] }
+      : { q: 'You have £' + i + ' and bet £1 at a time on fair coin flips. You stop at £0 or £' + N + '. Chance to reach £' + N + '?', a: pctText(i / N),
+        why: ['A fair game keeps your average wealth at £' + i + ', and you end at £0 or £' + N + '.', 'So ' + N + ' × P = ' + i + ': P = ' + i + '/' + N + ' = ' + pctText(i / N) + '.'] }; } },
+  { id: 'monty', title: 'Monty Hall, n doors', idea: 'Information from the host', make: rng => { const n = randInt(3, 10, rng), all = n > 3 && rng() < 0.5;
+    const sw = all ? (n - 1) / n : (n - 1) / (n * (n - 2));
+    return { q: 'A prize is behind one of ' + n + ' doors. You pick one. The host, who knows, opens ' + (all ? 'all but one of the other doors' : 'one other door') + ', showing no prize. Chance you win if you switch' + (all ? '' : ' to a given other closed door') + '?', a: pctText(sw),
+      why: ['Your first pick wins with 1/' + n + '; the host can always open an empty door, so that does not change.',
+        all ? 'The other ' + (n - 1) + '/' + n + ' now sits on the one door left closed.' : 'The other ' + (n - 1) + '/' + n + ' spreads over the ' + (n - 2) + ' other closed doors.',
+        all ? 'Switch: ' + pctText(sw) + '.' : (n - 1) + '/' + n + ' ÷ ' + (n - 2) + ' = ' + pctText(sw) + ', more than staying (' + pctText(1 / n) + ').'] }; } },
+  { id: 'stick', title: 'Broken stick', idea: 'Symmetry of gaps', make: rng => { const n = randInt(3, 6, rng), p = 1 - n / 2 ** (n - 1);
+    return { q: 'A stick is cut at ' + (n - 1) + ' random points into ' + n + ' pieces. Chance the pieces can form a' + (n === 3 ? ' triangle' : ' polygon with ' + n + ' sides') + '?', a: fracText(frac(2 ** (n - 1) - n, 2 ** (n - 1))),
+      why: ['It fails only when one piece is at least half the stick.', 'Each piece is that long with chance 1/2^' + (n - 1) + ', and two pieces cannot both be.', '1 − ' + n + '/' + 2 ** (n - 1) + ' = ' + pctText(p) + '.'] }; } },
+  { id: 'uniformmax', title: 'Largest of random numbers', idea: 'Symmetry of gaps', make: rng => { const k = randInt(2, 9, rng), mx = rng() < 0.5;
+    return { q: 'Pick ' + k + ' random numbers between 0 and 1. What is the average ' + (mx ? 'largest' : 'smallest') + ' one?', a: (mx ? k : 1) + '/' + (k + 1),
+      why: [k + ' points cut [0, 1] into ' + (k + 1) + ' gaps, and by symmetry each gap averages 1/' + (k + 1) + '.', mx ? 'The largest sits ' + k + ' gaps in: ' + k + '/' + (k + 1) + '.' : 'The smallest sits after one gap: 1/' + (k + 1) + '.'] }; } },
+  { id: 'sumexceed', title: 'Sum past a line', idea: 'Linearity of expectation', make: rng => { const t = pick([0.25, 0.5, 0.75, 1], rng);
+    return { q: 'Add random numbers between 0 and 1 until the total passes ' + t + '. On average, how many numbers?', a: numText(Math.exp(t), 3) + (t === 1 ? ' (e)' : ' (e^' + t + ')'),
+      why: ['The chance that n numbers still sum below ' + t + ' is ' + t + '^n/n!.', 'Average count = sum over n of P(more than n needed) = 1 + ' + t + ' + ' + t + '²/2! + … = e^' + t + '.'] }; } },
+  { id: 'cardcolour', title: 'Stop on red', idea: 'Martingales', make: rng => { const r = randInt(3, 26, rng), b = randInt(3, 26, rng);
+    return { q: 'A deck has ' + r + ' red and ' + b + ' black cards. Cards turn up one by one. At any time you may say "next is red" once. With the best timing, what is your chance to be right?', a: r + '/' + (r + b),
+      why: ['Whatever you have seen, the next card is as likely to be red as the last card in the deck.', 'So any plan wins exactly as often as betting on the last card: ' + r + '/' + (r + b) + '. Timing does not help.'] }; } },
+  { id: 'kelly', title: 'How much to bet', idea: 'Growth under risk', make: rng => { const p = pick([0.55, 0.6, 0.65, 0.7], rng), o = pick([1, 2], rng), f = p - (1 - p) / o;
+    return { q: 'A bet wins with chance ' + p + ' and pays ' + o + ' to 1. You can repeat it forever. What share of your money should you stake each time to grow fastest?', a: pctText(f),
+      why: ['Maximise the average log of wealth: p ln(1 + ' + o + 'f) + q ln(1 − f).', 'Kelly: f = p − q/b = ' + p + ' − ' + numText(1 - p) + '/' + o + ' = ' + pctText(f) + '.', 'Staking about twice this or more makes wealth shrink over time, even with an edge.'] }; } },
+  { id: 'roulette', title: 'Spin again?', idea: 'Information from the past', make: rng => { const n = randInt(5, 8, rng);
+    return { q: 'A revolver has ' + n + ' chambers with 2 bullets side by side. The cylinder is spun; you pull the trigger and live. Before the next pull, should you spin again? Chance to live each way?', a: 'Don\'t spin: ' + pctText((n - 3) / (n - 2)) + ' vs ' + pctText((n - 2) / n),
+      why: ['You were on one of the ' + (n - 2) + ' empty chambers. Only one of them sits just before a bullet.', 'No spin: live with ' + (n - 3) + '/' + (n - 2) + '. Spin: live with ' + (n - 2) + '/' + n + '.'] }; } },
+  { id: 'pirates', title: 'Pirate gold', idea: 'Backward induction', make: rng => { const n = randInt(3, 9, rng), give = Math.floor((n - 1) / 2);
+    return { q: n + ' ranked pirates split 100 coins. The top pirate proposes a split; if at least half vote yes (he votes too), it stands, or he is thrown overboard and the next proposes. Pirates want to live, then gold, then to throw others over. How much does the top pirate keep?', a: (100 - give) + ' coins',
+      why: ['Work back from 2 pirates: the senior one keeps all 100, with his own vote as half.', 'Each proposer buys the pirates who would get nothing in the next round, at 1 coin each.',
+        'He needs ' + give + ' such votes: he keeps ' + (100 - give) + ', and every second pirate below him gets 1.'] }; } },
+  { id: 'blueeyes', title: 'Blue-eyed islanders', idea: 'Common knowledge', make: rng => { const n = randInt(2, 100, rng);
+    return { q: 'An island has ' + n + ' blue-eyed people. No one knows their own eye colour, and anyone who learns it must leave that night. A visitor says, in front of all: "At least one of you has blue eyes." What happens?', a: 'All ' + n + ' leave on night ' + n,
+      why: ['With 1 blue-eyed person, they see none and leave on night 1.', 'With k, each waits to see if the k − 1 they see leave on night k − 1. When they do not, each knows they too have blue eyes.',
+        'The visitor added common knowledge: everyone knows that everyone knows … that one exists.'] }; } },
+  { id: 'prisoners', title: '100 prisoners and boxes', idea: 'Cycles in a shuffle', make: rng => { const n = pick([10, 20, 50, 100], rng);
+    return { q: n + ' prisoners each look in ' + n / 2 + ' of ' + n + ' boxes for their own number, one at a time, with no talking after the start. All go free only if all succeed. Best chance?', a: pctText(boxesP(n)),
+      why: ['Plan: open the box with your own number, then the box whose number you find, and so on.', 'You succeed exactly when your number\'s cycle in the shuffle is at most ' + n / 2 + ' long; all succeed when no cycle is longer.',
+        'P(no cycle longer than ' + n / 2 + ') = 1 − (1/' + (n / 2 + 1) + ' + … + 1/' + n + ') = ' + pctText(boxesP(n)) + ', against (1/2)^' + n + ' by chance.'] }; } },
+  { id: 'horses', title: '25 horses', idea: 'Count the outcomes', make: () => ({ q: '25 horses, a track for 5 at a time, no stopwatch. Fewest races to find the 3 fastest?', a: '7 races',
+    why: ['5 heats rank each group. A 6th race of the heat winners finds the fastest overall.', 'Only 5 horses can still be 2nd or 3rd: the 2nd and 3rd of the winner\'s heat, the 6th-race runner-up and her heat\'s 2nd, and the 6th-race 3rd.', 'A 7th race of those 5 settles it.'] }) },
+  { id: 'ropes', title: 'Burning ropes', idea: 'Invariants', make: () => ({ q: 'Two ropes each burn in 60 minutes, but unevenly. How do you measure 45 minutes?', a: 'Light rope A at both ends and rope B at one end. When A is gone (30 min), light B\'s other end (15 more).',
+    why: ['Uneven burning hides the halfway point along the rope, not in time.', 'Lighting both ends halves the time whatever the shape: two flames always meet at 30 minutes.'] }) },
+  { id: 'wolf', title: 'Wolf, goat, cabbage', idea: 'Search the few real plans', make: () => ({ q: 'A farmer must ferry a wolf, a goat and a cabbage across a river, one at a time. Left alone, the wolf eats the goat and the goat eats the cabbage. Fewest crossings?', a: '7 crossings',
+    why: ['The goat is the problem: it clashes with both. Take it first.', 'Goat over, back, wolf over, goat back, cabbage over, back, goat over: 7.', 'The trick is a return trip with cargo: bringing the goat back.'] }) },
+  { id: 'switches', title: 'Three switches', idea: 'Use another dimension', make: () => ({ q: 'Three switches outside a closed room; one works the bulb inside. You may enter once. How do you find the right switch?', a: 'Turn switch 1 on for some minutes, then off; turn switch 2 on; go in.',
+    why: ['On and lit: switch 2. Off but warm: switch 1. Off and cold: switch 3.', 'One visit gives only 2 light states, so you need a second signal: heat.'] }) },
+  { id: 'chessboard', title: 'Mutilated chessboard', idea: 'Invariants', make: () => ({ q: 'Remove two opposite corners from a chessboard. Can 31 dominoes cover the 62 squares left?', a: 'No',
+    why: ['Each domino covers one black and one white square.', 'Opposite corners have the same colour, so 32 of one colour and 30 of the other remain. No tiling can fix that.'] }) },
+  { id: 'bear', title: 'The colour of the bear', idea: 'Use another dimension', make: () => ({ q: 'A hunter walks 10 km south, 10 km east, 10 km north, and is back where he started. He sees a bear. What colour is it?', a: 'White: he is at the North Pole',
+    why: ['South, east, north closes the loop only where east is a circle round the pole.', 'Near the South Pole there are more answers: start 10 km north of a circle of length 10/k km. But there are no bears there.'] }) },
+  { id: 'guards', title: 'Two guards', idea: 'Self-reference', make: () => ({ q: 'Two doors, two guards. One door leads out. One guard always lies, one always tells the truth, and you do not know which. You may ask one guard one question. What do you ask?', a: '"Which door would the other guard say leads out?" Then take the other door.',
+    why: ['The question routes the answer through both guards, so exactly one lie is applied.', 'Either way the answer points to the wrong door.'] }) },
+  { id: 'hats', title: 'Hats in a line', idea: 'Parity', make: rng => { const n = randInt(10, 100, rng);
+    return { q: n + ' prisoners stand in a line, each seeing the hats (black or white) in front. From the back, each calls a colour; a right call saves them. They plan first. How many can be sure to live?', a: (n - 1) + ' prisoners',
+      why: ['The back prisoner calls "black" if he sees an odd number of black hats, else "white". He has a 50% chance.', 'Each next prisoner tracks the parity from what they see and hear, and knows their own hat.', 'So all but the first: ' + (n - 1) + '.'] }; } },
+  { id: 'lightbulb', title: 'Prisoners and a light', idea: 'Common knowledge', make: () => ({ q: '100 prisoners are taken one at a time, at random and forever, to a room with a light switch. Any prisoner may say "all of us have been here"; if wrong, all die. How can they be sure?', a: 'One counter. Each other prisoner turns the light on once, the first time they find it off. Only the counter turns it off and counts. At 99 he speaks.',
+    why: ['The light carries one bit, so the plan needs a single reader to add the bits up.', 'Every other prisoner sends exactly one signal, so the count can never be too high.'] }) },
+  { id: 'envelopes', title: 'Two envelopes', idea: 'Paradoxes', make: () => ({ q: 'One envelope holds twice what the other holds. You open one and see x. "Switch: half the time I get 2x, half the time x/2, average 1.25x." Should you?', a: 'No: switching gains nothing',
+    why: ['The step "half the time 2x" treats x as fixed while the pair varies. Call the pair (a, 2a): you hold a or 2a.', 'Switching gives +a or −a with equal chance: zero on average.'] }) },
+  { id: 'boygirl', title: 'Two children', idea: 'Paradoxes', make: rng => { const tue = rng() < 0.5;
+    return tue ? { q: 'A family has two children. At least one is a boy born on a Tuesday. Chance both are boys?', a: '13/27',
+      why: ['There are 27 equally likely sex-and-day pairs with a Tuesday boy: 14 boy-first, 14 boy-second, 1 counted twice.', '13 of the 27 are two boys. More detail about "a boy" pushes the answer toward 1/2.'] }
+      : { q: 'A family has two children. At least one is a boy. Chance both are boys?', a: '1/3', why: ['Equally likely: BB, BG, GB, GG. The condition removes GG.', 'One of the three left is BB: 1/3, not 1/2.'] }; } },
+  { id: 'simpson', title: 'Simpson\'s paradox', idea: 'Paradoxes', make: () => ({ q: 'Treatment A cures 81/87 small and 192/263 large kidney stones. Treatment B cures 234/270 small and 55/80 large. Overall A cures 78%, B 83%. Which is better?', a: 'A: it wins in both groups',
+    why: ['A got far more of the hard cases (large stones). That drags its overall rate down.', 'When a hidden factor drives both who gets what and the result, compare within groups.'] }) },
+  { id: 'bertrand', title: 'A random chord', idea: 'Paradoxes', make: () => ({ q: 'Pick a random chord in a circle. Chance it is longer than the side of the triangle drawn inside the circle?', a: '1/3, 1/2 or 1/4: it depends on what "random" means',
+    why: ['Random end points give 1/3; a random point on a random radius gives 1/2; a random midpoint in the disc gives 1/4.', 'Bertrand\'s point: "at random" must name a method before a chance exists.'] }) },
+  { id: 'vonneumann', title: 'Fair coin from a biased one', idea: 'Symmetry', make: () => ({ q: 'A coin is biased in an unknown way. How do you get a fair 50-50 decision from it?', a: 'Flip twice. HT means A, TH means B, HH or TT: start again.',
+    why: ['HT and TH both have chance p(1 − p), whatever p is.', 'Throwing away the matches leaves two equal chances.'] }) },
+  { id: 'batball', title: 'Bat and ball', idea: 'Intuition traps', make: rng => { const d = pick([100, 200, 500], rng), ball = pick([5, 10, 15, 20, 25], rng), t = d + 2 * ball;
+    return { q: 'A bat and a ball cost £' + numText(t / 100) + ' together. The bat costs £' + numText(d / 100) + ' more than the ball. What does the ball cost?', a: ball + 'p',
+      why: ['The fast answer, ' + (t - d) + 'p, makes the bat cost only ' + (t - 2 * (t - d)) + 'p more.', 'Ball x, bat x + ' + d + 'p: 2x + ' + d + ' = ' + t + ', so x = ' + ball + 'p.'] }; } },
+  { id: 'lily', title: 'Lily pads', idea: 'Intuition traps', make: rng => { const n = randInt(20, 60, rng), k = pick([2, 4, 8], rng);
+    return { q: 'Lily pads double their area every day and cover a lake on day ' + n + '. On which day do they cover 1/' + k + ' of it?', a: 'Day ' + (n - Math.log2(k)),
+      why: ['Go backwards: each day back halves the area.', '1/' + k + ' is ' + Math.log2(k) + ' halving' + (k > 2 ? 's' : '') + ' from full: day ' + (n - Math.log2(k)) + ', not day ' + n / k + '.'] }; } },
+  { id: 'widgets', title: 'Machines and widgets', idea: 'Intuition traps', make: rng => { const a = randInt(3, 9, rng), b = randInt(20, 200, rng);
+    return { q: a + ' machines make ' + a + ' widgets in ' + a + ' minutes. How long do ' + b + ' machines take to make ' + b + ' widgets?', a: a + ' minutes',
+      why: ['Each machine makes one widget in ' + a + ' minutes.', b + ' machines working side by side make ' + b + ' widgets in the same ' + a + ' minutes.'] }; } },
+  { id: 'rope', title: 'Rope round the Earth', idea: 'Intuition traps', make: rng => { const h = pick([1, 2, 5, 10], rng);
+    return { q: 'A rope lies tight round the equator. How much longer must it be to float ' + h + ' m above the ground all the way round?', a: numText(2 * Math.PI * h) + ' m',
+      why: ['Length = 2πr, so raising the radius by ' + h + ' m adds 2π × ' + h + ' m.', 'The size of the Earth drops out: the same holds for a football.'] }; } },
+  { id: 'avgspeed', title: 'Average speed', idea: 'Intuition traps', make: rng => { const [u, v] = pick([[40, 60], [30, 60], [20, 80], [50, 100], [60, 90]], rng);
+    return { q: 'You drive to a town at ' + u + ' km/h and back the same way at ' + v + ' km/h. Average speed for the trip?', a: numText(2 * u * v / (u + v)) + ' km/h',
+      why: ['Not ' + (u + v) / 2 + ': you spend more time at the slow speed.', 'For distance d: time d/' + u + ' + d/' + v + '; speed = 2d ÷ time = 2 × ' + u + ' × ' + v + '/(' + u + ' + ' + v + ') = ' + numText(2 * u * v / (u + v)) + '.'] }; } }
+];
+
+CONFIG.think = { ideaLinks: 3 };
+
+function puzzleById(id) { return PUZZLES.find(p => p.id === id); }
+
+// Next puzzle: one not yet seen this round (the round restarts when all are seen), never the one just shown.
+function nextPuzzleId(state, prev, rng) {
+  const seen = state.think.seen, fresh = PUZZLES.filter(p => !seen.includes(p.id) && p.id !== prev);
+  if (!fresh.length) state.think.seen = prev ? [prev] : [];
+  const pool = fresh.length ? fresh : PUZZLES.filter(p => p.id !== prev), id = pick(pool, rng).id;
+  state.think.seen.push(id);
+  return id;
+}
+
+function relatedTitles(p) {
+  return PUZZLES.filter(x => x.idea === p.idea && x.id !== p.id).slice(0, CONFIG.think.ideaLinks).map(x => x.title);
+}
+
+function thinkLine(cls, text) { const d = makeDiv(cls, ''); d.textContent = text; return d; }
+
+function renderThink() {
+  const t = app.think, p = puzzleById(t.id), card = document.getElementById('thinkCard');
+  card.replaceChildren(thinkLine('thinkTitle', p.title), thinkLine('thinkQ', t.item.q));
+  if (t.shown) {
+    const related = relatedTitles(p);
+    card.append(thinkLine('thinkA', t.item.a), ...t.item.why.map(w => thinkLine('thinkWhy', w)),
+      thinkLine('thinkIdea', 'Idea: ' + p.idea + (related.length ? '. See also: ' + related.join(', ') + '.' : '.')));
+  }
+  document.getElementById('thinkReveal').hidden = t.shown;
+  document.getElementById('thinkVariant').hidden = !t.shown || p.make.length === 0;
+  card.scrollTop = 0;
+}
+
+function showPuzzle(id) {
+  app.think = { id, item: puzzleById(id).make(makeItemRng()), shown: false };
+  renderThink();
+}
+
+function startThink() {
+  showScreen('think');
+  showPuzzle(nextPuzzleId(app.state, null, Math.random));
+  saveState(app.state, app.storage);
+}
+
+function revealPuzzle() { app.think.shown = true; renderThink(); }
+function variantPuzzle() { showPuzzle(app.think.id); }
+function nextPuzzle() { showPuzzle(nextPuzzleId(app.state, app.think.id, Math.random)); saveState(app.state, app.storage); }
+
+function wireThink() {
+  document.getElementById('goThink').addEventListener('click', startThink);
+  document.getElementById('thinkExit').addEventListener('click', showStart);
+  document.getElementById('thinkReveal').addEventListener('click', revealPuzzle);
+  document.getElementById('thinkVariant').addEventListener('click', variantPuzzle);
+  document.getElementById('thinkNext').addEventListener('click', nextPuzzle);
+}
+
 // ===== STATE =====
 // Progress and the staircase use Light answers only: Deep runs at skill + 5 and takes ~10x longer.
 const STORAGE_KEY = 'brain-game-v1';
@@ -4448,7 +4763,7 @@ const DAY_MS = 864e5;
 function defaultState() {
   const skill = {}, run = {}, recent = {};
   ALL_DRILL_IDS.forEach(id => { skill[id] = 1; run[id] = 0; recent[id] = []; });
-  return { v: 1, skill, run, streak: 0, recent, history: [], cal: [] };
+  return { v: 1, skill, run, streak: 0, recent, history: [], cal: [], think: { seen: [] } };
 }
 
 function isObject(o) { return !!o && typeof o === 'object' && !Array.isArray(o); }
@@ -4466,6 +4781,7 @@ function fillDrills(s) {
   if (!isObject(s.recent)) s.recent = {};
   ALL_DRILL_IDS.forEach(id => { if (!Array.isArray(s.recent[id])) s.recent[id] = []; });
   if (!Array.isArray(s.cal)) s.cal = [];
+  if (!isObject(s.think) || !Array.isArray(s.think.seen)) s.think = { seen: [] };
   return s;
 }
 
@@ -4956,6 +5272,7 @@ function init() {
   app.state = loadState(app.storage);
   wireLight();
   wireDeep();
+  wireThink();
   wireStart();
   showStart();
 }
@@ -5854,9 +6171,10 @@ test('layout: answer areas keep at least 20 px above the bottom edge', () => {
   const pb = parseFloat(getComputedStyle(el).paddingBottom); el.remove();
   assert(pb >= 20, 'bottom gap ' + pb);
 });
-test('start halves say only LIGHT and DEEP', () => {
+test('start bands say only LIGHT, DEEP and THINK', () => {
   assert(document.getElementById('goLight').textContent.trim() === 'LIGHT', 'light');
   assert(document.getElementById('goDeep').textContent.trim() === 'DEEP', 'deep');
+  assert(document.getElementById('goThink').textContent.trim() === 'THINK', 'think');
 });
 test('deep menu: five skills, all open; a skill starts a set of its scenes', () => {
   app.state = defaultState(); showDeepSkills();
@@ -7305,6 +7623,88 @@ test('quant: Light gives quant about five sixths of play', () => {
   const r = makeRng(53); let rot = 0;
   for (let i = 0; i < 1000; i++) if (DRILLS[pickLightDrill(r)].skill === 'rotation') rot++;
   assert(rot > 120 && rot < 220, 'rotation share ' + rot);
+});
+
+// ===== THINK TESTS =====
+test('think: every puzzle gives a question, an answer and 2-4 reason lines', () => {
+  assert(PUZZLES.length >= 55 && new Set(PUZZLES.map(p => p.id)).size === PUZZLES.length, 'count/unique ' + PUZZLES.length);
+  const r = makeRng(97);
+  PUZZLES.forEach(p => { for (let i = 0; i < (p.make.length ? 40 : 1); i++) {
+    const it = p.make(r), text = [it.q, it.a, ...it.why].join(' ');
+    assert(it.q && it.a && it.why.length >= 2 && it.why.length <= 4 && !/undefined|NaN|Infinity/.test(text), p.id + ': ' + text);
+  } });
+});
+test('think: brute force agrees - egg drop, lockers, Josephus, stamps, zeros, last digit', () => {
+  const eggDP = n => { for (let d = 1; ; d++) if (d * (d + 1) / 2 >= n) return d; };
+  for (let n = 1; n <= 300; n++) assert(eggDrops(n) === eggDP(n), 'egg ' + n);
+  const f2 = (d) => { let a = 0; for (let i = 1; i <= d; i++) a = a + i; return a; }; // f(d,2) = f(d-1,1) + f(d-1,2) + 1
+  assert(f2(14) >= 100 && f2(13) < 100 && eggDrops(100) === 14, 'egg 100 = 14');
+  for (let n = 50; n <= 400; n += 7) { const open = new Array(n + 1).fill(false); for (let k = 1; k <= n; k++) for (let m = k; m <= n; m += k) open[m] = !open[m]; assert(open.filter(Boolean).length === Math.floor(Math.sqrt(n)), 'lockers ' + n); }
+  for (let n = 1; n <= 130; n++) { const c = Array.from({ length: n }, (_, i) => i + 1); let i = 0; while (c.length > 1) { i = (i + 1) % c.length; c.splice(i, 1); } assert(c[0] === josephus(n), 'josephus ' + n); }
+  for (let a = 3; a <= 12; a++) for (let b = a + 1; b <= 17; b++) { if (gcd(a, b) !== 1) continue; const ok = [true]; let last = 0; for (let x = 1; x <= a * b; x++) { ok[x] = (x >= a && ok[x - a]) || (x >= b && ok[x - b]); if (!ok[x]) last = x; } assert(last === a * b - a - b, 'stamps ' + a + ',' + b); }
+  for (let n = 25; n <= 300; n += 11) { let f = 1n; for (let i = 2n; i <= BigInt(n); i++) f *= i; const z = String(f).match(/0*$/)[0].length; assert(z === factZeros(n), 'zeros ' + n); }
+  const r = makeRng(5);
+  for (let i = 0; i < 60; i++) { const it = puzzleById('lastdigit').make(r), [, a, n] = it.q.match(/of (\d)\^(\d+)/); assert(String(BigInt(a) ** BigInt(n) % 10n) === it.a, 'last digit ' + a + '^' + n); }
+});
+test('think: brute force agrees - bridge, jugs, ants', () => {
+  const bridgeSearch = t => { const best = { '15,0': 0 }, q = [[15, 0]];
+    while (q.length) { const [m, side] = q.shift(), c = best[m + ',' + side], here = [0, 1, 2, 3].filter(i => ((m >> i) & 1) === (side ? 0 : 1));
+      const moves = side === 0 ? pairs(here.length).map(([i, j]) => [here[i], here[j]]).concat(here.map(i => [i])) : here.map(i => [i]);
+      for (const g of moves) { const nm = g.reduce((x, i) => x ^ (1 << i), m), k = nm + ',' + (1 - side), cost = c + Math.max(...g.map(i => t[i]));
+        if (!(k in best) || cost < best[k]) { best[k] = cost; q.push([nm, 1 - side]); } } }
+    return best['0,1']; };
+  const r = makeRng(11);
+  for (let i = 0; i < 60; i++) { const t = shuffle([1, 2, 3, 4, 5, 6, 7, 8, 10, 12, 15, 20, 25], r).slice(0, 4).sort((x, y) => x - y); assert(bridgeSearch(t) === bridgeBest(t), 'bridge ' + t); }
+  assert(jugSteps(3, 5, 4) === 6 && jugSteps(4, 6, 3) === -1, 'jugs 3,5->4 in 6; 4,6->3 impossible');
+  for (let i = 0; i < 40; i++) { const it = puzzleById('ants').make(r), ants = [...it.q.matchAll(/(\d+) cm going (left|right)/g)].map(m => ({ x: 2 * m[1], v: m[2] === 'right' ? 1 : -1 }));
+    let t = 0, last = 0; while (ants.length) { t += 0.5; ants.forEach(a => { a.x += a.v; }); for (let k = ants.length - 1; k >= 0; k--) if (ants[k].x <= 0 || ants[k].x >= 200) { last = t; ants.splice(k, 1); }
+      ants.forEach(a => ants.forEach(b => { if (a !== b && a.x === b.x && a.v !== b.v) { a.turn = true; } })); ants.forEach(a => { if (a.turn) { a.v = -a.v; a.turn = false; } }); }
+    assert(last + ' s' === it.a, 'ants ' + it.q + ' sim ' + last); }
+});
+test('think: brute force agrees - patterns, pirates, boxes, Monty, first ace, letters, ruin', () => {
+  const markov = p => { const n = p.length, next = (k, c) => { const s = p.slice(0, k) + c; for (let j = Math.min(n, s.length); j >= 0; j--) if (s.slice(s.length - j) === p.slice(0, j)) return j; return 0; };
+    let e = new Array(n + 1).fill(0); for (let it = 0; it < 20000; it++) e = e.map((_, k) => k === n ? 0 : 1 + (e[next(k, 'H')] + e[next(k, 'T')]) / 2); return e[0]; };
+  ['HH', 'HT', 'HHH', 'HTH', 'HHT', 'HTT', 'HTHT', 'HHHH', 'HTTH', 'HHTT'].forEach(p => assert(Math.abs(markov(p) - patternWait(p)) < 1e-6, 'pattern ' + p));
+  let alloc = [100];
+  for (let k = 2; k <= 9; k++) { const costs = alloc.map((g, i) => ({ i, c: g + 1 })).sort((x, y) => x.c - y.c).slice(0, Math.ceil(k / 2) - 1), next = new Array(k - 1).fill(0);
+    costs.forEach(({ i, c }) => { next[i] = c; }); alloc = [100 - costs.reduce((s, x) => s + x.c, 0), ...next];
+    if (k >= 3) assert(alloc[0] === 100 - Math.floor((k - 1) / 2), 'pirates ' + k + ': ' + alloc); }
+  const perms = n => n === 0 ? [[]] : perms(n - 1).flatMap(p => Array.from({ length: n }, (_, i) => [...p.slice(0, i), n - 1, ...p.slice(i)]));
+  const all8 = perms(8), longest = p => { const seen = new Set(); let m = 0; p.forEach((_, s) => { let len = 0, x = s; while (!seen.has(x)) { seen.add(x); x = p[x]; len++; } m = Math.max(m, len); }); return m; };
+  assert(Math.abs(all8.filter(p => longest(p) <= 4).length / all8.length - boxesP(8)) < 1e-12, 'boxes 8');
+  assert(Math.abs(perms(6).filter(p => p.every((x, i) => x !== i)).length / 720 - derangeP(6)) < 1e-12, 'derangements 6');
+  for (let n = 4; n <= 8; n++) { let win = 0; for (let prize = 0; prize < n; prize++) { const empty = [...Array(n).keys()].filter(d => d !== 0 && d !== prize);
+    empty.forEach(h => { const rest = [...Array(n).keys()].filter(d => d !== 0 && d !== h); win += rest.filter(d => d === prize).length / rest.length / empty.length; }); }
+    assert(Math.abs(win / n - (n - 1) / (n * (n - 2))) < 1e-12, 'monty one door ' + n); }
+  let tot = 0, cnt = 0; for (let a = 1; a <= 6; a++) for (let b = a + 1; b <= 6; b++) { tot += a; cnt++; } assert(Math.abs(tot / cnt - 7 / 3) < 1e-12, 'first of 2 in 6');
+  const N = 10, D = new Array(N + 1).fill(0); for (let it = 0; it < 20000; it++) for (let i = 1; i < N; i++) D[i] = 1 + (D[i - 1] + D[i + 1]) / 2;
+  for (let i = 1; i < N; i++) assert(Math.abs(D[i] - i * (N - i)) < 1e-6, 'ruin duration ' + i);
+});
+test('think: Next shows every puzzle once before any repeat', () => {
+  const s = defaultState(), r = makeRng(3), seen = [];
+  let prev = null;
+  for (let i = 0; i < PUZZLES.length; i++) { prev = nextPuzzleId(s, prev, r); seen.push(prev); }
+  assert(new Set(seen).size === PUZZLES.length, 'one full round');
+  const again = nextPuzzleId(s, prev, r);
+  assert(again !== prev && s.think.seen.length === 2, 'new round, no back-to-back repeat');
+});
+test('think: the screen reveals, offers a variant only for changing puzzles, and moves on', () => {
+  app.state = defaultState(); startThink();
+  assert(document.getElementById('think').classList.contains('active') && !document.querySelector('.thinkA'), 'question only');
+  showPuzzle('egg'); revealPuzzle(); // listeners are not wired in test mode
+  assert(document.querySelector('.thinkA').textContent.endsWith('drops') && !document.getElementById('thinkVariant').hidden, 'answer + variant');
+  assert(document.querySelector('.thinkIdea').textContent.startsWith('Idea: Balance the worst case'), 'idea line');
+  variantPuzzle();
+  assert(app.think.id === 'egg' && !app.think.shown, 'variant: same puzzle, hidden answer');
+  showPuzzle('horses'); revealPuzzle();
+  assert(document.getElementById('thinkVariant').hidden, 'fixed classic has no variant');
+  nextPuzzle();
+  assert(app.think.id !== 'horses' && app.state.think.seen.includes(app.think.id), 'next');
+  showStart();
+});
+test('think: old saves gain an empty puzzle round', () => {
+  const old = { v: 1, skill: { rot: 2 }, run: { rot: 0 }, streak: 0, history: [] };
+  assert(loadState({ getItem: () => JSON.stringify(old), setItem() {} }).think.seen.length === 0, 'think');
 });
 
 // ===== BOOT =====
